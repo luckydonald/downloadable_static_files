@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.09.29.0000.19.46.57.0000.6c1c198ec4c6459e6b12fc8b6ba660673be76651
+// @version      2026.09.29.0000.19.48.25.0000.eaab4
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @match        *://*.derpibooru.org/*
