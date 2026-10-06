@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.09.29.0000.19.59.49.0000.809d0
+// @version      2026.10.06.0000.10.54.00.0000.b1e98
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -7311,9 +7311,14 @@
     biggerButtonsEnabled: false,
     listButtonSize: 24,
     imageButtonSize: 24,
+    showVoteNumbersList: true,
+    showVoteNumbersImage: true,
+    showScoreList: true,
+    showScoreImage: true,
     voteProgressEnabled: true,
     voteHoverStyleEnabled: true,
     hiddenButtonIds: [],
+    newTabButtonIds: [],
     galleryProgressEnabled: true,
     galleryFullPageEnabled: false,
     gallerySortAlphabetical: false,
@@ -7321,14 +7326,14 @@
     galleryShowIcons: false,
     pinnedGalleryIdsByInstance: {}
   };
-  function isRecord$3(value) {
+  function isRecord$4(value) {
     return typeof value === "object" && value !== null;
   }
   function normalizeSettingsState(raw) {
-    const record = isRecord$3(raw) ? { ...raw } : {};
+    const record = isRecord$4(raw) ? { ...raw } : {};
     const legacyPinnedGalleryIds = record.pinnedGalleryIds;
     delete record.pinnedGalleryIds;
-    const pinnedGalleryIdsByInstance = Array.isArray(legacyPinnedGalleryIds) && legacyPinnedGalleryIds.length > 0 ? { [resolveInstanceId(location.hostname)]: legacyPinnedGalleryIds } : isRecord$3(record.pinnedGalleryIdsByInstance) ? record.pinnedGalleryIdsByInstance : {};
+    const pinnedGalleryIdsByInstance = Array.isArray(legacyPinnedGalleryIds) && legacyPinnedGalleryIds.length > 0 ? { [resolveInstanceId(location.hostname)]: legacyPinnedGalleryIds } : isRecord$4(record.pinnedGalleryIdsByInstance) ? record.pinnedGalleryIdsByInstance : {};
     return {
       ...settingsDefaults,
       ...record,
@@ -7357,7 +7362,17 @@
     store.$subscribe(() => setValue(SETTINGS_STORAGE_KEY, store.$state), { flush: "sync" });
     onValueChanged(SETTINGS_STORAGE_KEY, (next) => store.$patch(normalizeSettingsState(next)));
   }
-  const STORAGE_KEY$2 = "lodestone-userscript-telegram-buttons";
+  const STORAGE_KEY$3 = "lodestone-userscript-telegram-buttons";
+  function parseBooruList(input) {
+    const hosts = input.split(/[\s,]+/).map((host) => host.trim().toLowerCase()).filter(Boolean).map(resolveInstanceId);
+    return [...new Set(hosts)];
+  }
+  function isTelegramButtonEnabledFor(config, hostname) {
+    if (!config.boorus || config.boorus.length === 0) {
+      return true;
+    }
+    return config.boorus.map(resolveInstanceId).includes(resolveInstanceId(hostname));
+  }
   const DEFAULT_TELEGRAM_API_URL = "https://api.telegram.org/bot{token}/";
   function createTelegramButtonConfig(overrides2 = {}) {
     return {
@@ -7371,6 +7386,7 @@
       chatId: "",
       format: "photo",
       captionSource: "pageUrl",
+      boorus: [],
       ...overrides2
     };
   }
@@ -7378,7 +7394,7 @@
     return { buttons: [] };
   }
   const useTelegramButtonsStore = /* @__PURE__ */ defineStore("telegramButtons", {
-    state: () => getValue(STORAGE_KEY$2, createTelegramButtonsDefaults()),
+    state: () => getValue(STORAGE_KEY$3, createTelegramButtonsDefaults()),
     actions: {
       add(overrides2 = {}) {
         const button = createTelegramButtonConfig(overrides2);
@@ -7407,10 +7423,10 @@
     }
   });
   function installTelegramButtonsPersistence(store) {
-    store.$subscribe(() => setValue(STORAGE_KEY$2, store.$state), { flush: "sync" });
-    onValueChanged(STORAGE_KEY$2, (next) => store.$patch(next));
+    store.$subscribe(() => setValue(STORAGE_KEY$3, store.$state), { flush: "sync" });
+    onValueChanged(STORAGE_KEY$3, (next) => store.$patch(next));
   }
-  const STORAGE_KEY$1 = "lodestone-userscript-gallery-quick-buttons";
+  const STORAGE_KEY$2 = "lodestone-userscript-gallery-quick-buttons";
   function createGalleryQuickButtonConfig(overrides2 = {}) {
     return {
       id: crypto.randomUUID(),
@@ -7423,64 +7439,127 @@
     };
   }
   function createGalleryQuickButtonsDefaults() {
-    return { perInstance: {} };
+    return { shared: [] };
   }
-  function isRecord$2(value) {
+  function isRecord$3(value) {
     return typeof value === "object" && value !== null;
   }
+  function mergeLegacyButtons(shared, instanceId, buttons) {
+    for (const { galleryId, ...rest } of buttons) {
+      const existing = shared.find((button) => button.id === rest.id);
+      if (existing) {
+        existing.galleryIds[instanceId] = galleryId;
+      } else {
+        shared.push({ ...rest, galleryIds: { [instanceId]: galleryId } });
+      }
+    }
+  }
   function normalizeGalleryQuickButtonsState(raw) {
-    const record = isRecord$2(raw) ? raw : {};
-    const perInstance = Array.isArray(record.buttons) && record.buttons.length > 0 ? { [resolveInstanceId(location.hostname)]: record.buttons } : isRecord$2(record.perInstance) ? record.perInstance : {};
-    return { perInstance: migrateInstanceKeyedData(perInstance, (existing, incoming) => [...existing, ...incoming]) };
+    const record = isRecord$3(raw) ? raw : {};
+    const shared = [];
+    if (Array.isArray(record.shared)) {
+      for (const button of record.shared) {
+        const galleryIds = {};
+        for (const [instance, galleryId] of Object.entries(isRecord$3(button.galleryIds) ? button.galleryIds : {})) {
+          galleryIds[resolveInstanceId(instance)] = galleryId;
+        }
+        const existing = shared.find((candidate) => candidate.id === button.id);
+        if (existing) {
+          Object.assign(existing.galleryIds, galleryIds);
+        } else {
+          shared.push({ ...button, galleryIds });
+        }
+      }
+    }
+    if (isRecord$3(record.perInstance)) {
+      for (const [instance, buttons] of Object.entries(record.perInstance)) {
+        if (Array.isArray(buttons)) {
+          mergeLegacyButtons(shared, resolveInstanceId(instance), buttons);
+        }
+      }
+    }
+    if (Array.isArray(record.buttons) && record.buttons.length > 0) {
+      mergeLegacyButtons(shared, resolveInstanceId(location.hostname), record.buttons);
+    }
+    return { shared };
+  }
+  function withGalleryId(button, instanceId) {
+    const { galleryIds, ...rest } = button;
+    return { ...rest, galleryId: galleryIds[instanceId] };
   }
   const useGalleryQuickButtonsStore = /* @__PURE__ */ defineStore("galleryQuickButtons", {
-    state: () => normalizeGalleryQuickButtonsState(getValue(STORAGE_KEY$1, createGalleryQuickButtonsDefaults())),
+    state: () => normalizeGalleryQuickButtonsState(getValue(STORAGE_KEY$2, createGalleryQuickButtonsDefaults())),
     getters: {
-      buttons: (state) => state.perInstance[resolveInstanceId(location.hostname)] ?? []
+      /** Buttons active on the current booru, with the gallery id resolved for it. */
+      buttons: (state) => {
+        const instanceId = resolveInstanceId(location.hostname);
+        return state.shared.filter((button) => instanceId in button.galleryIds).map((button) => withGalleryId(button, instanceId));
+      },
+      /** Buttons that have no gallery on the current booru yet ("Other boorus"). */
+      otherBoorusButtons: (state) => {
+        const instanceId = resolveInstanceId(location.hostname);
+        return state.shared.filter((button) => !(instanceId in button.galleryIds));
+      }
     },
     actions: {
       add(overrides2 = {}) {
-        const button = createGalleryQuickButtonConfig(overrides2);
+        const { galleryId, ...rest } = createGalleryQuickButtonConfig(overrides2);
         const instanceId = resolveInstanceId(location.hostname);
-        this.perInstance[instanceId] = [...this.perInstance[instanceId] ?? [], button];
-        return button;
+        const button = { ...rest, galleryIds: { [instanceId]: galleryId } };
+        this.shared.push(button);
+        return withGalleryId(button, instanceId);
       },
+      /** Copies an active button as a new, independent button pointing at the same gallery here only. */
       duplicate(id) {
         const existing = this.buttons.find((button) => button.id === id);
         if (!existing) {
           return void 0;
         }
-        const copy = createGalleryQuickButtonConfig({
-          ...existing,
-          id: crypto.randomUUID(),
-          label: `${existing.label} (copy)`
-        });
-        const instanceId = resolveInstanceId(location.hostname);
-        this.perInstance[instanceId] = [...this.perInstance[instanceId] ?? [], copy];
-        return copy;
+        return this.add({ ...existing, id: crypto.randomUUID(), label: `${existing.label} (copy)` });
       },
+      /** Look/behavior changes are shared across boorus; `galleryId` only sets the gallery on the current one. */
       update(id, changes) {
-        const instanceId = resolveInstanceId(location.hostname);
-        const buttons = this.perInstance[instanceId] ?? [];
-        const index = buttons.findIndex((button) => button.id === id);
+        const index = this.shared.findIndex((button) => button.id === id);
         if (index === -1) {
           return;
         }
-        this.perInstance[instanceId] = buttons.map(
-          (button, i) => i === index ? { ...button, ...changes, id } : button
-        );
+        const { galleryId, ...shared } = changes;
+        const current = this.shared[index];
+        this.shared[index] = {
+          ...current,
+          ...shared,
+          id,
+          galleryIds: galleryId === void 0 ? current.galleryIds : { ...current.galleryIds, [resolveInstanceId(location.hostname)]: galleryId }
+        };
       },
+      /** Makes an "Other boorus" button active here by pointing it at this booru's equivalent gallery. */
+      linkHere(id, galleryId) {
+        this.update(id, { galleryId });
+      },
+      /** Deactivates the button on the current booru; once no booru uses it any more it is deleted outright. */
       remove(id) {
         const instanceId = resolveInstanceId(location.hostname);
-        this.perInstance[instanceId] = (this.perInstance[instanceId] ?? []).filter((button) => button.id !== id);
+        const button = this.shared.find((candidate) => candidate.id === id);
+        if (!button) {
+          return;
+        }
+        const { [instanceId]: _removed, ...remaining } = button.galleryIds;
+        if (Object.keys(remaining).length === 0) {
+          this.removeEverywhere(id);
+          return;
+        }
+        this.shared = this.shared.map((candidate) => candidate.id === id ? { ...candidate, galleryIds: remaining } : candidate);
+      },
+      removeEverywhere(id) {
+        this.shared = this.shared.filter((button) => button.id !== id);
       }
     }
   });
   function installGalleryQuickButtonsPersistence(store) {
-    store.$subscribe(() => setValue(STORAGE_KEY$1, store.$state), { flush: "sync" });
-    onValueChanged(STORAGE_KEY$1, (next) => store.$patch(normalizeGalleryQuickButtonsState(next)));
+    store.$subscribe(() => setValue(STORAGE_KEY$2, store.$state), { flush: "sync" });
+    onValueChanged(STORAGE_KEY$2, (next) => store.$patch(normalizeGalleryQuickButtonsState(next)));
   }
-  const STORAGE_KEY = "lodestone-userscript-button-effects";
+  const STORAGE_KEY$1 = "lodestone-userscript-button-effects";
   function createButtonEffectRule(overrides2 = {}) {
     return {
       id: crypto.randomUUID(),
@@ -7496,16 +7575,16 @@
   function createButtonEffectsDefaults() {
     return { perInstance: {} };
   }
-  function isRecord$1(value) {
+  function isRecord$2(value) {
     return typeof value === "object" && value !== null;
   }
   function normalizeButtonEffectsState(raw) {
-    const record = isRecord$1(raw) ? raw : {};
-    const perInstance = isRecord$1(record.perInstance) ? record.perInstance : {};
+    const record = isRecord$2(raw) ? raw : {};
+    const perInstance = isRecord$2(record.perInstance) ? record.perInstance : {};
     return { perInstance: migrateInstanceKeyedData(perInstance, (existing, incoming) => [...existing, ...incoming]) };
   }
   const useButtonEffectsStore = /* @__PURE__ */ defineStore("buttonEffects", {
-    state: () => normalizeButtonEffectsState(getValue(STORAGE_KEY, createButtonEffectsDefaults())),
+    state: () => normalizeButtonEffectsState(getValue(STORAGE_KEY$1, createButtonEffectsDefaults())),
     getters: {
       rules: (state) => state.perInstance[resolveInstanceId(location.hostname)] ?? []
     },
@@ -7542,8 +7621,73 @@
     }
   });
   function installButtonEffectsPersistence(store) {
+    store.$subscribe(() => setValue(STORAGE_KEY$1, store.$state), { flush: "sync" });
+    onValueChanged(STORAGE_KEY$1, (next) => store.$patch(normalizeButtonEffectsState(next)));
+  }
+  const STORAGE_KEY = "lodestone-userscript-button-groups";
+  const DEFAULT_COLUMNS = 4;
+  function createBreakpoint(overrides2 = {}) {
+    return { id: crypto.randomUUID(), maxWidthPx: null, columns: DEFAULT_COLUMNS, ...overrides2 };
+  }
+  function createButtonGroup(overrides2 = {}) {
+    return {
+      id: crypto.randomUUID(),
+      name: "New group",
+      scope: "image",
+      buttonIds: [],
+      breakpoints: [createBreakpoint()],
+      ...overrides2
+    };
+  }
+  function createButtonGroupsDefaults() {
+    return { perInstance: {} };
+  }
+  function isRecord$1(value) {
+    return typeof value === "object" && value !== null;
+  }
+  function normalizeGroup(group) {
+    const given = Array.isArray(group.breakpoints) ? group.breakpoints : [];
+    const base2 = given.find((breakpoint) => breakpoint.maxWidthPx === null) ?? createBreakpoint();
+    const rest = given.filter((breakpoint) => breakpoint.maxWidthPx !== null);
+    return { ...group, buttonIds: Array.isArray(group.buttonIds) ? group.buttonIds : [], breakpoints: [base2, ...rest] };
+  }
+  function normalizeButtonGroupsState(raw) {
+    const record = isRecord$1(raw) ? raw : {};
+    const perInstance = isRecord$1(record.perInstance) ? record.perInstance : {};
+    const merged = migrateInstanceKeyedData(perInstance, (existing, incoming) => [...existing, ...incoming]);
+    return {
+      perInstance: Object.fromEntries(Object.entries(merged).map(([instance, groups]) => [instance, groups.map(normalizeGroup)]))
+    };
+  }
+  const useButtonGroupsStore = /* @__PURE__ */ defineStore("buttonGroups", {
+    state: () => normalizeButtonGroupsState(getValue(STORAGE_KEY, createButtonGroupsDefaults())),
+    getters: {
+      groups: (state) => state.perInstance[resolveInstanceId(location.hostname)] ?? []
+    },
+    actions: {
+      add(overrides2 = {}) {
+        const group = normalizeGroup(createButtonGroup(overrides2));
+        const instanceId = resolveInstanceId(location.hostname);
+        this.perInstance[instanceId] = [...this.perInstance[instanceId] ?? [], group];
+        return group;
+      },
+      update(id, changes) {
+        const instanceId = resolveInstanceId(location.hostname);
+        const groups = this.perInstance[instanceId] ?? [];
+        if (!groups.some((group) => group.id === id)) {
+          return;
+        }
+        this.perInstance[instanceId] = groups.map((group) => group.id === id ? normalizeGroup({ ...group, ...changes, id }) : group);
+      },
+      remove(id) {
+        const instanceId = resolveInstanceId(location.hostname);
+        this.perInstance[instanceId] = (this.perInstance[instanceId] ?? []).filter((group) => group.id !== id);
+      }
+    }
+  });
+  function installButtonGroupsPersistence(store) {
     store.$subscribe(() => setValue(STORAGE_KEY, store.$state), { flush: "sync" });
-    onValueChanged(STORAGE_KEY, (next) => store.$patch(normalizeButtonEffectsState(next)));
+    onValueChanged(STORAGE_KEY, (next) => store.$patch(normalizeButtonGroupsState(next)));
   }
   function useToggle(store, key) {
     return computed({
@@ -7553,15 +7697,15 @@
       }
     });
   }
-  const _hoisted_1$k = { class: "lodestone-settings-section" };
-  const _sfc_main$m = /* @__PURE__ */ defineComponent({
+  const _hoisted_1$o = { class: "lodestone-settings-section" };
+  const _sfc_main$r = /* @__PURE__ */ defineComponent({
     __name: "ErrorReportingSection",
     setup(__props) {
       const store = useSettingsStore();
       const errorReportingEnabled = useToggle(store, "errorReportingEnabled");
       const sentryDsn = useToggle(store, "sentryDsn");
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$k, [
+        return openBlock(), createElementBlock("div", _hoisted_1$o, [
           _cache[4] || (_cache[4] = createBaseVNode("h3", null, "Error Reporting", -1)),
           createBaseVNode("label", null, [
             withDirectives(createBaseVNode("input", {
@@ -7586,21 +7730,25 @@
       };
     }
   });
-  const _hoisted_1$j = { class: "lodestone-settings-section" };
-  const _hoisted_2$c = {
+  const _hoisted_1$n = { class: "lodestone-settings-section" };
+  const _hoisted_2$e = {
     key: 0,
     class: "lodestone-settings-subfields"
   };
-  const _sfc_main$l = /* @__PURE__ */ defineComponent({
-    __name: "ButtonSizeSection",
+  const _sfc_main$q = /* @__PURE__ */ defineComponent({
+    __name: "ScoreButtonsSection",
     setup(__props) {
       const store = useSettingsStore();
       const biggerButtonsEnabled = useToggle(store, "biggerButtonsEnabled");
       const listButtonSize = useToggle(store, "listButtonSize");
       const imageButtonSize = useToggle(store, "imageButtonSize");
+      const showVoteNumbersList = useToggle(store, "showVoteNumbersList");
+      const showVoteNumbersImage = useToggle(store, "showVoteNumbersImage");
+      const showScoreList = useToggle(store, "showScoreList");
+      const showScoreImage = useToggle(store, "showScoreImage");
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$j, [
-          _cache[6] || (_cache[6] = createBaseVNode("h3", null, "Button Size", -1)),
+        return openBlock(), createElementBlock("div", _hoisted_1$n, [
+          _cache[14] || (_cache[14] = createBaseVNode("h3", null, "Score Buttons", -1)),
           createBaseVNode("label", null, [
             withDirectives(createBaseVNode("input", {
               "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => /* @__PURE__ */ isRef(biggerButtonsEnabled) ? biggerButtonsEnabled.value = $event : null),
@@ -7608,11 +7756,11 @@
             }, null, 512), [
               [vModelCheckbox, unref(biggerButtonsEnabled)]
             ]),
-            _cache[3] || (_cache[3] = createTextVNode(" Bigger buttons ", -1))
+            _cache[7] || (_cache[7] = createTextVNode(" Bigger buttons ", -1))
           ]),
-          unref(biggerButtonsEnabled) ? (openBlock(), createElementBlock("div", _hoisted_2$c, [
+          unref(biggerButtonsEnabled) ? (openBlock(), createElementBlock("div", _hoisted_2$e, [
             createBaseVNode("label", null, [
-              _cache[4] || (_cache[4] = createTextVNode(" List button size (px) ", -1)),
+              _cache[8] || (_cache[8] = createTextVNode(" List button size (px) ", -1)),
               withDirectives(createBaseVNode("input", {
                 "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => /* @__PURE__ */ isRef(listButtonSize) ? listButtonSize.value = $event : null),
                 min: "12",
@@ -7628,7 +7776,7 @@
               ])
             ]),
             createBaseVNode("label", null, [
-              _cache[5] || (_cache[5] = createTextVNode(" Image button size (px) ", -1)),
+              _cache[9] || (_cache[9] = createTextVNode(" Image button size (px) ", -1)),
               withDirectives(createBaseVNode("input", {
                 "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => /* @__PURE__ */ isRef(imageButtonSize) ? imageButtonSize.value = $event : null),
                 min: "12",
@@ -7643,20 +7791,58 @@
                 ]
               ])
             ])
-          ])) : createCommentVNode("", true)
+          ])) : createCommentVNode("", true),
+          _cache[15] || (_cache[15] = createBaseVNode("h4", null, "Numbers — List", -1)),
+          createBaseVNode("label", null, [
+            withDirectives(createBaseVNode("input", {
+              "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => /* @__PURE__ */ isRef(showVoteNumbersList) ? showVoteNumbersList.value = $event : null),
+              type: "checkbox"
+            }, null, 512), [
+              [vModelCheckbox, unref(showVoteNumbersList)]
+            ]),
+            _cache[10] || (_cache[10] = createTextVNode(" Show the count on favorite / upvote / downvote buttons ", -1))
+          ]),
+          createBaseVNode("label", null, [
+            withDirectives(createBaseVNode("input", {
+              "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => /* @__PURE__ */ isRef(showScoreList) ? showScoreList.value = $event : null),
+              type: "checkbox"
+            }, null, 512), [
+              [vModelCheckbox, unref(showScoreList)]
+            ]),
+            _cache[11] || (_cache[11] = createTextVNode(" Show the general score ", -1))
+          ]),
+          _cache[16] || (_cache[16] = createBaseVNode("h4", null, "Numbers — Image", -1)),
+          createBaseVNode("label", null, [
+            withDirectives(createBaseVNode("input", {
+              "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => /* @__PURE__ */ isRef(showVoteNumbersImage) ? showVoteNumbersImage.value = $event : null),
+              type: "checkbox"
+            }, null, 512), [
+              [vModelCheckbox, unref(showVoteNumbersImage)]
+            ]),
+            _cache[12] || (_cache[12] = createTextVNode(" Show the count on favorite / upvote / downvote buttons ", -1))
+          ]),
+          createBaseVNode("label", null, [
+            withDirectives(createBaseVNode("input", {
+              "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => /* @__PURE__ */ isRef(showScoreImage) ? showScoreImage.value = $event : null),
+              type: "checkbox"
+            }, null, 512), [
+              [vModelCheckbox, unref(showScoreImage)]
+            ]),
+            _cache[13] || (_cache[13] = createTextVNode(" Show the general score ", -1))
+          ])
         ]);
       };
     }
   });
-  const _hoisted_1$i = { class: "lodestone-settings-section" };
-  const _sfc_main$k = /* @__PURE__ */ defineComponent({
+  const _hoisted_1$m = { class: "lodestone-settings-section" };
+  const _sfc_main$p = /* @__PURE__ */ defineComponent({
     __name: "VoteSection",
     setup(__props) {
       const store = useSettingsStore();
       const voteProgressEnabled = useToggle(store, "voteProgressEnabled");
       const voteHoverStyleEnabled = useToggle(store, "voteHoverStyleEnabled");
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$i, [
+        return openBlock(), createElementBlock("div", _hoisted_1$m, [
           _cache[4] || (_cache[4] = createBaseVNode("h3", null, "Vote Buttons", -1)),
           createBaseVNode("label", null, [
             withDirectives(createBaseVNode("input", {
@@ -7712,12 +7898,28 @@
     { id: "list-hide", scope: "list", selector: ".media-box .interaction--hide", label: "Hide image", icon: "fa-eye-slash", color: "#8a8a8a", category: "hide" }
   ];
   const allButtonDefs = [...imageButtonDefs, ...listButtonDefs];
-  const _hoisted_1$h = { class: "lodestone-settings-section" };
-  const _hoisted_2$b = { class: "lodestone-hide-group" };
-  const _hoisted_3$a = ["checked", "onChange"];
-  const _hoisted_4$9 = { class: "lodestone-hide-group" };
-  const _hoisted_5$8 = ["checked", "onChange"];
-  const _sfc_main$j = /* @__PURE__ */ defineComponent({
+  const LINK_CATEGORIES = /* @__PURE__ */ new Set(["nav", "related", "view", "download"]);
+  function isLinkButton(def2) {
+    return LINK_CATEGORIES.has(def2.category);
+  }
+  const _hoisted_1$l = { class: "lodestone-settings-section" };
+  const _hoisted_2$d = { class: "lodestone-hide-group" };
+  const _hoisted_3$c = ["checked", "onChange"];
+  const _hoisted_4$b = {
+    key: 0,
+    class: "lodestone-hide-row__new-tab",
+    title: "Open in a new tab"
+  };
+  const _hoisted_5$a = ["checked", "onChange"];
+  const _hoisted_6$8 = { class: "lodestone-hide-group" };
+  const _hoisted_7$7 = ["checked", "onChange"];
+  const _hoisted_8$6 = {
+    key: 0,
+    class: "lodestone-hide-row__new-tab",
+    title: "Open in a new tab"
+  };
+  const _hoisted_9$5 = ["checked", "onChange"];
+  const _sfc_main$o = /* @__PURE__ */ defineComponent({
     __name: "HideButtonsSection",
     setup(__props) {
       const store = useSettingsStore();
@@ -7733,57 +7935,87 @@
           store.hiddenButtonIds = store.hiddenButtonIds.filter((existing) => existing !== id);
         }
       }
+      function opensInNewTab(id) {
+        return store.newTabButtonIds.includes(id);
+      }
+      function setNewTab(id, checked) {
+        store.newTabButtonIds = checked ? [.../* @__PURE__ */ new Set([...store.newTabButtonIds, id])] : store.newTabButtonIds.filter((existing) => existing !== id);
+      }
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$h, [
-          _cache[0] || (_cache[0] = createBaseVNode("h3", null, "Hidden Buttons", -1)),
-          _cache[1] || (_cache[1] = createBaseVNode("h4", null, "Hide buttons — List", -1)),
-          createBaseVNode("div", _hoisted_2$b, [
+        return openBlock(), createElementBlock("div", _hoisted_1$l, [
+          _cache[2] || (_cache[2] = createBaseVNode("h3", null, "Hidden Buttons", -1)),
+          _cache[3] || (_cache[3] = createBaseVNode("h4", null, "Hide buttons — List", -1)),
+          createBaseVNode("div", _hoisted_2$d, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(unref(listButtonDefs), (button) => {
-              return openBlock(), createElementBlock("label", {
+              return openBlock(), createElementBlock("div", {
                 key: button.id,
-                class: "lodestone-hide-row",
-                style: normalizeStyle({ "--lodestone-accent": button.color })
+                class: "lodestone-hide-entry"
               }, [
-                createBaseVNode("input", {
-                  type: "checkbox",
-                  checked: isHidden(button.id),
-                  onChange: ($event) => toggle(button.id, $event.target.checked)
-                }, null, 40, _hoisted_3$a),
-                createBaseVNode("i", {
-                  class: normalizeClass(["fa", button.icon]),
-                  style: normalizeStyle({ color: button.color })
-                }, null, 6),
-                createTextVNode(" " + toDisplayString(button.label), 1)
-              ], 4);
+                createBaseVNode("label", {
+                  class: "lodestone-hide-row",
+                  style: normalizeStyle({ "--lodestone-accent": button.color })
+                }, [
+                  createBaseVNode("input", {
+                    type: "checkbox",
+                    checked: isHidden(button.id),
+                    onChange: ($event) => toggle(button.id, $event.target.checked)
+                  }, null, 40, _hoisted_3$c),
+                  createBaseVNode("i", {
+                    class: normalizeClass(["fa", button.icon]),
+                    style: normalizeStyle({ color: button.color })
+                  }, null, 6),
+                  createTextVNode(" " + toDisplayString(button.label), 1)
+                ], 4),
+                unref(isLinkButton)(button) ? (openBlock(), createElementBlock("label", _hoisted_4$b, [
+                  createBaseVNode("input", {
+                    type: "checkbox",
+                    checked: opensInNewTab(button.id),
+                    onChange: ($event) => setNewTab(button.id, $event.target.checked)
+                  }, null, 40, _hoisted_5$a),
+                  _cache[0] || (_cache[0] = createTextVNode(" new tab ", -1))
+                ])) : createCommentVNode("", true)
+              ]);
             }), 128))
           ]),
-          _cache[2] || (_cache[2] = createBaseVNode("h4", null, "Hide buttons — Image", -1)),
-          createBaseVNode("div", _hoisted_4$9, [
+          _cache[4] || (_cache[4] = createBaseVNode("h4", null, "Hide buttons — Image", -1)),
+          createBaseVNode("div", _hoisted_6$8, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(unref(imageButtonDefs), (button) => {
-              return openBlock(), createElementBlock("label", {
+              return openBlock(), createElementBlock("div", {
                 key: button.id,
-                class: "lodestone-hide-row",
-                style: normalizeStyle({ "--lodestone-accent": button.color })
+                class: "lodestone-hide-entry"
               }, [
-                createBaseVNode("input", {
-                  type: "checkbox",
-                  checked: isHidden(button.id),
-                  onChange: ($event) => toggle(button.id, $event.target.checked)
-                }, null, 40, _hoisted_5$8),
-                createBaseVNode("i", {
-                  class: normalizeClass(["fa", button.icon]),
-                  style: normalizeStyle({ color: button.color })
-                }, null, 6),
-                createTextVNode(" " + toDisplayString(button.label), 1)
-              ], 4);
+                createBaseVNode("label", {
+                  class: "lodestone-hide-row",
+                  style: normalizeStyle({ "--lodestone-accent": button.color })
+                }, [
+                  createBaseVNode("input", {
+                    type: "checkbox",
+                    checked: isHidden(button.id),
+                    onChange: ($event) => toggle(button.id, $event.target.checked)
+                  }, null, 40, _hoisted_7$7),
+                  createBaseVNode("i", {
+                    class: normalizeClass(["fa", button.icon]),
+                    style: normalizeStyle({ color: button.color })
+                  }, null, 6),
+                  createTextVNode(" " + toDisplayString(button.label), 1)
+                ], 4),
+                unref(isLinkButton)(button) ? (openBlock(), createElementBlock("label", _hoisted_8$6, [
+                  createBaseVNode("input", {
+                    type: "checkbox",
+                    checked: opensInNewTab(button.id),
+                    onChange: ($event) => setNewTab(button.id, $event.target.checked)
+                  }, null, 40, _hoisted_9$5),
+                  _cache[1] || (_cache[1] = createTextVNode(" new tab ", -1))
+                ])) : createCommentVNode("", true)
+              ]);
             }), 128))
           ])
         ]);
       };
     }
   });
-  const _hoisted_1$g = { class: "lodestone-settings-section" };
-  const _sfc_main$i = /* @__PURE__ */ defineComponent({
+  const _hoisted_1$k = { class: "lodestone-settings-section" };
+  const _sfc_main$n = /* @__PURE__ */ defineComponent({
     __name: "GallerySection",
     setup(__props) {
       const store = useSettingsStore();
@@ -7793,7 +8025,7 @@
       const galleryLeftAlign = useToggle(store, "galleryLeftAlign");
       const galleryShowIcons = useToggle(store, "galleryShowIcons");
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$g, [
+        return openBlock(), createElementBlock("div", _hoisted_1$k, [
           _cache[10] || (_cache[10] = createBaseVNode("h3", null, "Galleries", -1)),
           createBaseVNode("label", null, [
             withDirectives(createBaseVNode("input", {
@@ -7844,11 +8076,11 @@
       };
     }
   });
-  const _hoisted_1$f = { class: "lodestone-icon-picker" };
-  const _hoisted_2$a = ["value"];
-  const _hoisted_3$9 = ["value"];
+  const _hoisted_1$j = { class: "lodestone-icon-picker" };
+  const _hoisted_2$c = ["value"];
+  const _hoisted_3$b = ["value"];
   const CUSTOM_VALUE = "__custom__";
-  const _sfc_main$h = /* @__PURE__ */ defineComponent({
+  const _sfc_main$m = /* @__PURE__ */ defineComponent({
     __name: "IconPicker",
     props: {
       modelValue: {}
@@ -7901,7 +8133,7 @@
         }
       );
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("span", _hoisted_1$f, [
+        return openBlock(), createElementBlock("span", _hoisted_1$j, [
           createBaseVNode("i", {
             class: normalizeClass(["fa", __props.modelValue || "fa-question"])
           }, null, 2),
@@ -7913,10 +8145,10 @@
               return createBaseVNode("option", {
                 key: icon,
                 value: icon
-              }, toDisplayString(icon), 9, _hoisted_3$9);
+              }, toDisplayString(icon), 9, _hoisted_3$b);
             }), 64)),
             createBaseVNode("option", { value: CUSTOM_VALUE }, "Other (custom)...")
-          ], 40, _hoisted_2$a),
+          ], 40, _hoisted_2$c),
           isCustom.value ? withDirectives((openBlock(), createElementBlock("input", {
             key: 0,
             "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => customValue.value = $event),
@@ -7929,22 +8161,40 @@
       };
     }
   });
-  const _sfc_main$g = /* @__PURE__ */ defineComponent({
+  const _sfc_main$l = /* @__PURE__ */ defineComponent({
+    __name: "ButtonPreview",
+    props: {
+      icon: {},
+      label: {},
+      color: {}
+    },
+    setup(__props) {
+      return (_ctx, _cache) => {
+        return openBlock(), createElementBlock("span", {
+          class: "lodestone-button-preview",
+          style: normalizeStyle({ color: __props.color })
+        }, [
+          createBaseVNode("i", {
+            class: normalizeClass(["fa", __props.icon])
+          }, null, 2),
+          createTextVNode(" " + toDisplayString(__props.label), 1)
+        ], 4);
+      };
+    }
+  });
+  const _sfc_main$k = /* @__PURE__ */ defineComponent({
     __name: "TelegramButtonPreview",
     props: {
       config: {}
     },
     setup(__props) {
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("span", {
+        return openBlock(), createBlock(_sfc_main$l, {
           class: "lodestone-telegram-preview",
-          style: normalizeStyle({ color: __props.config.color })
-        }, [
-          createBaseVNode("i", {
-            class: normalizeClass(["fa", __props.config.icon])
-          }, null, 2),
-          createTextVNode(" " + toDisplayString(__props.config.label), 1)
-        ], 4);
+          icon: __props.config.icon,
+          label: __props.config.label,
+          color: __props.config.color
+        }, null, 8, ["icon", "label", "color"]);
       };
     }
   });
@@ -8014,14 +8264,14 @@
         return "";
     }
   }
-  const _hoisted_1$e = { class: "lodestone-telegram-format-caption" };
-  const _hoisted_2$9 = ["value"];
-  const _hoisted_3$8 = ["value"];
-  const _hoisted_4$8 = {
+  const _hoisted_1$i = { class: "lodestone-telegram-format-caption" };
+  const _hoisted_2$b = ["value"];
+  const _hoisted_3$a = ["value"];
+  const _hoisted_4$a = {
     key: 0,
     class: "lodestone-preview-blockquote"
   };
-  const _sfc_main$f = /* @__PURE__ */ defineComponent({
+  const _sfc_main$j = /* @__PURE__ */ defineComponent({
     __name: "TelegramFormatCaptionFields",
     props: {
       modelValue: {},
@@ -8038,7 +8288,7 @@
         () => props.modelValue.captionSource === "custom" ? null : resolveCaption(props.modelValue.captionSource, props.exampleContext)
       );
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$e, [
+        return openBlock(), createElementBlock("div", _hoisted_1$i, [
           createBaseVNode("label", null, [
             _cache[3] || (_cache[3] = createTextVNode(" Format ", -1)),
             createBaseVNode("select", {
@@ -8048,7 +8298,7 @@
               createBaseVNode("option", { value: "photo" }, "Photo", -1),
               createBaseVNode("option", { value: "document" }, "Document", -1),
               createBaseVNode("option", { value: "both" }, "Both (photo as reply to the document)", -1)
-            ])], 40, _hoisted_2$9)
+            ])], 40, _hoisted_2$b)
           ]),
           createBaseVNode("label", null, [
             _cache[5] || (_cache[5] = createTextVNode(" Caption ", -1)),
@@ -8057,24 +8307,24 @@
               onChange: _cache[1] || (_cache[1] = ($event) => update("captionSource", $event.target.value))
             }, [..._cache[4] || (_cache[4] = [
               createStaticVNode('<option value="pageUrl">Page URL</option><option value="currentUrl">Current URL</option><option value="imageUrlFull">Image file URL (full)</option><option value="imageUrlShort">Image file URL (short)</option><option value="custom">Custom</option>', 5)
-            ])], 40, _hoisted_3$8)
+            ])], 40, _hoisted_3$a)
           ]),
-          preview.value !== null ? (openBlock(), createElementBlock("blockquote", _hoisted_4$8, toDisplayString(preview.value), 1)) : createCommentVNode("", true)
+          preview.value !== null ? (openBlock(), createElementBlock("blockquote", _hoisted_4$a, toDisplayString(preview.value), 1)) : createCommentVNode("", true)
         ]);
       };
     }
   });
-  const _hoisted_1$d = { class: "lodestone-json-viewer" };
-  const _hoisted_2$8 = {
+  const _hoisted_1$h = { class: "lodestone-json-viewer" };
+  const _hoisted_2$a = {
     key: 0,
     open: ""
   };
-  const _hoisted_3$7 = ["onClick"];
-  const _hoisted_4$7 = { class: "lodestone-json-viewer__key" };
-  const _hoisted_5$7 = ["onClick"];
-  const _hoisted_6$5 = { class: "lodestone-json-viewer__key" };
-  const _hoisted_7$4 = { class: "lodestone-json-viewer__value" };
-  const _sfc_main$e = /* @__PURE__ */ defineComponent({
+  const _hoisted_3$9 = ["onClick"];
+  const _hoisted_4$9 = { class: "lodestone-json-viewer__key" };
+  const _hoisted_5$9 = ["onClick"];
+  const _hoisted_6$7 = { class: "lodestone-json-viewer__key" };
+  const _hoisted_7$6 = { class: "lodestone-json-viewer__value" };
+  const _sfc_main$i = /* @__PURE__ */ defineComponent({
     ...{ name: "CaptionJsonViewer" },
     __name: "CaptionJsonViewer",
     props: {
@@ -8123,16 +8373,16 @@
       }
       return (_ctx, _cache) => {
         const _component_CaptionJsonViewer = resolveComponent("CaptionJsonViewer", true);
-        return openBlock(), createElementBlock("ul", _hoisted_1$d, [
+        return openBlock(), createElementBlock("ul", _hoisted_1$h, [
           (openBlock(true), createElementBlock(Fragment, null, renderList(entries(), ([key, value]) => {
             return openBlock(), createElementBlock("li", { key }, [
-              isExpandable(value) ? (openBlock(), createElementBlock("details", _hoisted_2$8, [
+              isExpandable(value) ? (openBlock(), createElementBlock("details", _hoisted_2$a, [
                 createBaseVNode("summary", { onClick: onSummaryClick }, [
                   createBaseVNode("button", {
                     type: "button",
                     onClick: ($event) => onInsertClick($event, key)
-                  }, "+", 8, _hoisted_3$7),
-                  createBaseVNode("span", _hoisted_4$7, toDisplayString(key), 1)
+                  }, "+", 8, _hoisted_3$9),
+                  createBaseVNode("span", _hoisted_4$9, toDisplayString(key), 1)
                 ]),
                 createVNode(_component_CaptionJsonViewer, {
                   data: value,
@@ -8143,9 +8393,9 @@
                 createBaseVNode("button", {
                   type: "button",
                   onClick: ($event) => emit2("insert", childPath(key))
-                }, "+", 8, _hoisted_5$7),
-                createBaseVNode("span", _hoisted_6$5, toDisplayString(key), 1),
-                createBaseVNode("span", _hoisted_7$4, toDisplayString(value), 1)
+                }, "+", 8, _hoisted_5$9),
+                createBaseVNode("span", _hoisted_6$7, toDisplayString(key), 1),
+                createBaseVNode("span", _hoisted_7$6, toDisplayString(value), 1)
               ], 64))
             ]);
           }), 128))
@@ -8153,12 +8403,12 @@
       };
     }
   });
-  const _hoisted_1$c = { class: "lodestone-caption-editor" };
-  const _hoisted_2$7 = ["value"];
-  const _hoisted_3$6 = { class: "lodestone-caption-editor__preview lodestone-preview-blockquote" };
-  const _hoisted_4$6 = { class: "lodestone-caption-editor__variables" };
-  const _hoisted_5$6 = { class: "lodestone-caption-editor__json-root" };
-  const _sfc_main$d = /* @__PURE__ */ defineComponent({
+  const _hoisted_1$g = { class: "lodestone-caption-editor" };
+  const _hoisted_2$9 = ["value"];
+  const _hoisted_3$8 = { class: "lodestone-caption-editor__preview lodestone-preview-blockquote" };
+  const _hoisted_4$8 = { class: "lodestone-caption-editor__variables" };
+  const _hoisted_5$8 = { class: "lodestone-caption-editor__json-root" };
+  const _sfc_main$h = /* @__PURE__ */ defineComponent({
     __name: "CaptionTemplateEditor",
     props: {
       modelValue: {},
@@ -8187,7 +8437,7 @@
         insertAtCursor(path === "" ? "{json}" : `{json${path}}`);
       }
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$c, [
+        return openBlock(), createElementBlock("div", _hoisted_1$g, [
           createBaseVNode("textarea", {
             ref_key: "textareaRef",
             ref: textareaRef,
@@ -8195,9 +8445,9 @@
             class: "lodestone-caption-editor__textarea",
             rows: "4",
             onInput: _cache[0] || (_cache[0] = ($event) => emit2("update:modelValue", $event.target.value))
-          }, null, 40, _hoisted_2$7),
-          createBaseVNode("blockquote", _hoisted_3$6, toDisplayString(preview.value), 1),
-          createBaseVNode("table", _hoisted_4$6, [
+          }, null, 40, _hoisted_2$9),
+          createBaseVNode("blockquote", _hoisted_3$8, toDisplayString(preview.value), 1),
+          createBaseVNode("table", _hoisted_4$8, [
             createBaseVNode("tbody", null, [
               createBaseVNode("tr", null, [
                 _cache[5] || (_cache[5] = createBaseVNode("td", null, "Page URL", -1)),
@@ -8241,9 +8491,9 @@
               ])
             ])
           ]),
-          createBaseVNode("details", _hoisted_5$6, [
+          createBaseVNode("details", _hoisted_5$8, [
             _cache[9] || (_cache[9] = createBaseVNode("summary", null, "json", -1)),
-            createVNode(_sfc_main$e, {
+            createVNode(_sfc_main$i, {
               data: __props.exampleData.json,
               path: "",
               onInsert: insertJsonPath
@@ -8274,30 +8524,38 @@
     const body = await response.json();
     return body.image;
   }
-  const _hoisted_1$b = { class: "lodestone-telegram-manager" };
-  const _hoisted_2$6 = {
+  const _hoisted_1$f = { class: "lodestone-telegram-manager" };
+  const _hoisted_2$8 = {
     key: 0,
     class: "lodestone-settings-subfield"
   };
-  const _hoisted_3$5 = { class: "lodestone-inline-group" };
-  const _hoisted_4$5 = { class: "lodestone-inline-group" };
-  const _hoisted_5$5 = ["type"];
-  const _hoisted_6$4 = { class: "lodestone-telegram-manager__preview" };
-  const _hoisted_7$3 = { class: "lodestone-manager-list" };
-  const _hoisted_8$3 = { class: "lodestone-manager-list__actions" };
-  const _hoisted_9$3 = ["onClick"];
-  const _hoisted_10$3 = ["onClick"];
-  const _hoisted_11$2 = ["onClick"];
-  const _sfc_main$c = /* @__PURE__ */ defineComponent({
+  const _hoisted_3$7 = { class: "lodestone-inline-group" };
+  const _hoisted_4$7 = { class: "lodestone-inline-group" };
+  const _hoisted_5$7 = ["type"];
+  const _hoisted_6$6 = ["placeholder"];
+  const _hoisted_7$5 = { class: "lodestone-telegram-manager__preview" };
+  const _hoisted_8$5 = { class: "lodestone-manager-list" };
+  const _hoisted_9$4 = { class: "lodestone-manager-list__actions" };
+  const _hoisted_10$4 = ["onClick"];
+  const _hoisted_11$4 = ["onClick"];
+  const _hoisted_12$2 = ["onClick"];
+  const _sfc_main$g = /* @__PURE__ */ defineComponent({
     __name: "TelegramButtonManager",
     setup(__props) {
       const store = useTelegramButtonsStore();
+      const location2 = window.location;
       const draft = /* @__PURE__ */ reactive(createTelegramButtonConfig());
       const editingId = /* @__PURE__ */ ref(null);
+      const booruInput = computed({
+        get: () => (draft.boorus ?? []).join(", "),
+        set: (value) => {
+          draft.boorus = parseBooruList(value);
+        }
+      });
       const tokenVisible = /* @__PURE__ */ ref(false);
       const exampleMetadata = /* @__PURE__ */ ref(null);
       onMounted(async () => {
-        const exampleId = getExampleImageId(location.hostname);
+        const exampleId = getExampleImageId(location2.hostname);
         if (!exampleId) {
           return;
         }
@@ -8308,7 +8566,7 @@
         }
       });
       const examplePageUrl = computed(
-        () => exampleMetadata.value ? `${location.origin}/images/${exampleMetadata.value.id}` : ""
+        () => exampleMetadata.value ? `${location2.origin}/images/${exampleMetadata.value.id}` : ""
       );
       const exampleContext = computed(() => {
         var _a, _b;
@@ -8345,10 +8603,10 @@
         editingId.value = null;
       }
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$b, [
+        return openBlock(), createElementBlock("div", _hoisted_1$f, [
           createBaseVNode("h4", null, toDisplayString(editingId.value ? "Edit Telegram button" : "Add a Telegram button"), 1),
           createBaseVNode("label", null, [
-            _cache[11] || (_cache[11] = createTextVNode("Label ", -1)),
+            _cache[12] || (_cache[12] = createTextVNode("Label ", -1)),
             withDirectives(createBaseVNode("input", {
               "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => draft.label = $event),
               type: "text"
@@ -8357,14 +8615,14 @@
             ])
           ]),
           createBaseVNode("label", null, [
-            _cache[12] || (_cache[12] = createTextVNode("Icon ", -1)),
-            createVNode(_sfc_main$h, {
+            _cache[13] || (_cache[13] = createTextVNode("Icon ", -1)),
+            createVNode(_sfc_main$m, {
               modelValue: draft.icon,
               "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => draft.icon = $event)
             }, null, 8, ["modelValue"])
           ]),
           createBaseVNode("label", null, [
-            _cache[13] || (_cache[13] = createTextVNode("Color ", -1)),
+            _cache[14] || (_cache[14] = createTextVNode("Color ", -1)),
             withDirectives(createBaseVNode("input", {
               "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => draft.color = $event),
               type: "color"
@@ -8379,10 +8637,10 @@
             }, null, 512), [
               [vModelCheckbox, draft.syncColors]
             ]),
-            _cache[14] || (_cache[14] = createTextVNode(" Sync colors (use the same color in dark mode) ", -1))
+            _cache[15] || (_cache[15] = createTextVNode(" Sync colors (use the same color in dark mode) ", -1))
           ]),
-          !draft.syncColors ? (openBlock(), createElementBlock("label", _hoisted_2$6, [
-            _cache[15] || (_cache[15] = createTextVNode(" Dark mode color ", -1)),
+          !draft.syncColors ? (openBlock(), createElementBlock("label", _hoisted_2$8, [
+            _cache[16] || (_cache[16] = createTextVNode(" Dark mode color ", -1)),
             withDirectives(createBaseVNode("input", {
               "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => draft.darkColor = $event),
               type: "color"
@@ -8391,8 +8649,8 @@
             ])
           ])) : createCommentVNode("", true),
           createBaseVNode("label", null, [
-            _cache[16] || (_cache[16] = createTextVNode(" API URL ", -1)),
-            createBaseVNode("span", _hoisted_3$5, [
+            _cache[17] || (_cache[17] = createTextVNode(" API URL ", -1)),
+            createBaseVNode("span", _hoisted_3$7, [
               withDirectives(createBaseVNode("input", {
                 "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => draft.apiUrl = $event),
                 type: "text"
@@ -8407,12 +8665,12 @@
             ])
           ]),
           createBaseVNode("label", null, [
-            _cache[17] || (_cache[17] = createTextVNode(" Bot token ", -1)),
-            createBaseVNode("span", _hoisted_4$5, [
+            _cache[18] || (_cache[18] = createTextVNode(" Bot token ", -1)),
+            createBaseVNode("span", _hoisted_4$7, [
               withDirectives(createBaseVNode("input", {
                 "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => draft.token = $event),
                 type: tokenVisible.value ? "text" : "password"
-              }, null, 8, _hoisted_5$5), [
+              }, null, 8, _hoisted_5$7), [
                 [vModelDynamic, draft.token]
               ]),
               createBaseVNode("button", {
@@ -8422,7 +8680,7 @@
             ])
           ]),
           createBaseVNode("label", null, [
-            _cache[18] || (_cache[18] = createTextVNode("Destination chat ", -1)),
+            _cache[19] || (_cache[19] = createTextVNode("Destination chat ", -1)),
             withDirectives(createBaseVNode("input", {
               "onUpdate:modelValue": _cache[8] || (_cache[8] = ($event) => draft.chatId = $event),
               placeholder: "@username or numeric id",
@@ -8432,7 +8690,7 @@
             ])
           ]),
           createBaseVNode("label", null, [
-            _cache[19] || (_cache[19] = createTextVNode("Destination topic (optional) ", -1)),
+            _cache[20] || (_cache[20] = createTextVNode("Destination topic (optional) ", -1)),
             withDirectives(createBaseVNode("input", {
               "onUpdate:modelValue": _cache[9] || (_cache[9] = ($event) => draft.topicId = $event),
               type: "text"
@@ -8440,12 +8698,27 @@
               [vModelText, draft.topicId]
             ])
           ]),
-          createVNode(_sfc_main$f, {
+          createBaseVNode("label", null, [
+            _cache[21] || (_cache[21] = createTextVNode(" Only on these boorus (optional) ", -1)),
+            withDirectives(createBaseVNode("input", {
+              "onUpdate:modelValue": _cache[10] || (_cache[10] = ($event) => booruInput.value = $event),
+              placeholder: `e.g. ${unref(location2).hostname}; empty = all boorus`,
+              type: "text"
+            }, null, 8, _hoisted_6$6), [
+              [
+                vModelText,
+                booruInput.value,
+                void 0,
+                { lazy: true }
+              ]
+            ])
+          ]),
+          createVNode(_sfc_main$j, {
             "model-value": draft,
             "example-context": exampleContext.value,
             "onUpdate:modelValue": updateDraft
           }, null, 8, ["model-value", "example-context"]),
-          draft.captionSource === "custom" && exampleMetadata.value ? (openBlock(), createBlock(_sfc_main$d, {
+          draft.captionSource === "custom" && exampleMetadata.value ? (openBlock(), createBlock(_sfc_main$h, {
             key: 1,
             "example-data": {
               url: exampleContext.value.pageUrlWithoutSearch,
@@ -8455,10 +8728,10 @@
               json: exampleMetadata.value
             },
             "model-value": draft.customCaptionHtml ?? "",
-            "onUpdate:modelValue": _cache[10] || (_cache[10] = (value) => draft.customCaptionHtml = value)
+            "onUpdate:modelValue": _cache[11] || (_cache[11] = (value) => draft.customCaptionHtml = value)
           }, null, 8, ["example-data", "model-value"])) : createCommentVNode("", true),
-          createBaseVNode("div", _hoisted_6$4, [
-            createVNode(_sfc_main$g, { config: draft }, null, 8, ["config"])
+          createBaseVNode("div", _hoisted_7$5, [
+            createVNode(_sfc_main$k, { config: draft }, null, 8, ["config"])
           ]),
           createBaseVNode("button", {
             type: "button",
@@ -8469,27 +8742,27 @@
             type: "button",
             onClick: cancelEdit
           }, "Cancel edit")) : createCommentVNode("", true),
-          _cache[20] || (_cache[20] = createBaseVNode("h4", null, "Configured Telegram buttons", -1)),
-          createBaseVNode("ul", _hoisted_7$3, [
+          _cache[22] || (_cache[22] = createBaseVNode("h4", null, "Configured Telegram buttons", -1)),
+          createBaseVNode("ul", _hoisted_8$5, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).buttons, (button) => {
               return openBlock(), createElementBlock("li", {
                 key: button.id,
                 class: "lodestone-manager-list__item"
               }, [
-                createVNode(_sfc_main$g, { config: button }, null, 8, ["config"]),
-                createBaseVNode("span", _hoisted_8$3, [
+                createVNode(_sfc_main$k, { config: button }, null, 8, ["config"]),
+                createBaseVNode("span", _hoisted_9$4, [
                   createBaseVNode("button", {
                     type: "button",
                     onClick: ($event) => edit(button)
-                  }, "Edit", 8, _hoisted_9$3),
+                  }, "Edit", 8, _hoisted_10$4),
                   createBaseVNode("button", {
                     type: "button",
                     onClick: ($event) => unref(store).duplicate(button.id)
-                  }, "Duplicate", 8, _hoisted_10$3),
+                  }, "Duplicate", 8, _hoisted_11$4),
                   createBaseVNode("button", {
                     type: "button",
                     onClick: ($event) => unref(store).remove(button.id)
-                  }, "Delete", 8, _hoisted_11$2)
+                  }, "Delete", 8, _hoisted_12$2)
                 ])
               ]);
             }), 128))
@@ -8498,14 +8771,14 @@
       };
     }
   });
-  const _hoisted_1$a = { class: "lodestone-settings-section" };
-  const _sfc_main$b = /* @__PURE__ */ defineComponent({
+  const _hoisted_1$e = { class: "lodestone-settings-section" };
+  const _sfc_main$f = /* @__PURE__ */ defineComponent({
     __name: "TelegramSection",
     setup(__props) {
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$a, [
+        return openBlock(), createElementBlock("div", _hoisted_1$e, [
           _cache[0] || (_cache[0] = createBaseVNode("h3", null, "Send to Telegram", -1)),
-          createVNode(_sfc_main$c)
+          createVNode(_sfc_main$g)
         ]);
       };
     }
@@ -8569,73 +8842,132 @@
       thumbnailUrl: (thumbnail == null ? void 0 : thumbnail.thumb_url) ?? (thumbnail == null ? void 0 : thumbnail.small_url) ?? void 0
     }));
   }
-  const _sfc_main$a = /* @__PURE__ */ defineComponent({
+  const _hoisted_1$d = { class: "lodestone-gallery-chooser" };
+  const _hoisted_2$7 = { key: 0 };
+  const _hoisted_3$6 = ["value"];
+  const _hoisted_4$6 = {
+    value: "",
+    disabled: ""
+  };
+  const _hoisted_5$6 = ["value"];
+  const _hoisted_6$5 = { key: 1 };
+  const _hoisted_7$4 = ["value"];
+  const _hoisted_8$4 = {
+    key: 2,
+    class: "lodestone-quick-button-manager__note"
+  };
+  const _sfc_main$e = /* @__PURE__ */ defineComponent({
+    __name: "GalleryChooser",
+    props: {
+      modelValue: {},
+      options: {},
+      lookupState: {}
+    },
+    emits: ["update:modelValue"],
+    setup(__props, { emit: __emit }) {
+      const props = __props;
+      const emit2 = __emit;
+      const manualOverride = /* @__PURE__ */ ref(null);
+      const manualEntry = computed(
+        () => manualOverride.value ?? (props.lookupState === "error" || props.lookupState === "ready" && props.options.length === 0)
+      );
+      function onInput(event) {
+        emit2("update:modelValue", event.target.value);
+      }
+      return (_ctx, _cache) => {
+        return openBlock(), createElementBlock("div", _hoisted_1$d, [
+          !manualEntry.value ? (openBlock(), createElementBlock("label", _hoisted_2$7, [
+            _cache[1] || (_cache[1] = createTextVNode(" Gallery ", -1)),
+            createBaseVNode("select", {
+              value: __props.modelValue,
+              onChange: onInput
+            }, [
+              createBaseVNode("option", _hoisted_4$6, toDisplayString(__props.lookupState === "loading" ? "Loading your galleries…" : "Select a gallery"), 1),
+              (openBlock(true), createElementBlock(Fragment, null, renderList(__props.options, (gallery) => {
+                return openBlock(), createElementBlock("option", {
+                  key: gallery.id,
+                  value: String(gallery.id)
+                }, toDisplayString(gallery.title) + " (#" + toDisplayString(gallery.id) + ") ", 9, _hoisted_5$6);
+              }), 128))
+            ], 40, _hoisted_3$6)
+          ])) : (openBlock(), createElementBlock("label", _hoisted_6$5, [
+            _cache[2] || (_cache[2] = createTextVNode(" Gallery id or slug ", -1)),
+            createBaseVNode("input", {
+              value: __props.modelValue,
+              type: "text",
+              onInput
+            }, null, 40, _hoisted_7$4)
+          ])),
+          __props.lookupState === "error" ? (openBlock(), createElementBlock("p", _hoisted_8$4, " Couldn't look up your galleries automatically -- enter the id manually. ")) : createCommentVNode("", true),
+          createBaseVNode("button", {
+            type: "button",
+            class: "lodestone-quick-button-manager__toggle-entry",
+            onClick: _cache[0] || (_cache[0] = ($event) => manualOverride.value = !manualEntry.value)
+          }, toDisplayString(manualEntry.value ? "Pick from a dropdown instead" : "Enter manually instead"), 1)
+        ]);
+      };
+    }
+  });
+  const _sfc_main$d = /* @__PURE__ */ defineComponent({
     __name: "QuickButtonPreview",
     props: {
       config: {}
     },
     setup(__props) {
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("span", {
+        return openBlock(), createBlock(_sfc_main$l, {
           class: "lodestone-quick-button-preview",
-          style: normalizeStyle({ color: __props.config.color })
-        }, [
-          createBaseVNode("i", {
-            class: normalizeClass(["fa", __props.config.icon])
-          }, null, 2),
-          createTextVNode(" " + toDisplayString(__props.config.label), 1)
-        ], 4);
+          icon: __props.config.icon,
+          label: __props.config.label,
+          color: __props.config.color
+        }, null, 8, ["icon", "label", "color"]);
       };
     }
   });
-  const _hoisted_1$9 = { class: "lodestone-quick-button-manager" };
-  const _hoisted_2$5 = { key: 0 };
-  const _hoisted_3$4 = {
-    value: "",
-    disabled: ""
-  };
-  const _hoisted_4$4 = ["value"];
-  const _hoisted_5$4 = { key: 1 };
-  const _hoisted_6$3 = {
-    key: 2,
-    class: "lodestone-quick-button-manager__note"
-  };
-  const _hoisted_7$2 = {
-    key: 3,
+  const _hoisted_1$c = { class: "lodestone-quick-button-manager" };
+  const _hoisted_2$6 = {
+    key: 0,
     class: "lodestone-settings-subfield"
   };
-  const _hoisted_8$2 = { class: "lodestone-quick-button-manager__preview" };
-  const _hoisted_9$2 = { class: "lodestone-manager-list" };
-  const _hoisted_10$2 = ["href"];
-  const _hoisted_11$1 = { class: "lodestone-manager-list__actions" };
-  const _hoisted_12 = ["onClick"];
-  const _hoisted_13 = ["onClick"];
+  const _hoisted_3$5 = { class: "lodestone-quick-button-manager__preview" };
+  const _hoisted_4$5 = { class: "lodestone-manager-list" };
+  const _hoisted_5$5 = ["href"];
+  const _hoisted_6$4 = { class: "lodestone-manager-list__actions" };
+  const _hoisted_7$3 = ["onClick"];
+  const _hoisted_8$3 = ["onClick"];
+  const _hoisted_9$3 = ["onClick"];
+  const _hoisted_10$3 = { class: "lodestone-quick-button-manager__note" };
+  const _hoisted_11$3 = { class: "lodestone-manager-list" };
+  const _hoisted_12$1 = { class: "lodestone-manager-list__actions" };
+  const _hoisted_13$1 = ["onClick"];
   const _hoisted_14 = ["onClick"];
-  const _sfc_main$9 = /* @__PURE__ */ defineComponent({
+  const _hoisted_15 = {
+    key: 0,
+    class: "lodestone-quick-button-manager__link"
+  };
+  const _hoisted_16 = ["disabled"];
+  const _sfc_main$c = /* @__PURE__ */ defineComponent({
     __name: "QuickButtonManager",
     setup(__props) {
       const store = useGalleryQuickButtonsStore();
+      const instanceId = resolveInstanceId(location.hostname);
       const draft = /* @__PURE__ */ reactive(createGalleryQuickButtonConfig());
       const editingId = /* @__PURE__ */ ref(null);
       const galleryOptions = /* @__PURE__ */ ref([]);
       const galleryLookupState = /* @__PURE__ */ ref("loading");
-      const manualEntry = /* @__PURE__ */ ref(false);
+      const linkingId = /* @__PURE__ */ ref(null);
+      const linkGalleryId = /* @__PURE__ */ ref("");
       onMounted(async () => {
         const username = getCurrentUsername();
         if (!username) {
           galleryLookupState.value = "error";
-          manualEntry.value = true;
           return;
         }
         try {
           galleryOptions.value = await searchUserGalleries(username);
           galleryLookupState.value = "ready";
-          if (galleryOptions.value.length === 0) {
-            manualEntry.value = true;
-          }
         } catch {
           galleryLookupState.value = "error";
-          manualEntry.value = true;
         }
       });
       function save() {
@@ -8651,63 +8983,49 @@
         Object.assign(draft, button);
         editingId.value = button.id;
       }
+      function startLinking(id) {
+        linkingId.value = id;
+        linkGalleryId.value = "";
+      }
+      function saveLink() {
+        if (linkingId.value && linkGalleryId.value) {
+          store.linkHere(linkingId.value, linkGalleryId.value);
+        }
+        linkingId.value = null;
+      }
       function cancelEdit() {
         Object.assign(draft, createGalleryQuickButtonConfig());
         editingId.value = null;
       }
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$9, [
+        return openBlock(), createElementBlock("div", _hoisted_1$c, [
           createBaseVNode("h4", null, toDisplayString(editingId.value ? "Edit gallery quick button" : "Add a gallery quick button"), 1),
-          !manualEntry.value ? (openBlock(), createElementBlock("label", _hoisted_2$5, [
-            _cache[8] || (_cache[8] = createTextVNode(" Gallery ", -1)),
-            withDirectives(createBaseVNode("select", {
-              "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => draft.galleryId = $event)
-            }, [
-              createBaseVNode("option", _hoisted_3$4, toDisplayString(galleryLookupState.value === "loading" ? "Loading your galleries…" : "Select a gallery"), 1),
-              (openBlock(true), createElementBlock(Fragment, null, renderList(galleryOptions.value, (gallery) => {
-                return openBlock(), createElementBlock("option", {
-                  key: gallery.id,
-                  value: String(gallery.id)
-                }, toDisplayString(gallery.title) + " (#" + toDisplayString(gallery.id) + ") ", 9, _hoisted_4$4);
-              }), 128))
-            ], 512), [
-              [vModelSelect, draft.galleryId]
-            ])
-          ])) : (openBlock(), createElementBlock("label", _hoisted_5$4, [
-            _cache[9] || (_cache[9] = createTextVNode(" Gallery id or slug ", -1)),
-            withDirectives(createBaseVNode("input", {
-              "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => draft.galleryId = $event),
-              type: "text"
-            }, null, 512), [
-              [vModelText, draft.galleryId]
-            ])
-          ])),
-          galleryLookupState.value === "error" ? (openBlock(), createElementBlock("p", _hoisted_6$3, " Couldn't look up your galleries automatically -- enter the id manually. ")) : createCommentVNode("", true),
-          createBaseVNode("button", {
-            type: "button",
-            class: "lodestone-quick-button-manager__toggle-entry",
-            onClick: _cache[2] || (_cache[2] = ($event) => manualEntry.value = !manualEntry.value)
-          }, toDisplayString(manualEntry.value ? "Pick from a dropdown instead" : "Enter manually instead"), 1),
+          createVNode(_sfc_main$e, {
+            modelValue: draft.galleryId,
+            "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => draft.galleryId = $event),
+            options: galleryOptions.value,
+            "lookup-state": galleryLookupState.value
+          }, null, 8, ["modelValue", "options", "lookup-state"]),
           createBaseVNode("label", null, [
-            _cache[10] || (_cache[10] = createTextVNode("Label ", -1)),
+            _cache[8] || (_cache[8] = createTextVNode("Label ", -1)),
             withDirectives(createBaseVNode("input", {
-              "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => draft.label = $event),
+              "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => draft.label = $event),
               type: "text"
             }, null, 512), [
               [vModelText, draft.label]
             ])
           ]),
           createBaseVNode("label", null, [
-            _cache[11] || (_cache[11] = createTextVNode("Icon ", -1)),
-            createVNode(_sfc_main$h, {
+            _cache[9] || (_cache[9] = createTextVNode("Icon ", -1)),
+            createVNode(_sfc_main$m, {
               modelValue: draft.icon,
-              "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => draft.icon = $event)
+              "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => draft.icon = $event)
             }, null, 8, ["modelValue"])
           ]),
           createBaseVNode("label", null, [
-            _cache[12] || (_cache[12] = createTextVNode("Color ", -1)),
+            _cache[10] || (_cache[10] = createTextVNode("Color ", -1)),
             withDirectives(createBaseVNode("input", {
-              "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => draft.color = $event),
+              "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => draft.color = $event),
               type: "color"
             }, null, 512), [
               [vModelText, draft.color]
@@ -8715,95 +9033,161 @@
           ]),
           createBaseVNode("label", null, [
             withDirectives(createBaseVNode("input", {
-              "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => draft.syncColors = $event),
+              "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => draft.syncColors = $event),
               type: "checkbox"
             }, null, 512), [
               [vModelCheckbox, draft.syncColors]
             ]),
-            _cache[13] || (_cache[13] = createTextVNode(" Sync colors (use the same color in dark mode) ", -1))
+            _cache[11] || (_cache[11] = createTextVNode(" Sync colors (use the same color in dark mode) ", -1))
           ]),
-          !draft.syncColors ? (openBlock(), createElementBlock("label", _hoisted_7$2, [
-            _cache[14] || (_cache[14] = createTextVNode(" Dark mode color ", -1)),
+          !draft.syncColors ? (openBlock(), createElementBlock("label", _hoisted_2$6, [
+            _cache[12] || (_cache[12] = createTextVNode(" Dark mode color ", -1)),
             withDirectives(createBaseVNode("input", {
-              "onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => draft.darkColor = $event),
+              "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => draft.darkColor = $event),
               type: "color"
             }, null, 512), [
               [vModelText, draft.darkColor]
             ])
           ])) : createCommentVNode("", true),
-          createBaseVNode("div", _hoisted_8$2, [
-            createVNode(_sfc_main$a, { config: draft }, null, 8, ["config"])
+          createBaseVNode("div", _hoisted_3$5, [
+            createVNode(_sfc_main$d, { config: draft }, null, 8, ["config"])
           ]),
           createBaseVNode("button", {
             type: "button",
             onClick: save
           }, toDisplayString(editingId.value ? "Save changes" : "Save"), 1),
           editingId.value ? (openBlock(), createElementBlock("button", {
-            key: 4,
+            key: 1,
             type: "button",
             onClick: cancelEdit
           }, "Cancel edit")) : createCommentVNode("", true),
-          _cache[15] || (_cache[15] = createBaseVNode("h4", null, "Configured gallery buttons", -1)),
-          createBaseVNode("ul", _hoisted_9$2, [
+          createBaseVNode("h4", null, "Active on " + toDisplayString(unref(instanceId)), 1),
+          createBaseVNode("ul", _hoisted_4$5, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).buttons, (button) => {
               return openBlock(), createElementBlock("li", {
                 key: button.id,
                 class: "lodestone-manager-list__item"
               }, [
-                createVNode(_sfc_main$a, { config: button }, null, 8, ["config"]),
+                createVNode(_sfc_main$d, { config: button }, null, 8, ["config"]),
                 createBaseVNode("a", {
                   href: `/galleries?gallery[include_image]=${button.galleryId}`,
                   target: "_blank",
                   rel: "noopener"
-                }, " gallery #" + toDisplayString(button.galleryId), 9, _hoisted_10$2),
-                createBaseVNode("span", _hoisted_11$1, [
+                }, " gallery #" + toDisplayString(button.galleryId), 9, _hoisted_5$5),
+                createBaseVNode("span", _hoisted_6$4, [
                   createBaseVNode("button", {
                     type: "button",
                     onClick: ($event) => edit(button)
-                  }, "Edit", 8, _hoisted_12),
+                  }, "Edit", 8, _hoisted_7$3),
                   createBaseVNode("button", {
                     type: "button",
                     onClick: ($event) => unref(store).duplicate(button.id)
-                  }, "Duplicate", 8, _hoisted_13),
+                  }, "Duplicate", 8, _hoisted_8$3),
                   createBaseVNode("button", {
                     type: "button",
+                    title: "Hides it on this booru; it moves to Other boorus unless no other booru uses it",
                     onClick: ($event) => unref(store).remove(button.id)
-                  }, "Delete", 8, _hoisted_14)
+                  }, "Remove here", 8, _hoisted_9$3)
                 ])
               ]);
             }), 128))
-          ])
+          ]),
+          unref(store).otherBoorusButtons.length > 0 ? (openBlock(), createElementBlock(Fragment, { key: 2 }, [
+            _cache[13] || (_cache[13] = createBaseVNode("h4", null, "Other boorus", -1)),
+            createBaseVNode("p", _hoisted_10$3, " These buttons are not active on " + toDisplayString(unref(instanceId)) + " yet. Link them to this booru's equivalent gallery; look and settings stay shared. ", 1),
+            createBaseVNode("ul", _hoisted_11$3, [
+              (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).otherBoorusButtons, (button) => {
+                return openBlock(), createElementBlock("li", {
+                  key: button.id,
+                  class: "lodestone-manager-list__item"
+                }, [
+                  createVNode(_sfc_main$d, {
+                    config: { ...button, galleryId: "" }
+                  }, null, 8, ["config"]),
+                  createBaseVNode("span", null, "on " + toDisplayString(Object.keys(button.galleryIds).join(", ")), 1),
+                  createBaseVNode("span", _hoisted_12$1, [
+                    createBaseVNode("button", {
+                      type: "button",
+                      onClick: ($event) => startLinking(button.id)
+                    }, "Find equivalent gallery here", 8, _hoisted_13$1),
+                    createBaseVNode("button", {
+                      type: "button",
+                      onClick: ($event) => unref(store).removeEverywhere(button.id)
+                    }, "Delete everywhere", 8, _hoisted_14)
+                  ]),
+                  linkingId.value === button.id ? (openBlock(), createElementBlock("div", _hoisted_15, [
+                    createVNode(_sfc_main$e, {
+                      modelValue: linkGalleryId.value,
+                      "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => linkGalleryId.value = $event),
+                      options: galleryOptions.value,
+                      "lookup-state": galleryLookupState.value
+                    }, null, 8, ["modelValue", "options", "lookup-state"]),
+                    createBaseVNode("button", {
+                      type: "button",
+                      disabled: !linkGalleryId.value,
+                      onClick: saveLink
+                    }, "Save link", 8, _hoisted_16),
+                    createBaseVNode("button", {
+                      type: "button",
+                      onClick: _cache[7] || (_cache[7] = ($event) => linkingId.value = null)
+                    }, "Cancel")
+                  ])) : createCommentVNode("", true)
+                ]);
+              }), 128))
+            ])
+          ], 64)) : createCommentVNode("", true)
         ]);
       };
     }
   });
-  const _hoisted_1$8 = { class: "lodestone-settings-section" };
-  const _sfc_main$8 = /* @__PURE__ */ defineComponent({
+  const _hoisted_1$b = { class: "lodestone-settings-section" };
+  const _sfc_main$b = /* @__PURE__ */ defineComponent({
     __name: "QuickButtonsSection",
     setup(__props) {
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$8, [
+        return openBlock(), createElementBlock("div", _hoisted_1$b, [
           _cache[0] || (_cache[0] = createBaseVNode("h3", null, "Gallery quick buttons", -1)),
-          createVNode(_sfc_main$9)
+          createVNode(_sfc_main$c)
         ]);
       };
     }
   });
-  function buildButtonCatalog() {
-    const native = allButtonDefs.filter((def2) => def2.category !== "nav").map((def2) => ({ id: def2.id, label: def2.label, category: def2.category, selector: def2.selector, stateKind: "toggle" }));
+  function displayLabel(entry) {
+    return entry.label.trim() || entry.icon;
+  }
+  function buildButtonCatalog(options = {}) {
+    const native = allButtonDefs.filter((def2) => options.includeNav || def2.category !== "nav").map((def2) => ({
+      id: def2.id,
+      label: def2.label,
+      category: def2.category,
+      selector: def2.selector,
+      stateKind: "toggle",
+      icon: def2.icon,
+      color: def2.color,
+      source: "native",
+      scope: def2.scope
+    }));
     const galleryQuick = useGalleryQuickButtonsStore().buttons.map((config) => ({
       id: `gallery-quick-${config.id}`,
       label: config.label,
       category: "gallery-quick",
       selector: `[data-gallery-quick-button-id="${config.id}"]`,
-      stateKind: "toggle"
+      stateKind: "toggle",
+      icon: config.icon,
+      color: config.color,
+      source: "gallery-quick",
+      scope: "image"
     }));
     const telegram = useTelegramButtonsStore().buttons.map((config) => ({
       id: `telegram-${config.id}`,
       label: config.label,
       category: "telegram",
       selector: `[data-telegram-button-id="${config.id}"]`,
-      stateKind: "stateless"
+      stateKind: "stateless",
+      icon: config.icon,
+      color: config.color,
+      source: "telegram",
+      scope: "image"
     }));
     return [...native, ...galleryQuick, ...telegram];
   }
@@ -8823,18 +9207,20 @@
   function findCatalogEntryForElement(catalog, el) {
     return catalog.find((entry) => Array.from(document.querySelectorAll(entry.selector)).includes(el));
   }
-  const _hoisted_1$7 = { class: "lodestone-condition-node" };
-  const _hoisted_2$4 = ["value"];
-  const _hoisted_3$3 = ["checked"];
-  const _hoisted_4$3 = ["checked"];
-  const _hoisted_5$3 = ["value"];
-  const _hoisted_6$2 = ["value"];
-  const _hoisted_7$1 = ["value"];
-  const _hoisted_8$1 = ["value"];
-  const _hoisted_9$1 = ["value"];
-  const _hoisted_10$1 = { class: "lodestone-condition-node__children" };
-  const _hoisted_11 = ["onClick"];
-  const _sfc_main$7 = /* @__PURE__ */ defineComponent({
+  const _hoisted_1$a = { class: "lodestone-condition-node" };
+  const _hoisted_2$5 = ["value"];
+  const _hoisted_3$4 = ["checked"];
+  const _hoisted_4$4 = ["checked"];
+  const _hoisted_5$4 = ["value"];
+  const _hoisted_6$3 = ["value"];
+  const _hoisted_7$2 = ["value"];
+  const _hoisted_8$2 = ["value"];
+  const _hoisted_9$2 = ["value"];
+  const _hoisted_10$2 = { title: "Only when this button is the one that was just toggled, not merely in that state" };
+  const _hoisted_11$2 = ["checked"];
+  const _hoisted_12 = { class: "lodestone-condition-node__children" };
+  const _hoisted_13 = ["onClick"];
+  const _sfc_main$a = /* @__PURE__ */ defineComponent({
     __name: "ConditionGroupEditor",
     props: {
       modelValue: {},
@@ -8899,16 +9285,16 @@
       }
       return (_ctx, _cache) => {
         const _component_ConditionGroupEditor = resolveComponent("ConditionGroupEditor", true);
-        return openBlock(), createElementBlock("div", _hoisted_1$7, [
+        return openBlock(), createElementBlock("div", _hoisted_1$a, [
           createBaseVNode("select", {
             value: __props.modelValue.type,
             onChange: _cache[0] || (_cache[0] = ($event) => setKind($event.target.value))
-          }, [..._cache[6] || (_cache[6] = [
+          }, [..._cache[7] || (_cache[7] = [
             createBaseVNode("option", { value: "leaf" }, "A single button", -1),
             createBaseVNode("option", { value: "and" }, "All of (AND)", -1),
             createBaseVNode("option", { value: "or" }, "Any of (OR)", -1),
             createBaseVNode("option", { value: "not" }, "Not (NOT)", -1)
-          ])], 40, _hoisted_2$4),
+          ])], 40, _hoisted_2$5),
           __props.modelValue.type === "leaf" ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
             createBaseVNode("label", null, [
               createBaseVNode("input", {
@@ -8916,8 +9302,8 @@
                 value: "id",
                 checked: __props.modelValue.targetKind === "id",
                 onChange: _cache[1] || (_cache[1] = ($event) => updateLeaf({ targetKind: "id", targetId: "" }))
-              }, null, 40, _hoisted_3$3),
-              _cache[7] || (_cache[7] = createTextVNode(" Specific button ", -1))
+              }, null, 40, _hoisted_3$4),
+              _cache[8] || (_cache[8] = createTextVNode(" Specific button ", -1))
             ]),
             createBaseVNode("label", null, [
               createBaseVNode("input", {
@@ -8925,15 +9311,15 @@
                 value: "category",
                 checked: __props.modelValue.targetKind === "category",
                 onChange: _cache[2] || (_cache[2] = ($event) => updateLeaf({ targetKind: "category", targetId: "" }))
-              }, null, 40, _hoisted_4$3),
-              _cache[8] || (_cache[8] = createTextVNode(" Category ", -1))
+              }, null, 40, _hoisted_4$4),
+              _cache[9] || (_cache[9] = createTextVNode(" Category ", -1))
             ]),
             __props.modelValue.targetKind === "id" ? (openBlock(), createElementBlock("select", {
               key: 0,
               value: __props.modelValue.targetId,
               onChange: _cache[3] || (_cache[3] = ($event) => updateLeaf({ targetId: $event.target.value }))
             }, [
-              _cache[9] || (_cache[9] = createBaseVNode("option", {
+              _cache[10] || (_cache[10] = createBaseVNode("option", {
                 value: "",
                 disabled: ""
               }, "Select a button", -1)),
@@ -8941,14 +9327,14 @@
                 return openBlock(), createElementBlock("option", {
                   key: entry.id,
                   value: entry.id
-                }, toDisplayString(entry.label), 9, _hoisted_6$2);
+                }, toDisplayString(unref(displayLabel)(entry)), 9, _hoisted_6$3);
               }), 128))
-            ], 40, _hoisted_5$3)) : (openBlock(), createElementBlock("select", {
+            ], 40, _hoisted_5$4)) : (openBlock(), createElementBlock("select", {
               key: 1,
               value: __props.modelValue.targetId,
               onChange: _cache[4] || (_cache[4] = ($event) => updateLeaf({ targetId: $event.target.value }))
             }, [
-              _cache[10] || (_cache[10] = createBaseVNode("option", {
+              _cache[11] || (_cache[11] = createBaseVNode("option", {
                 value: "",
                 disabled: ""
               }, "Select a category", -1)),
@@ -8956,17 +9342,25 @@
                 return openBlock(), createElementBlock("option", {
                   key: category,
                   value: category
-                }, toDisplayString(category), 9, _hoisted_8$1);
+                }, toDisplayString(category), 9, _hoisted_8$2);
               }), 128))
-            ], 40, _hoisted_7$1)),
+            ], 40, _hoisted_7$2)),
             createBaseVNode("select", {
               value: __props.modelValue.state,
               onChange: _cache[5] || (_cache[5] = ($event) => updateLeaf({ state: $event.target.value }))
-            }, [..._cache[11] || (_cache[11] = [
+            }, [..._cache[12] || (_cache[12] = [
               createBaseVNode("option", { value: "on" }, "is on", -1),
               createBaseVNode("option", { value: "off" }, "is off", -1),
               createBaseVNode("option", { value: "either" }, "exists (either state)", -1)
-            ])], 40, _hoisted_9$1)
+            ])], 40, _hoisted_9$2),
+            createBaseVNode("label", _hoisted_10$2, [
+              createBaseVNode("input", {
+                type: "checkbox",
+                checked: __props.modelValue.trigger === true,
+                onChange: _cache[6] || (_cache[6] = ($event) => updateLeaf({ trigger: $event.target.checked }))
+              }, null, 40, _hoisted_11$2),
+              _cache[13] || (_cache[13] = createTextVNode(" Trigger ", -1))
+            ])
           ], 64)) : __props.modelValue.type === "not" ? (openBlock(), createBlock(_component_ConditionGroupEditor, {
             key: 1,
             "model-value": __props.modelValue.child,
@@ -8974,7 +9368,7 @@
             categories: __props.categories,
             "onUpdate:modelValue": updateChild
           }, null, 8, ["model-value", "catalog", "categories"])) : (openBlock(), createElementBlock(Fragment, { key: 2 }, [
-            createBaseVNode("ul", _hoisted_10$1, [
+            createBaseVNode("ul", _hoisted_12, [
               (openBlock(true), createElementBlock(Fragment, null, renderList(__props.modelValue.children, (child, index) => {
                 return openBlock(), createElementBlock("li", { key: index }, [
                   createVNode(_component_ConditionGroupEditor, {
@@ -8986,7 +9380,7 @@
                   createBaseVNode("button", {
                     type: "button",
                     onClick: ($event) => removeChildAt(index)
-                  }, "Remove", 8, _hoisted_11)
+                  }, "Remove", 8, _hoisted_13)
                 ]);
               }), 128))
             ]),
@@ -8999,17 +9393,18 @@
       };
     }
   });
-  const _hoisted_1$6 = { class: "lodestone-button-effects-manager" };
-  const _hoisted_2$3 = ["value"];
-  const _hoisted_3$2 = ["value"];
-  const _hoisted_4$2 = ["value"];
-  const _hoisted_5$2 = { class: "lodestone-manager-list" };
-  const _hoisted_6$1 = ["checked", "onChange"];
-  const _hoisted_7 = { class: "lodestone-manager-list__actions" };
-  const _hoisted_8 = ["onClick"];
-  const _hoisted_9 = ["onClick"];
-  const _hoisted_10 = ["onClick"];
-  const _sfc_main$6 = /* @__PURE__ */ defineComponent({
+  const _hoisted_1$9 = { class: "lodestone-button-effects-manager" };
+  const _hoisted_2$4 = ["value"];
+  const _hoisted_3$3 = ["value"];
+  const _hoisted_4$3 = ["value"];
+  const _hoisted_5$3 = { class: "lodestone-manager-list" };
+  const _hoisted_6$2 = ["checked", "onChange"];
+  const _hoisted_7$1 = { class: "lodestone-manager-list__target" };
+  const _hoisted_8$1 = { class: "lodestone-manager-list__actions" };
+  const _hoisted_9$1 = ["onClick"];
+  const _hoisted_10$1 = ["onClick"];
+  const _hoisted_11$1 = ["onClick"];
+  const _sfc_main$9 = /* @__PURE__ */ defineComponent({
     __name: "ButtonEffectsManager",
     setup(__props) {
       const store = useButtonEffectsStore();
@@ -9050,12 +9445,11 @@
         Object.assign(draft, createButtonEffectRule());
         editingId.value = null;
       }
-      function labelFor(id) {
-        var _a;
-        return ((_a = catalog.value.find((entry) => entry.id === id)) == null ? void 0 : _a.label) ?? id;
+      function entryFor(id) {
+        return catalog.value.find((entry) => entry.id === id);
       }
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$6, [
+        return openBlock(), createElementBlock("div", _hoisted_1$9, [
           createBaseVNode("h4", null, toDisplayString(editingId.value ? "Edit button effect" : "Add a button effect"), 1),
           createBaseVNode("label", null, [
             _cache[5] || (_cache[5] = createTextVNode("Label ", -1)),
@@ -9068,7 +9462,7 @@
           ]),
           createBaseVNode("fieldset", null, [
             _cache[6] || (_cache[6] = createBaseVNode("legend", null, "When", -1)),
-            createVNode(_sfc_main$7, {
+            createVNode(_sfc_main$a, {
               modelValue: draft.condition,
               "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => draft.condition = $event),
               catalog: catalog.value,
@@ -9102,9 +9496,9 @@
                   return openBlock(), createElementBlock("option", {
                     key: entry.id,
                     value: entry.id
-                  }, toDisplayString(entry.label), 9, _hoisted_3$2);
+                  }, toDisplayString(unref(displayLabel)(entry)), 9, _hoisted_3$3);
                 }), 128))
-              ], 40, _hoisted_2$3)
+              ], 40, _hoisted_2$4)
             ]),
             createBaseVNode("label", null, [
               _cache[11] || (_cache[11] = createTextVNode(" Action ", -1)),
@@ -9115,7 +9509,7 @@
                   return openBlock(), createElementBlock("option", {
                     key: option.value,
                     value: option.value
-                  }, toDisplayString(option.label), 9, _hoisted_4$2);
+                  }, toDisplayString(option.label), 9, _hoisted_4$3);
                 }), 128))
               ], 512), [
                 [vModelSelect, draft.actionVerb]
@@ -9131,8 +9525,8 @@
             type: "button",
             onClick: cancelEdit
           }, "Cancel edit")) : createCommentVNode("", true),
-          _cache[13] || (_cache[13] = createBaseVNode("h4", null, "Configured button effects", -1)),
-          createBaseVNode("ul", _hoisted_5$2, [
+          _cache[14] || (_cache[14] = createBaseVNode("h4", null, "Configured button effects", -1)),
+          createBaseVNode("ul", _hoisted_5$3, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).rules, (rule) => {
               return openBlock(), createElementBlock("li", {
                 key: rule.id,
@@ -9143,23 +9537,337 @@
                     type: "checkbox",
                     checked: rule.enabled,
                     onChange: ($event) => unref(store).update(rule.id, { enabled: $event.target.checked })
-                  }, null, 40, _hoisted_6$1),
+                  }, null, 40, _hoisted_6$2),
                   createTextVNode(" " + toDisplayString(rule.label), 1)
                 ]),
-                createBaseVNode("span", null, "→ " + toDisplayString(labelFor(rule.actionTargetId)), 1),
-                createBaseVNode("span", _hoisted_7, [
+                createBaseVNode("span", _hoisted_7$1, [
+                  _cache[13] || (_cache[13] = createTextVNode(" → ", -1)),
+                  entryFor(rule.actionTargetId) ? (openBlock(), createBlock(_sfc_main$l, {
+                    key: 0,
+                    icon: entryFor(rule.actionTargetId).icon,
+                    label: unref(displayLabel)(entryFor(rule.actionTargetId)),
+                    color: entryFor(rule.actionTargetId).color
+                  }, null, 8, ["icon", "label", "color"])) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
+                    createTextVNode(toDisplayString(rule.actionTargetId), 1)
+                  ], 64))
+                ]),
+                createBaseVNode("span", _hoisted_8$1, [
                   createBaseVNode("button", {
                     type: "button",
                     onClick: ($event) => edit(rule)
-                  }, "Edit", 8, _hoisted_8),
+                  }, "Edit", 8, _hoisted_9$1),
                   createBaseVNode("button", {
                     type: "button",
                     onClick: ($event) => unref(store).duplicate(rule.id)
-                  }, "Duplicate", 8, _hoisted_9),
+                  }, "Duplicate", 8, _hoisted_10$1),
                   createBaseVNode("button", {
                     type: "button",
                     onClick: ($event) => unref(store).remove(rule.id)
-                  }, "Delete", 8, _hoisted_10)
+                  }, "Delete", 8, _hoisted_11$1)
+                ])
+              ]);
+            }), 128))
+          ])
+        ]);
+      };
+    }
+  });
+  const _hoisted_1$8 = { class: "lodestone-settings-section" };
+  const _sfc_main$8 = /* @__PURE__ */ defineComponent({
+    __name: "ButtonEffectsSection",
+    setup(__props) {
+      return (_ctx, _cache) => {
+        return openBlock(), createElementBlock("div", _hoisted_1$8, [
+          _cache[0] || (_cache[0] = createBaseVNode("h3", null, "Button effects", -1)),
+          createVNode(_sfc_main$9)
+        ]);
+      };
+    }
+  });
+  function useWindowWidth() {
+    const width = /* @__PURE__ */ ref(window.innerWidth);
+    const update = () => {
+      width.value = window.innerWidth;
+    };
+    onMounted(() => window.addEventListener("resize", update));
+    onBeforeUnmount(() => window.removeEventListener("resize", update));
+    return { width };
+  }
+  const _hoisted_1$7 = { class: "lodestone-select-all-none" };
+  const _sfc_main$7 = /* @__PURE__ */ defineComponent({
+    __name: "SelectAllNone",
+    props: {
+      modelValue: {},
+      ids: {}
+    },
+    emits: ["update:modelValue"],
+    setup(__props, { emit: __emit }) {
+      const props = __props;
+      const emit2 = __emit;
+      function selectAll() {
+        emit2("update:modelValue", [.../* @__PURE__ */ new Set([...props.modelValue, ...props.ids])]);
+      }
+      function selectNone() {
+        emit2("update:modelValue", props.modelValue.filter((id) => !props.ids.includes(id)));
+      }
+      return (_ctx, _cache) => {
+        return openBlock(), createElementBlock("span", _hoisted_1$7, [
+          createBaseVNode("button", {
+            type: "button",
+            onClick: selectAll
+          }, "All"),
+          createBaseVNode("button", {
+            type: "button",
+            onClick: selectNone
+          }, "None")
+        ]);
+      };
+    }
+  });
+  function resolveColumns(breakpoints, width) {
+    var _a;
+    const base2 = breakpoints.find((breakpoint) => breakpoint.maxWidthPx === null);
+    const covering = breakpoints.filter((breakpoint) => breakpoint.maxWidthPx !== null && width <= breakpoint.maxWidthPx).sort((a, b) => a.maxWidthPx - b.maxWidthPx)[0];
+    return clampColumns(((_a = covering ?? base2) == null ? void 0 : _a.columns) ?? DEFAULT_COLUMNS);
+  }
+  function clampColumns(columns) {
+    return Number.isFinite(columns) ? Math.max(1, Math.floor(columns)) : DEFAULT_COLUMNS;
+  }
+  const GROUP_CLASS = "lodestone-button-group";
+  function gridRule(groupId, columns) {
+    return `.${GROUP_CLASS}[data-lodestone-group-id="${groupId}"] { grid-template-columns: repeat(${clampColumns(columns)}, minmax(0, auto)); }`;
+  }
+  function buildButtonGroupsCss(groups) {
+    const rules = [
+      `.${GROUP_CLASS} { display: grid; justify-content: start; align-items: center; gap: 4px; }`
+    ];
+    for (const group of groups) {
+      const base2 = group.breakpoints.find((breakpoint) => breakpoint.maxWidthPx === null);
+      rules.push(gridRule(group.id, (base2 == null ? void 0 : base2.columns) ?? DEFAULT_COLUMNS));
+      const narrower = group.breakpoints.filter((breakpoint) => breakpoint.maxWidthPx !== null).sort((a, b) => b.maxWidthPx - a.maxWidthPx);
+      for (const breakpoint of narrower) {
+        rules.push(`@media (max-width: ${breakpoint.maxWidthPx}px) { ${gridRule(group.id, breakpoint.columns)} }`);
+      }
+    }
+    return rules.join("\n");
+  }
+  const _hoisted_1$6 = { class: "lodestone-button-groups-manager" };
+  const _hoisted_2$3 = ["checked", "onChange"];
+  const _hoisted_3$2 = ["onUpdate:modelValue"];
+  const _hoisted_4$2 = ["onClick"];
+  const _hoisted_5$2 = ["onUpdate:modelValue"];
+  const _hoisted_6$1 = ["onClick"];
+  const _hoisted_7 = { class: "lodestone-button-groups-manager__preview" };
+  const _hoisted_8 = { class: "lodestone-manager-list" };
+  const _hoisted_9 = { class: "lodestone-manager-list__actions" };
+  const _hoisted_10 = ["onClick"];
+  const _hoisted_11 = ["onClick"];
+  const _sfc_main$6 = /* @__PURE__ */ defineComponent({
+    __name: "ButtonGroupsManager",
+    setup(__props) {
+      const store = useButtonGroupsStore();
+      const draft = /* @__PURE__ */ reactive(createButtonGroup());
+      const editingId = /* @__PURE__ */ ref(null);
+      const { width } = useWindowWidth();
+      const catalog = computed(() => buildButtonCatalog({ includeNav: true }));
+      const scopedCatalog = computed(() => catalog.value.filter((entry) => entry.scope === draft.scope));
+      const sources = [
+        { source: "native", title: "Built-in" },
+        { source: "gallery-quick", title: "Gallery" },
+        { source: "telegram", title: "Telegram" }
+      ];
+      const sections = computed(
+        () => sources.map(({ source, title }) => ({ title, entries: scopedCatalog.value.filter((entry) => entry.source === source) })).filter((section) => section.entries.length > 0)
+      );
+      const selectedEntries = computed(
+        () => draft.buttonIds.map((id) => catalog.value.find((entry) => entry.id === id)).filter((entry) => entry !== void 0)
+      );
+      const previewColumns = computed(() => resolveColumns(draft.breakpoints, width.value));
+      function isSelected(id) {
+        return draft.buttonIds.includes(id);
+      }
+      function setSelected2(id, checked) {
+        draft.buttonIds = checked ? [...draft.buttonIds, id] : draft.buttonIds.filter((existing) => existing !== id);
+      }
+      function onScopeChange() {
+        draft.buttonIds = draft.buttonIds.filter((id) => scopedCatalog.value.some((entry) => entry.id === id));
+      }
+      function addBreakpoint() {
+        draft.breakpoints.push(createBreakpoint({ maxWidthPx: width.value, columns: previewColumns.value }));
+      }
+      function removeBreakpoint(id) {
+        draft.breakpoints = draft.breakpoints.filter((breakpoint) => breakpoint.id !== id);
+      }
+      function reset() {
+        Object.assign(draft, createButtonGroup());
+        editingId.value = null;
+      }
+      function save() {
+        if (editingId.value) {
+          store.update(editingId.value, JSON.parse(JSON.stringify(draft)));
+        } else {
+          store.add(JSON.parse(JSON.stringify(draft)));
+        }
+        reset();
+      }
+      function edit(group) {
+        Object.assign(draft, JSON.parse(JSON.stringify(group)));
+        editingId.value = group.id;
+      }
+      return (_ctx, _cache) => {
+        return openBlock(), createElementBlock("div", _hoisted_1$6, [
+          createBaseVNode("h4", null, toDisplayString(editingId.value ? "Edit button group" : "Add a button group"), 1),
+          createBaseVNode("label", null, [
+            _cache[3] || (_cache[3] = createTextVNode("Name ", -1)),
+            withDirectives(createBaseVNode("input", {
+              "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => draft.name = $event),
+              type: "text"
+            }, null, 512), [
+              [vModelText, draft.name]
+            ])
+          ]),
+          createBaseVNode("label", null, [
+            _cache[5] || (_cache[5] = createTextVNode(" Applies to ", -1)),
+            withDirectives(createBaseVNode("select", {
+              "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => draft.scope = $event),
+              onChange: onScopeChange
+            }, [..._cache[4] || (_cache[4] = [
+              createBaseVNode("option", { value: "image" }, "Image page", -1),
+              createBaseVNode("option", { value: "list" }, "Image lists", -1)
+            ])], 544), [
+              [vModelSelect, draft.scope]
+            ])
+          ]),
+          (openBlock(true), createElementBlock(Fragment, null, renderList(sections.value, (section) => {
+            return openBlock(), createElementBlock("fieldset", {
+              key: section.title
+            }, [
+              createBaseVNode("legend", null, [
+                createTextVNode(toDisplayString(section.title) + " ", 1),
+                createVNode(_sfc_main$7, {
+                  "model-value": draft.buttonIds,
+                  ids: section.entries.map((entry) => entry.id),
+                  "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => draft.buttonIds = $event)
+                }, null, 8, ["model-value", "ids"])
+              ]),
+              (openBlock(true), createElementBlock(Fragment, null, renderList(section.entries, (entry) => {
+                return openBlock(), createElementBlock("label", {
+                  key: entry.id,
+                  class: "lodestone-button-groups-manager__choice"
+                }, [
+                  createBaseVNode("input", {
+                    type: "checkbox",
+                    checked: isSelected(entry.id),
+                    onChange: ($event) => setSelected2(entry.id, $event.target.checked)
+                  }, null, 40, _hoisted_2$3),
+                  createVNode(_sfc_main$l, {
+                    icon: entry.icon,
+                    label: unref(displayLabel)(entry),
+                    color: entry.color
+                  }, null, 8, ["icon", "label", "color"])
+                ]);
+              }), 128))
+            ]);
+          }), 128)),
+          createBaseVNode("fieldset", null, [
+            _cache[9] || (_cache[9] = createBaseVNode("legend", null, "Columns", -1)),
+            (openBlock(true), createElementBlock(Fragment, null, renderList(draft.breakpoints, (breakpoint) => {
+              return openBlock(), createElementBlock("div", {
+                key: breakpoint.id,
+                class: "lodestone-button-groups-manager__breakpoint"
+              }, [
+                breakpoint.maxWidthPx === null ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
+                  createTextVNode("Any screen/window size")
+                ], 64)) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
+                  _cache[6] || (_cache[6] = createTextVNode(" Up to ", -1)),
+                  withDirectives(createBaseVNode("input", {
+                    "onUpdate:modelValue": ($event) => breakpoint.maxWidthPx = $event,
+                    type: "number",
+                    min: "1"
+                  }, null, 8, _hoisted_3$2), [
+                    [
+                      vModelText,
+                      breakpoint.maxWidthPx,
+                      void 0,
+                      { number: true }
+                    ]
+                  ]),
+                  _cache[7] || (_cache[7] = createTextVNode(" px ", -1)),
+                  createBaseVNode("button", {
+                    type: "button",
+                    onClick: ($event) => breakpoint.maxWidthPx = unref(width)
+                  }, "Use current size", 8, _hoisted_4$2)
+                ], 64)),
+                createBaseVNode("label", null, [
+                  _cache[8] || (_cache[8] = createTextVNode(" Columns ", -1)),
+                  withDirectives(createBaseVNode("input", {
+                    "onUpdate:modelValue": ($event) => breakpoint.columns = $event,
+                    type: "number",
+                    min: "1",
+                    max: "24"
+                  }, null, 8, _hoisted_5$2), [
+                    [
+                      vModelText,
+                      breakpoint.columns,
+                      void 0,
+                      { number: true }
+                    ]
+                  ])
+                ]),
+                breakpoint.maxWidthPx !== null ? (openBlock(), createElementBlock("button", {
+                  key: 2,
+                  type: "button",
+                  onClick: ($event) => removeBreakpoint(breakpoint.id)
+                }, "Remove", 8, _hoisted_6$1)) : createCommentVNode("", true)
+              ]);
+            }), 128)),
+            createBaseVNode("button", {
+              type: "button",
+              onClick: addBreakpoint
+            }, "Add breakpoint")
+          ]),
+          createBaseVNode("div", _hoisted_7, [
+            createBaseVNode("div", null, "Preview at the current window width (" + toDisplayString(unref(width)) + "px): " + toDisplayString(previewColumns.value) + " column" + toDisplayString(previewColumns.value === 1 ? "" : "s"), 1),
+            createBaseVNode("div", {
+              class: "lodestone-button-groups-manager__grid",
+              style: normalizeStyle({ gridTemplateColumns: `repeat(${previewColumns.value}, minmax(0, auto))` })
+            }, [
+              (openBlock(true), createElementBlock(Fragment, null, renderList(selectedEntries.value, (entry) => {
+                return openBlock(), createBlock(_sfc_main$l, {
+                  key: entry.id,
+                  icon: entry.icon,
+                  label: unref(displayLabel)(entry),
+                  color: entry.color
+                }, null, 8, ["icon", "label", "color"]);
+              }), 128))
+            ], 4)
+          ]),
+          createBaseVNode("button", {
+            type: "button",
+            onClick: save
+          }, toDisplayString(editingId.value ? "Save changes" : "Save"), 1),
+          editingId.value ? (openBlock(), createElementBlock("button", {
+            key: 0,
+            type: "button",
+            onClick: reset
+          }, "Cancel edit")) : createCommentVNode("", true),
+          _cache[10] || (_cache[10] = createBaseVNode("h4", null, "Configured button groups", -1)),
+          createBaseVNode("ul", _hoisted_8, [
+            (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).groups, (group) => {
+              return openBlock(), createElementBlock("li", {
+                key: group.id,
+                class: "lodestone-manager-list__item"
+              }, [
+                createBaseVNode("span", null, toDisplayString(group.name) + " (" + toDisplayString(group.scope) + ", " + toDisplayString(group.buttonIds.length) + " buttons)", 1),
+                createBaseVNode("span", _hoisted_9, [
+                  createBaseVNode("button", {
+                    type: "button",
+                    onClick: ($event) => edit(group)
+                  }, "Edit", 8, _hoisted_10),
+                  createBaseVNode("button", {
+                    type: "button",
+                    onClick: ($event) => unref(store).remove(group.id)
+                  }, "Delete", 8, _hoisted_11)
                 ])
               ]);
             }), 128))
@@ -9170,11 +9878,11 @@
   });
   const _hoisted_1$5 = { class: "lodestone-settings-section" };
   const _sfc_main$5 = /* @__PURE__ */ defineComponent({
-    __name: "ButtonEffectsSection",
+    __name: "ButtonGroupsSection",
     setup(__props) {
       return (_ctx, _cache) => {
         return openBlock(), createElementBlock("div", _hoisted_1$5, [
-          _cache[0] || (_cache[0] = createBaseVNode("h3", null, "Button effects", -1)),
+          _cache[0] || (_cache[0] = createBaseVNode("h3", null, "Button Groups", -1)),
           createVNode(_sfc_main$6)
         ]);
       };
@@ -9187,7 +9895,8 @@
       settings: { ...useSettingsStore().$state },
       telegramButtons: { ...useTelegramButtonsStore().$state },
       galleryQuickButtons: { ...useGalleryQuickButtonsStore().$state },
-      buttonEffects: { ...useButtonEffectsStore().$state }
+      buttonEffects: { ...useButtonEffectsStore().$state },
+      buttonGroups: { ...useButtonGroupsStore().$state }
     };
   }
   function isRecord(value) {
@@ -9214,6 +9923,12 @@
       normalizeButtonEffectsState({
         ...createButtonEffectsDefaults(),
         ...isRecord(data.buttonEffects) ? data.buttonEffects : {}
+      })
+    );
+    useButtonGroupsStore().$patch(
+      normalizeButtonGroupsState({
+        ...createButtonGroupsDefaults(),
+        ...isRecord(data.buttonGroups) ? data.buttonGroups : {}
       })
     );
   }
@@ -9338,16 +10053,18 @@
       installTelegramButtonsPersistence(useTelegramButtonsStore());
       installGalleryQuickButtonsPersistence(useGalleryQuickButtonsStore());
       installButtonEffectsPersistence(useButtonEffectsStore());
+      installButtonGroupsPersistence(useButtonGroupsStore());
       return (_ctx, _cache) => {
         return openBlock(), createElementBlock("div", _hoisted_1$3, [
-          createVNode(_sfc_main$l),
-          createVNode(_sfc_main$k),
-          createVNode(_sfc_main$j),
-          createVNode(_sfc_main$i),
-          createVNode(_sfc_main$8),
+          createVNode(_sfc_main$q),
+          createVNode(_sfc_main$p),
+          createVNode(_sfc_main$o),
+          createVNode(_sfc_main$n),
           createVNode(_sfc_main$b),
+          createVNode(_sfc_main$f),
           createVNode(_sfc_main$5),
-          createVNode(_sfc_main$m),
+          createVNode(_sfc_main$8),
+          createVNode(_sfc_main$r),
           createVNode(_sfc_main$4)
         ]);
       };
@@ -9427,7 +10144,14 @@ ${event}
     }
     return { message: String(value) };
   }
+  const IGNORED_MESSAGES = [/^The play\(\) request was interrupted/, /^(Load failed|Failed to fetch)$/];
+  function shouldIgnore(error) {
+    return IGNORED_MESSAGES.some((pattern) => pattern.test(error.message.replace(/^Error: /, "").trim()));
+  }
   function report(error, tags) {
+    if (shouldIgnore(error)) {
+      return;
+    }
     const settings = getValue(SETTINGS_STORAGE_KEY, settingsDefaults);
     const dsn = resolveDsn(settings);
     if (!settings.errorReportingEnabled) {
@@ -9558,10 +10282,21 @@ ${event}
       gap: 8px;
       border-left: 3px solid transparent;
     }
+    .lodestone-hide-entry { break-inside: avoid; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .lodestone-hide-entry .lodestone-hide-row { flex: 1; }
+    .lodestone-hide-entry .lodestone-hide-row__new-tab { flex: none; font-size: 0.85em; opacity: 0.8; }
     .lodestone-hide-group label:hover,
     .lodestone-hide-group label:focus-within {
       border-left-color: var(--lodestone-accent, currentColor);
     }
+
+    .lodestone-button-groups-manager fieldset { margin: 8px 0; }
+    .lodestone-button-groups-manager__choice { display: inline-flex; align-items: center; gap: 6px; margin-right: 12px; }
+    .lodestone-button-groups-manager__breakpoint { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 4px 0; }
+    .lodestone-button-groups-manager__preview { margin: 10px 0; }
+    .lodestone-button-groups-manager__grid { display: grid; gap: 4px 12px; padding: 6px 0; justify-content: start; }
+    .lodestone-select-all-none { margin-left: 8px; }
+    .lodestone-select-all-none button { margin-right: 4px; }
 
     .lodestone-quick-button-manager__preview,
     .lodestone-telegram-manager__preview {
@@ -9627,9 +10362,13 @@ ${event}
   }
   const IMAGE_SCORE_SELECTOR = ".block__header .score.block__header__title";
   const LIST_SCORE_SELECTOR = ".media-box .score";
+  const EXCLUDE_SEARCH_FORM = ":not(#searchform *)";
+  function joinSelectors(selectors) {
+    return selectors.map((selector) => `${selector}${EXCLUDE_SEARCH_FORM}`).join(", ");
+  }
   function buildBiggerButtonsCss(listSize, imageSize) {
-    const listSelector = [...listButtonDefs.map((button) => button.selector), LIST_SCORE_SELECTOR].join(", ");
-    const imageSelector = [...imageButtonDefs.map((button) => button.selector), IMAGE_SCORE_SELECTOR].join(", ");
+    const listSelector = joinSelectors([...listButtonDefs.map((button) => button.selector), LIST_SCORE_SELECTOR]);
+    const imageSelector = joinSelectors([...imageButtonDefs.map((button) => button.selector), IMAGE_SCORE_SELECTOR]);
     return [
       `${listSelector} { font-size: ${listSize}px !important; }`,
       `${imageSelector} { font-size: ${imageSize}px !important; }`
@@ -10434,6 +11173,9 @@ ${striped}`;
     const { register } = useButtonRegistry();
     const { run } = useSpinnerAction();
     for (const config of telegramStore.buttons) {
+      if (!isTelegramButtonEnabledFor(config, location.hostname)) {
+        continue;
+      }
       const el = createButtonElement$1(config);
       toolbar.append(el);
       register({
@@ -10550,17 +11292,20 @@ ${striped}`;
     }
     return expected === "on" ? actual : !actual;
   }
-  function evaluateCondition(node, catalog, readState) {
+  function evaluateCondition(node, catalog, readState, triggerEntry) {
     switch (node.type) {
       case "and":
-        return node.children.every((child) => evaluateCondition(child, catalog, readState));
+        return node.children.every((child) => evaluateCondition(child, catalog, readState, triggerEntry));
       case "or":
-        return node.children.some((child) => evaluateCondition(child, catalog, readState));
+        return node.children.some((child) => evaluateCondition(child, catalog, readState, triggerEntry));
       case "not":
-        return !evaluateCondition(node.child, catalog, readState);
+        return !evaluateCondition(node.child, catalog, readState, triggerEntry);
       case "leaf": {
         const entries = node.targetKind === "category" ? catalog.filter((entry) => entry.category === node.targetId) : catalog.filter((entry) => entry.id === node.targetId);
         if (entries.length === 0) {
+          return false;
+        }
+        if (node.trigger && !(triggerEntry && entries.includes(triggerEntry))) {
           return false;
         }
         return entries.some((entry) => matchesState(readState(entry), node.state));
@@ -10628,7 +11373,7 @@ ${striped}`;
       (rule) => rule.enabled && rule.timing === event.phase && conditionReferencesEntry(rule.condition, changedEntry)
     );
     for (const rule of matchingRules) {
-      if (evaluateCondition(rule.condition, catalog, readCatalogState)) {
+      if (evaluateCondition(rule.condition, catalog, readCatalogState, changedEntry)) {
         void runAction(rule, catalog);
       }
     }
@@ -10636,6 +11381,117 @@ ${striped}`;
   function initButtonEffects() {
     const store = useButtonEffectsStore();
     subscribeButtonEvents((event) => handleButtonEvent(store, event));
+  }
+  const SCOPES = [
+    { prefix: ".media-box", numbers: "showVoteNumbersList", score: "showScoreList" },
+    { prefix: ".block__header", numbers: "showVoteNumbersImage", score: "showScoreImage" }
+  ];
+  function buildScoreNumbersCss(settings) {
+    const hidden = [];
+    for (const scope of SCOPES) {
+      if (!settings[scope.numbers]) {
+        hidden.push(
+          ...[".interaction--fave .favorites", ".interaction--upvote .upvotes", ".interaction--downvote .downvotes"].map(
+            (selector) => `${scope.prefix} ${selector}`
+          )
+        );
+      }
+      if (!settings[scope.score]) {
+        hidden.push(`${scope.prefix} .score`);
+      }
+    }
+    return hidden.length ? `${hidden.join(", ")} { display: none !important; }` : "";
+  }
+  function initScoreNumbers() {
+    const store = useSettingsStore();
+    let styleEl = null;
+    watch(
+      () => [store.showVoteNumbersList, store.showVoteNumbersImage, store.showScoreList, store.showScoreImage],
+      () => {
+        styleEl == null ? void 0 : styleEl.remove();
+        const css = buildScoreNumbersCss(store);
+        styleEl = css ? addStyle(css) : null;
+      },
+      { immediate: true, flush: "sync" }
+    );
+  }
+  const LIST_CONTAINER_SELECTOR = ".media-box";
+  function containerFor(el, scope) {
+    return scope === "list" ? el.closest(LIST_CONTAINER_SELECTOR) ?? document : document;
+  }
+  function membersByContainer(group, catalog) {
+    const byContainer = /* @__PURE__ */ new Map();
+    for (const buttonId of group.buttonIds) {
+      const entry = catalog.find((candidate) => candidate.id === buttonId && candidate.scope === group.scope);
+      if (!entry) {
+        continue;
+      }
+      for (const el of document.querySelectorAll(entry.selector)) {
+        const container = containerFor(el, group.scope);
+        byContainer.set(container, [...byContainer.get(container) ?? [], el]);
+      }
+    }
+    return byContainer;
+  }
+  function applyButtonGroups(groups, pageScope) {
+    const catalog = buildButtonCatalog({ includeNav: true });
+    for (const group of groups.filter((candidate) => candidate.scope === pageScope)) {
+      for (const members of membersByContainer(group, catalog).values()) {
+        const first = members[0];
+        let wrapper = members.map((el) => el.closest(`.${GROUP_CLASS}[data-lodestone-group-id="${group.id}"]`)).find(Boolean) ?? null;
+        if (!wrapper) {
+          wrapper = document.createElement("div");
+          wrapper.className = GROUP_CLASS;
+          wrapper.dataset.lodestoneGroupId = group.id;
+          wrapper.title = group.name;
+          first.before(wrapper);
+        }
+        for (const el of members) {
+          wrapper.append(el);
+        }
+      }
+    }
+  }
+  function initButtonGroups(pageScope) {
+    const store = useButtonGroupsStore();
+    let styleEl = null;
+    const groupsForPage = () => store.groups.filter((group) => group.scope === pageScope);
+    watch(
+      () => JSON.stringify(groupsForPage()),
+      () => {
+        styleEl == null ? void 0 : styleEl.remove();
+        const groups = groupsForPage();
+        styleEl = groups.length ? addStyle(buildButtonGroupsCss(groups)) : null;
+      },
+      { immediate: true, flush: "sync" }
+    );
+    applyButtonGroups(groupsForPage(), pageScope);
+  }
+  function initNewTabButtons() {
+    const store = useSettingsStore();
+    document.addEventListener(
+      "click",
+      (event) => {
+        if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+          return;
+        }
+        if (!(event.target instanceof Element) || store.newTabButtonIds.length === 0) {
+          return;
+        }
+        const anchor = event.target.closest("a[href]");
+        if (!anchor) {
+          return;
+        }
+        const matches = allButtonDefs.some((def2) => store.newTabButtonIds.includes(def2.id) && anchor.matches(def2.selector));
+        if (!matches) {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        window.open(anchor.href, "_blank", "noopener");
+      },
+      true
+    );
   }
   const pinia = createPinia();
   setActivePinia(pinia);
@@ -10649,6 +11505,8 @@ ${striped}`;
     initVoteProgress();
     initVoteHoverStyle();
     initHideButtons();
+    initScoreNumbers();
+    initNewTabButtons();
     initButtonEffects();
   }
   if (page === "image") {
@@ -10658,6 +11516,9 @@ ${striped}`;
     initGalleryFullPage(pinia);
     mountTelegramButtons();
     mountQuickButtons();
+  }
+  if (page === "list" || page === "image") {
+    initButtonGroups(page);
   }
 
 })();
