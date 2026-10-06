@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.10.06.0000.15.45.37.0000.db6e3
+// @version      2026.10.06.0000.16.46.22.0000.cb344
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -7845,14 +7845,14 @@
     store.$subscribe(() => setValue(STORAGE_KEY, store.$state), { flush: "sync" });
     onValueChanged(STORAGE_KEY, (next) => store.$patch(normalizeButtonGroupsState(next)));
   }
-  const _hoisted_1$k = ["aria-labelledby"];
+  const _hoisted_1$l = ["aria-labelledby"];
   const _hoisted_2$h = { class: "lodestone-settings-section__intro" };
   const _hoisted_3$g = ["id"];
   const _hoisted_4$f = {
     key: 0,
     class: "lodestone-hint"
   };
-  const _hoisted_5$b = { class: "lodestone-settings-section__body" };
+  const _hoisted_5$c = { class: "lodestone-settings-section__body" };
   const _sfc_main$v = /* @__PURE__ */ defineComponent({
     __name: "SettingsSection",
     props: {
@@ -7870,14 +7870,14 @@
             createBaseVNode("h3", { id: unref(headingId) }, toDisplayString(__props.title), 9, _hoisted_3$g),
             __props.description ? (openBlock(), createElementBlock("p", _hoisted_4$f, toDisplayString(__props.description), 1)) : createCommentVNode("", true)
           ]),
-          createBaseVNode("div", _hoisted_5$b, [
+          createBaseVNode("div", _hoisted_5$c, [
             renderSlot(_ctx.$slots, "default")
           ])
-        ], 8, _hoisted_1$k);
+        ], 8, _hoisted_1$l);
       };
     }
   });
-  const _hoisted_1$j = { class: "lodestone-toggle-row" };
+  const _hoisted_1$k = { class: "lodestone-toggle-row" };
   const _hoisted_2$g = ["aria-describedby"];
   const _hoisted_3$f = { class: "lodestone-toggle-row__text" };
   const _hoisted_4$e = ["id"];
@@ -7894,7 +7894,7 @@
       const model = useModel(__props, "modelValue");
       const hintId = useId();
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("label", _hoisted_1$j, [
+        return openBlock(), createElementBlock("label", _hoisted_1$k, [
           withDirectives(createBaseVNode("input", {
             "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => model.value = $event),
             type: "checkbox",
@@ -7959,7 +7959,7 @@
       };
     }
   });
-  const _hoisted_1$i = {
+  const _hoisted_1$j = {
     key: 0,
     class: "lodestone-settings-subfields"
   };
@@ -7989,7 +7989,7 @@
               ])]),
               _: 1
             }, 8, ["modelValue"]),
-            unref(biggerButtonsEnabled) ? (openBlock(), createElementBlock("div", _hoisted_1$i, [
+            unref(biggerButtonsEnabled) ? (openBlock(), createElementBlock("div", _hoisted_1$j, [
               createBaseVNode("label", null, [
                 _cache[8] || (_cache[8] = createTextVNode(" List button size (px) ", -1)),
                 withDirectives(createBaseVNode("input", {
@@ -8139,7 +8139,7 @@
   function isLinkButton(def2) {
     return LINK_CATEGORIES.has(def2.category);
   }
-  const _hoisted_1$h = { class: "lodestone-hide-group" };
+  const _hoisted_1$i = { class: "lodestone-hide-group" };
   const _hoisted_2$f = ["checked", "onChange"];
   const _hoisted_3$e = {
     key: 0,
@@ -8183,7 +8183,7 @@
                 key: group.title
               }, [
                 createBaseVNode("h4", null, toDisplayString(group.title), 1),
-                createBaseVNode("div", _hoisted_1$h, [
+                createBaseVNode("div", _hoisted_1$i, [
                   (openBlock(true), createElementBlock(Fragment, null, renderList(group.defs, (button) => {
                     return openBlock(), createElementBlock("div", {
                       key: button.id,
@@ -8293,7 +8293,7 @@
       };
     }
   });
-  const _hoisted_1$g = { class: "lodestone-icon-picker" };
+  const _hoisted_1$h = { class: "lodestone-icon-picker" };
   const _hoisted_2$e = ["value"];
   const _hoisted_3$d = ["value"];
   const CUSTOM_VALUE = "__custom__";
@@ -8350,7 +8350,7 @@
         }
       );
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("span", _hoisted_1$g, [
+        return openBlock(), createElementBlock("span", _hoisted_1$h, [
           createBaseVNode("i", {
             class: normalizeClass(["fa", __props.modelValue || "fa-question"])
           }, null, 2),
@@ -8378,15 +8378,15 @@
       };
     }
   });
-  const _hoisted_1$f = ["aria-labelledby"];
+  const _hoisted_1$g = ["aria-labelledby"];
   const _hoisted_2$d = {
     key: 0,
     class: "lodestone-dialog__panel"
   };
   const _hoisted_3$c = { class: "lodestone-dialog__header" };
   const _hoisted_4$c = ["id"];
-  const _hoisted_5$a = { class: "lodestone-dialog__body" };
-  const _hoisted_6$9 = { class: "lodestone-dialog__footer" };
+  const _hoisted_5$b = { class: "lodestone-dialog__body" };
+  const _hoisted_6$a = { class: "lodestone-dialog__footer" };
   const _sfc_main$n = /* @__PURE__ */ defineComponent({
     __name: "ModalDialog",
     props: {
@@ -8468,28 +8468,28 @@
                 onClick: _cache[0] || (_cache[0] = ($event) => emit2("close"))
               }, "×")
             ]),
-            createBaseVNode("div", _hoisted_5$a, [
+            createBaseVNode("div", _hoisted_5$b, [
               renderSlot(_ctx.$slots, "default")
             ]),
-            createBaseVNode("footer", _hoisted_6$9, [
+            createBaseVNode("footer", _hoisted_6$a, [
               renderSlot(_ctx.$slots, "footer")
             ])
           ])) : createCommentVNode("", true)
-        ], 40, _hoisted_1$f);
+        ], 40, _hoisted_1$g);
       };
     }
   });
-  const _hoisted_1$e = { class: "lodestone-stepflow" };
+  const _hoisted_1$f = { class: "lodestone-stepflow" };
   const _hoisted_2$c = {
     class: "lodestone-stepflow__header",
     "aria-label": "Progress"
   };
   const _hoisted_3$b = ["aria-current"];
   const _hoisted_4$b = { class: "lodestone-hint" };
-  const _hoisted_5$9 = { class: "lodestone-stepflow__body" };
-  const _hoisted_6$8 = { class: "lodestone-stepflow__actions" };
-  const _hoisted_7$7 = ["disabled"];
-  const _hoisted_8$6 = ["disabled"];
+  const _hoisted_5$a = { class: "lodestone-stepflow__body" };
+  const _hoisted_6$9 = { class: "lodestone-stepflow__actions" };
+  const _hoisted_7$8 = ["disabled"];
+  const _hoisted_8$7 = ["disabled"];
   const _sfc_main$m = /* @__PURE__ */ defineComponent({
     __name: "StepFlow",
     props: /* @__PURE__ */ mergeModels({
@@ -8512,7 +8512,7 @@
       });
       return (_ctx, _cache) => {
         var _a, _b;
-        return openBlock(), createElementBlock("div", _hoisted_1$e, [
+        return openBlock(), createElementBlock("div", _hoisted_1$f, [
           createBaseVNode("ol", _hoisted_2$c, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(__props.steps, (item, index) => {
               return openBlock(), createElementBlock("li", {
@@ -8523,12 +8523,12 @@
             }), 128))
           ]),
           createBaseVNode("p", _hoisted_4$b, "Step " + toDisplayString(current.value + 1) + " of " + toDisplayString(__props.steps.length) + ": " + toDisplayString((_a = step.value) == null ? void 0 : _a.title), 1),
-          createBaseVNode("div", _hoisted_5$9, [
+          createBaseVNode("div", _hoisted_5$a, [
             renderSlot(_ctx.$slots, "default", {
               step: (_b = step.value) == null ? void 0 : _b.id
             })
           ]),
-          createBaseVNode("div", _hoisted_6$8, [
+          createBaseVNode("div", _hoisted_6$9, [
             createBaseVNode("button", {
               type: "button",
               onClick: _cache[0] || (_cache[0] = ($event) => emit2("cancel"))
@@ -8545,13 +8545,13 @@
               class: "lodestone-primary",
               disabled: !canAdvance.value,
               onClick: _cache[2] || (_cache[2] = ($event) => current.value++)
-            }, "Next", 8, _hoisted_7$7)) : (openBlock(), createElementBlock("button", {
+            }, "Next", 8, _hoisted_7$8)) : (openBlock(), createElementBlock("button", {
               key: 2,
               type: "button",
               class: "lodestone-primary",
               disabled: !canAdvance.value,
               onClick: _cache[3] || (_cache[3] = ($event) => emit2("save"))
-            }, toDisplayString(__props.saveLabel), 9, _hoisted_8$6))
+            }, toDisplayString(__props.saveLabel), 9, _hoisted_8$7))
           ])
         ]);
       };
@@ -8660,7 +8660,7 @@
         return "";
     }
   }
-  const _hoisted_1$d = { class: "lodestone-telegram-format-caption" };
+  const _hoisted_1$e = { class: "lodestone-telegram-format-caption" };
   const _hoisted_2$b = ["value"];
   const _hoisted_3$a = ["value"];
   const _hoisted_4$a = {
@@ -8684,7 +8684,7 @@
         () => props.modelValue.captionSource === "custom" ? null : resolveCaption(props.modelValue.captionSource, props.exampleContext)
       );
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$d, [
+        return openBlock(), createElementBlock("div", _hoisted_1$e, [
           createBaseVNode("label", null, [
             _cache[3] || (_cache[3] = createTextVNode(" Format ", -1)),
             createBaseVNode("select", {
@@ -8710,16 +8710,16 @@
       };
     }
   });
-  const _hoisted_1$c = { class: "lodestone-json-viewer" };
+  const _hoisted_1$d = { class: "lodestone-json-viewer" };
   const _hoisted_2$a = {
     key: 0,
     open: ""
   };
   const _hoisted_3$9 = ["onClick"];
   const _hoisted_4$9 = { class: "lodestone-json-viewer__key" };
-  const _hoisted_5$8 = ["onClick"];
-  const _hoisted_6$7 = { class: "lodestone-json-viewer__key" };
-  const _hoisted_7$6 = { class: "lodestone-json-viewer__value" };
+  const _hoisted_5$9 = ["onClick"];
+  const _hoisted_6$8 = { class: "lodestone-json-viewer__key" };
+  const _hoisted_7$7 = { class: "lodestone-json-viewer__value" };
   const _sfc_main$i = /* @__PURE__ */ defineComponent({
     ...{ name: "CaptionJsonViewer" },
     __name: "CaptionJsonViewer",
@@ -8769,7 +8769,7 @@
       }
       return (_ctx, _cache) => {
         const _component_CaptionJsonViewer = resolveComponent("CaptionJsonViewer", true);
-        return openBlock(), createElementBlock("ul", _hoisted_1$c, [
+        return openBlock(), createElementBlock("ul", _hoisted_1$d, [
           (openBlock(true), createElementBlock(Fragment, null, renderList(entries(), ([key, value]) => {
             return openBlock(), createElementBlock("li", { key }, [
               isExpandable(value) ? (openBlock(), createElementBlock("details", _hoisted_2$a, [
@@ -8789,9 +8789,9 @@
                 createBaseVNode("button", {
                   type: "button",
                   onClick: ($event) => emit2("insert", childPath(key))
-                }, "+", 8, _hoisted_5$8),
-                createBaseVNode("span", _hoisted_6$7, toDisplayString(key), 1),
-                createBaseVNode("span", _hoisted_7$6, toDisplayString(value), 1)
+                }, "+", 8, _hoisted_5$9),
+                createBaseVNode("span", _hoisted_6$8, toDisplayString(key), 1),
+                createBaseVNode("span", _hoisted_7$7, toDisplayString(value), 1)
               ], 64))
             ]);
           }), 128))
@@ -8799,11 +8799,11 @@
       };
     }
   });
-  const _hoisted_1$b = { class: "lodestone-caption-editor" };
+  const _hoisted_1$c = { class: "lodestone-caption-editor" };
   const _hoisted_2$9 = ["value"];
   const _hoisted_3$8 = { class: "lodestone-caption-editor__preview lodestone-preview-blockquote" };
   const _hoisted_4$8 = { class: "lodestone-caption-editor__variables" };
-  const _hoisted_5$7 = { class: "lodestone-caption-editor__json-root" };
+  const _hoisted_5$8 = { class: "lodestone-caption-editor__json-root" };
   const _sfc_main$h = /* @__PURE__ */ defineComponent({
     __name: "CaptionTemplateEditor",
     props: {
@@ -8833,7 +8833,7 @@
         insertAtCursor(path === "" ? "{json}" : `{json${path}}`);
       }
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$b, [
+        return openBlock(), createElementBlock("div", _hoisted_1$c, [
           createBaseVNode("textarea", {
             ref_key: "textareaRef",
             ref: textareaRef,
@@ -8887,7 +8887,7 @@
               ])
             ])
           ]),
-          createBaseVNode("details", _hoisted_5$7, [
+          createBaseVNode("details", _hoisted_5$8, [
             _cache[9] || (_cache[9] = createBaseVNode("summary", null, "json", -1)),
             createVNode(_sfc_main$i, {
               data: __props.exampleData.json,
@@ -8920,17 +8920,17 @@
     const body = await response.json();
     return body.image;
   }
-  const _hoisted_1$a = { class: "lodestone-telegram-manager" };
+  const _hoisted_1$b = { class: "lodestone-telegram-manager" };
   const _hoisted_2$8 = { class: "lodestone-inline-group" };
   const _hoisted_3$7 = { class: "lodestone-inline-group" };
   const _hoisted_4$7 = ["type"];
-  const _hoisted_5$6 = ["aria-pressed"];
-  const _hoisted_6$6 = ["placeholder"];
-  const _hoisted_7$5 = {
+  const _hoisted_5$7 = ["aria-pressed"];
+  const _hoisted_6$7 = ["placeholder"];
+  const _hoisted_7$6 = {
     key: 0,
     class: "lodestone-settings-subfield"
   };
-  const _hoisted_8$5 = { class: "lodestone-telegram-manager__preview" };
+  const _hoisted_8$6 = { class: "lodestone-telegram-manager__preview" };
   const _hoisted_9$4 = {
     key: 0,
     class: "lodestone-hint"
@@ -9021,7 +9021,7 @@
         dialogOpen.value = true;
       }
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$a, [
+        return openBlock(), createElementBlock("div", _hoisted_1$b, [
           createBaseVNode("button", {
             type: "button",
             class: "lodestone-primary",
@@ -9072,7 +9072,7 @@
                           type: "button",
                           "aria-pressed": tokenVisible.value,
                           onClick: _cache[2] || (_cache[2] = ($event) => tokenVisible.value = !tokenVisible.value)
-                        }, toDisplayString(tokenVisible.value ? "Hide" : "Show"), 9, _hoisted_5$6)
+                        }, toDisplayString(tokenVisible.value ? "Hide" : "Show"), 9, _hoisted_5$7)
                       ])
                     ]),
                     createBaseVNode("label", null, [
@@ -9100,7 +9100,7 @@
                         "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => booruInput.value = $event),
                         placeholder: `e.g. ${unref(location2).hostname}; empty = all boorus`,
                         type: "text"
-                      }, null, 8, _hoisted_6$6), [
+                      }, null, 8, _hoisted_6$7), [
                         [
                           vModelText,
                           booruInput.value,
@@ -9144,7 +9144,7 @@
                       ]),
                       _cache[21] || (_cache[21] = createTextVNode(" Sync colors (use the same color in dark mode) ", -1))
                     ]),
-                    !draft.syncColors ? (openBlock(), createElementBlock("label", _hoisted_7$5, [
+                    !draft.syncColors ? (openBlock(), createElementBlock("label", _hoisted_7$6, [
                       _cache[22] || (_cache[22] = createTextVNode(" Dark mode color ", -1)),
                       withDirectives(createBaseVNode("input", {
                         "onUpdate:modelValue": _cache[10] || (_cache[10] = ($event) => draft.darkColor = $event),
@@ -9153,7 +9153,7 @@
                         [vModelText, draft.darkColor]
                       ])
                     ])) : createCommentVNode("", true),
-                    createBaseVNode("div", _hoisted_8$5, [
+                    createBaseVNode("div", _hoisted_8$6, [
                       createVNode(_sfc_main$k, { config: draft }, null, 8, ["config"])
                     ])
                   ], 64)) : (openBlock(), createElementBlock(Fragment, { key: 2 }, [
@@ -9286,17 +9286,17 @@
       thumbnailUrl: (thumbnail == null ? void 0 : thumbnail.thumb_url) ?? (thumbnail == null ? void 0 : thumbnail.small_url) ?? void 0
     }));
   }
-  const _hoisted_1$9 = { class: "lodestone-gallery-chooser" };
+  const _hoisted_1$a = { class: "lodestone-gallery-chooser" };
   const _hoisted_2$7 = { key: 0 };
   const _hoisted_3$6 = ["value"];
   const _hoisted_4$6 = {
     value: "",
     disabled: ""
   };
-  const _hoisted_5$5 = ["value"];
-  const _hoisted_6$5 = { key: 1 };
-  const _hoisted_7$4 = ["value"];
-  const _hoisted_8$4 = {
+  const _hoisted_5$6 = ["value"];
+  const _hoisted_6$6 = { key: 1 };
+  const _hoisted_7$5 = ["value"];
+  const _hoisted_8$5 = {
     key: 2,
     class: "lodestone-quick-button-manager__note"
   };
@@ -9319,7 +9319,7 @@
         emit2("update:modelValue", event.target.value);
       }
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$9, [
+        return openBlock(), createElementBlock("div", _hoisted_1$a, [
           !manualEntry.value ? (openBlock(), createElementBlock("label", _hoisted_2$7, [
             _cache[1] || (_cache[1] = createTextVNode(" Gallery ", -1)),
             createBaseVNode("select", {
@@ -9331,18 +9331,18 @@
                 return openBlock(), createElementBlock("option", {
                   key: gallery.id,
                   value: String(gallery.id)
-                }, toDisplayString(gallery.title) + " (#" + toDisplayString(gallery.id) + ") ", 9, _hoisted_5$5);
+                }, toDisplayString(gallery.title) + " (#" + toDisplayString(gallery.id) + ") ", 9, _hoisted_5$6);
               }), 128))
             ], 40, _hoisted_3$6)
-          ])) : (openBlock(), createElementBlock("label", _hoisted_6$5, [
+          ])) : (openBlock(), createElementBlock("label", _hoisted_6$6, [
             _cache[2] || (_cache[2] = createTextVNode(" Gallery id or slug ", -1)),
             createBaseVNode("input", {
               value: __props.modelValue,
               type: "text",
               onInput
-            }, null, 40, _hoisted_7$4)
+            }, null, 40, _hoisted_7$5)
           ])),
-          __props.lookupState === "error" ? (openBlock(), createElementBlock("p", _hoisted_8$4, " Couldn't look up your galleries automatically -- enter the id manually. ")) : createCommentVNode("", true),
+          __props.lookupState === "error" ? (openBlock(), createElementBlock("p", _hoisted_8$5, " Couldn't look up your galleries automatically -- enter the id manually. ")) : createCommentVNode("", true),
           createBaseVNode("button", {
             type: "button",
             class: "lodestone-quick-button-manager__toggle-entry",
@@ -9368,7 +9368,7 @@
       };
     }
   });
-  const _hoisted_1$8 = { class: "lodestone-quick-button-manager" };
+  const _hoisted_1$9 = { class: "lodestone-quick-button-manager" };
   const _hoisted_2$6 = {
     key: 0,
     class: "lodestone-settings-subfield"
@@ -9378,10 +9378,10 @@
     key: 0,
     class: "lodestone-hint"
   };
-  const _hoisted_5$4 = { class: "lodestone-manager-list" };
-  const _hoisted_6$4 = ["href"];
-  const _hoisted_7$3 = { class: "lodestone-manager-list__actions" };
-  const _hoisted_8$3 = ["onClick"];
+  const _hoisted_5$5 = { class: "lodestone-manager-list" };
+  const _hoisted_6$5 = ["href"];
+  const _hoisted_7$4 = { class: "lodestone-manager-list__actions" };
+  const _hoisted_8$4 = ["onClick"];
   const _hoisted_9$3 = ["onClick"];
   const _hoisted_10$3 = ["onClick"];
   const _hoisted_11$3 = { class: "lodestone-quick-button-manager__note" };
@@ -9459,7 +9459,7 @@
         linkingId.value = null;
       }
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$8, [
+        return openBlock(), createElementBlock("div", _hoisted_1$9, [
           createBaseVNode("button", {
             type: "button",
             class: "lodestone-primary",
@@ -9542,7 +9542,7 @@
           }, 8, ["open", "title"]),
           createBaseVNode("h4", null, "Active on " + toDisplayString(unref(instanceId)), 1),
           unref(store).buttons.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_4$5, "No quick buttons on this booru yet.")) : createCommentVNode("", true),
-          createBaseVNode("ul", _hoisted_5$4, [
+          createBaseVNode("ul", _hoisted_5$5, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).buttons, (button) => {
               return openBlock(), createElementBlock("li", {
                 key: button.id,
@@ -9553,12 +9553,12 @@
                   href: `/galleries?gallery[include_image]=${button.galleryId}`,
                   target: "_blank",
                   rel: "noopener"
-                }, " gallery #" + toDisplayString(button.galleryId), 9, _hoisted_6$4),
-                createBaseVNode("span", _hoisted_7$3, [
+                }, " gallery #" + toDisplayString(button.galleryId), 9, _hoisted_6$5),
+                createBaseVNode("span", _hoisted_7$4, [
                   createBaseVNode("button", {
                     type: "button",
                     onClick: ($event) => edit(button)
-                  }, "Edit", 8, _hoisted_8$3),
+                  }, "Edit", 8, _hoisted_8$4),
                   createBaseVNode("button", {
                     type: "button",
                     onClick: ($event) => unref(store).duplicate(button.id)
@@ -9703,14 +9703,14 @@
   function findCatalogEntryForElement(catalog, el) {
     return catalog.find((entry) => Array.from(document.querySelectorAll(entry.selector)).includes(el));
   }
-  const _hoisted_1$7 = { class: "lodestone-condition-node" };
+  const _hoisted_1$8 = { class: "lodestone-condition-node" };
   const _hoisted_2$5 = ["value"];
   const _hoisted_3$4 = ["checked"];
   const _hoisted_4$4 = ["checked"];
-  const _hoisted_5$3 = ["value"];
-  const _hoisted_6$3 = ["value"];
-  const _hoisted_7$2 = ["value"];
-  const _hoisted_8$2 = ["value"];
+  const _hoisted_5$4 = ["value"];
+  const _hoisted_6$4 = ["value"];
+  const _hoisted_7$3 = ["value"];
+  const _hoisted_8$3 = ["value"];
   const _hoisted_9$2 = ["value"];
   const _hoisted_10$2 = { title: "Only when this button is the one that was just toggled, not merely in that state" };
   const _hoisted_11$2 = ["checked"];
@@ -9781,7 +9781,7 @@
       }
       return (_ctx, _cache) => {
         const _component_ConditionGroupEditor = resolveComponent("ConditionGroupEditor", true);
-        return openBlock(), createElementBlock("div", _hoisted_1$7, [
+        return openBlock(), createElementBlock("div", _hoisted_1$8, [
           createBaseVNode("select", {
             value: __props.modelValue.type,
             onChange: _cache[0] || (_cache[0] = ($event) => setKind($event.target.value))
@@ -9823,9 +9823,9 @@
                 return openBlock(), createElementBlock("option", {
                   key: entry.id,
                   value: entry.id
-                }, toDisplayString(unref(displayLabel)(entry)), 9, _hoisted_6$3);
+                }, toDisplayString(unref(displayLabel)(entry)), 9, _hoisted_6$4);
               }), 128))
-            ], 40, _hoisted_5$3)) : (openBlock(), createElementBlock("select", {
+            ], 40, _hoisted_5$4)) : (openBlock(), createElementBlock("select", {
               key: 1,
               value: __props.modelValue.targetId,
               onChange: _cache[4] || (_cache[4] = ($event) => updateLeaf({ targetId: $event.target.value }))
@@ -9838,9 +9838,9 @@
                 return openBlock(), createElementBlock("option", {
                   key: category,
                   value: category
-                }, toDisplayString(category), 9, _hoisted_8$2);
+                }, toDisplayString(category), 9, _hoisted_8$3);
               }), 128))
-            ], 40, _hoisted_7$2)),
+            ], 40, _hoisted_7$3)),
             createBaseVNode("select", {
               value: __props.modelValue.state,
               onChange: _cache[5] || (_cache[5] = ($event) => updateLeaf({ state: $event.target.value }))
@@ -9889,17 +9889,17 @@
       };
     }
   });
-  const _hoisted_1$6 = { class: "lodestone-button-effects-manager" };
+  const _hoisted_1$7 = { class: "lodestone-button-effects-manager" };
   const _hoisted_2$4 = { key: 1 };
   const _hoisted_3$3 = ["value"];
   const _hoisted_4$3 = ["value"];
-  const _hoisted_5$2 = ["value"];
-  const _hoisted_6$2 = { key: 2 };
-  const _hoisted_7$1 = {
+  const _hoisted_5$3 = ["value"];
+  const _hoisted_6$3 = { key: 2 };
+  const _hoisted_7$2 = {
     key: 0,
     class: "lodestone-hint"
   };
-  const _hoisted_8$1 = { class: "lodestone-manager-list" };
+  const _hoisted_8$2 = { class: "lodestone-manager-list" };
   const _hoisted_9$1 = ["checked", "onChange"];
   const _hoisted_10$1 = { class: "lodestone-manager-list__target" };
   const _hoisted_11$1 = { class: "lodestone-manager-list__actions" };
@@ -9968,7 +9968,7 @@
         return catalog.value.find((entry) => entry.id === id);
       }
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$6, [
+        return openBlock(), createElementBlock("div", _hoisted_1$7, [
           createBaseVNode("button", {
             type: "button",
             class: "lodestone-primary",
@@ -10039,13 +10039,13 @@
                           return openBlock(), createElementBlock("option", {
                             key: option.value,
                             value: option.value
-                          }, toDisplayString(option.label), 9, _hoisted_5$2);
+                          }, toDisplayString(option.label), 9, _hoisted_5$3);
                         }), 128))
                       ], 512), [
                         [vModelSelect, draft.actionVerb]
                       ])
                     ])
-                  ])) : (openBlock(), createElementBlock("label", _hoisted_6$2, [
+                  ])) : (openBlock(), createElementBlock("label", _hoisted_6$3, [
                     _cache[13] || (_cache[13] = createTextVNode("Label ", -1)),
                     withDirectives(createBaseVNode("input", {
                       "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => draft.label = $event),
@@ -10061,8 +10061,8 @@
             _: 1
           }, 8, ["open", "title"]),
           _cache[15] || (_cache[15] = createBaseVNode("h4", null, "Configured button effects", -1)),
-          unref(store).rules.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_7$1, "No button effects yet.")) : createCommentVNode("", true),
-          createBaseVNode("ul", _hoisted_8$1, [
+          unref(store).rules.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_7$2, "No button effects yet.")) : createCommentVNode("", true),
+          createBaseVNode("ul", _hoisted_8$2, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).rules, (rule) => {
               return openBlock(), createElementBlock("li", {
                 key: rule.id,
@@ -10133,7 +10133,7 @@
     onBeforeUnmount(() => window.removeEventListener("resize", update));
     return { width };
   }
-  const _hoisted_1$5 = { class: "lodestone-select-all-none" };
+  const _hoisted_1$6 = { class: "lodestone-select-all-none" };
   const _sfc_main$7 = /* @__PURE__ */ defineComponent({
     __name: "SelectAllNone",
     props: {
@@ -10151,7 +10151,7 @@
         emit2("update:modelValue", props.modelValue.filter((id) => !props.ids.includes(id)));
       }
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("span", _hoisted_1$5, [
+        return openBlock(), createElementBlock("span", _hoisted_1$6, [
           createBaseVNode("button", {
             type: "button",
             onClick: selectAll
@@ -10191,14 +10191,14 @@
     }
     return rules.join("\n");
   }
-  const _hoisted_1$4 = { class: "lodestone-button-groups-manager" };
+  const _hoisted_1$5 = { class: "lodestone-button-groups-manager" };
   const _hoisted_2$3 = ["checked", "onChange"];
   const _hoisted_3$2 = ["onUpdate:modelValue"];
   const _hoisted_4$2 = ["onClick"];
-  const _hoisted_5$1 = ["onUpdate:modelValue"];
-  const _hoisted_6$1 = ["onClick"];
-  const _hoisted_7 = { class: "lodestone-button-groups-manager__preview" };
-  const _hoisted_8 = {
+  const _hoisted_5$2 = ["onUpdate:modelValue"];
+  const _hoisted_6$2 = ["onClick"];
+  const _hoisted_7$1 = { class: "lodestone-button-groups-manager__preview" };
+  const _hoisted_8$1 = {
     key: 0,
     class: "lodestone-hint"
   };
@@ -10276,7 +10276,7 @@
         dialogOpen.value = true;
       }
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$4, [
+        return openBlock(), createElementBlock("div", _hoisted_1$5, [
           createBaseVNode("button", {
             type: "button",
             class: "lodestone-primary",
@@ -10386,7 +10386,7 @@
                               type: "number",
                               min: "1",
                               max: "24"
-                            }, null, 8, _hoisted_5$1), [
+                            }, null, 8, _hoisted_5$2), [
                               [
                                 vModelText,
                                 breakpoint.columns,
@@ -10399,7 +10399,7 @@
                             key: 2,
                             type: "button",
                             onClick: ($event) => removeBreakpoint(breakpoint.id)
-                          }, "Remove", 8, _hoisted_6$1)) : createCommentVNode("", true)
+                          }, "Remove", 8, _hoisted_6$2)) : createCommentVNode("", true)
                         ]);
                       }), 128)),
                       createBaseVNode("button", {
@@ -10407,7 +10407,7 @@
                         onClick: addBreakpoint
                       }, "Add breakpoint")
                     ]),
-                    createBaseVNode("div", _hoisted_7, [
+                    createBaseVNode("div", _hoisted_7$1, [
                       createBaseVNode("div", null, "Preview at the current window width (" + toDisplayString(unref(width)) + "px): " + toDisplayString(previewColumns.value) + " column" + toDisplayString(previewColumns.value === 1 ? "" : "s"), 1),
                       createBaseVNode("div", {
                         class: "lodestone-button-groups-manager__grid",
@@ -10431,7 +10431,7 @@
             _: 1
           }, 8, ["open", "title"]),
           _cache[11] || (_cache[11] = createBaseVNode("h4", null, "Configured button groups", -1)),
-          unref(store).groups.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_8, "No button groups yet.")) : createCommentVNode("", true),
+          unref(store).groups.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_8$1, "No button groups yet.")) : createCommentVNode("", true),
           createBaseVNode("ul", _hoisted_9, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).groups, (group) => {
               return openBlock(), createElementBlock("li", {
@@ -10516,14 +10516,18 @@
       })
     );
   }
-  const _hoisted_1$3 = ["value"];
-  const _hoisted_2$2 = { class: "lodestone-inline-group" };
-  const _hoisted_3$1 = {
+  const _hoisted_1$4 = { class: "lodestone-subsection" };
+  const _hoisted_2$2 = { class: "lodestone-field--stacked" };
+  const _hoisted_3$1 = ["value"];
+  const _hoisted_4$1 = { class: "lodestone-subsection" };
+  const _hoisted_5$1 = { class: "lodestone-field--stacked" };
+  const _hoisted_6$1 = { class: "lodestone-actions" };
+  const _hoisted_7 = {
     key: 0,
     class: "lodestone-import-export__error",
     role: "alert"
   };
-  const _hoisted_4$1 = {
+  const _hoisted_8 = {
     key: 1,
     class: "lodestone-import-export__success",
     role: "status"
@@ -10584,85 +10588,73 @@
           description: "Back up your settings or move them to another browser."
         }, {
           default: withCtx(() => [
-            _cache[3] || (_cache[3] = createBaseVNode("h4", null, "Export", -1)),
-            createBaseVNode("label", null, [
-              _cache[1] || (_cache[1] = createTextVNode(" Settings JSON ", -1)),
-              createBaseVNode("textarea", {
-                readonly: "",
-                rows: "6",
-                value: exportJson.value
-              }, null, 8, _hoisted_1$3)
-            ]),
-            createBaseVNode("span", { class: "lodestone-inline-group" }, [
-              createBaseVNode("button", {
-                type: "button",
-                onClick: copyExport
-              }, "Copy to clipboard"),
-              createBaseVNode("button", {
-                type: "button",
-                onClick: downloadExport
-              }, "Download as file")
-            ]),
-            _cache[4] || (_cache[4] = createBaseVNode("h4", null, "Import", -1)),
-            createBaseVNode("label", null, [
-              _cache[2] || (_cache[2] = createTextVNode(" Paste JSON ", -1)),
-              withDirectives(createBaseVNode("textarea", {
-                "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => importText.value = $event),
-                rows: "6",
-                placeholder: "Paste a previously exported settings JSON here"
-              }, null, 512), [
-                [vModelText, importText.value]
+            createBaseVNode("div", _hoisted_1$4, [
+              _cache[2] || (_cache[2] = createBaseVNode("h4", null, "Export", -1)),
+              createBaseVNode("label", _hoisted_2$2, [
+                _cache[1] || (_cache[1] = createTextVNode(" Settings JSON ", -1)),
+                createBaseVNode("textarea", {
+                  readonly: "",
+                  rows: "6",
+                  value: exportJson.value
+                }, null, 8, _hoisted_3$1)
+              ]),
+              createBaseVNode("div", { class: "lodestone-actions" }, [
+                createBaseVNode("button", {
+                  type: "button",
+                  onClick: copyExport
+                }, "Copy to clipboard"),
+                createBaseVNode("button", {
+                  type: "button",
+                  onClick: downloadExport
+                }, "Download as file")
               ])
             ]),
-            createBaseVNode("span", _hoisted_2$2, [
-              createBaseVNode("input", {
-                ref_key: "fileInputRef",
-                ref: fileInputRef,
-                type: "file",
-                accept: "application/json",
-                onChange: onFileChosen
-              }, null, 544),
-              createBaseVNode("button", {
-                type: "button",
-                onClick: runImport
-              }, "Import")
-            ]),
-            importError.value ? (openBlock(), createElementBlock("p", _hoisted_3$1, toDisplayString(importError.value), 1)) : createCommentVNode("", true),
-            importSuccess.value ? (openBlock(), createElementBlock("p", _hoisted_4$1, "Settings imported.")) : createCommentVNode("", true)
+            createBaseVNode("div", _hoisted_4$1, [
+              _cache[4] || (_cache[4] = createBaseVNode("h4", null, "Import", -1)),
+              createBaseVNode("label", _hoisted_5$1, [
+                _cache[3] || (_cache[3] = createTextVNode(" Paste JSON ", -1)),
+                withDirectives(createBaseVNode("textarea", {
+                  "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => importText.value = $event),
+                  rows: "6",
+                  placeholder: "Paste a previously exported settings JSON here"
+                }, null, 512), [
+                  [vModelText, importText.value]
+                ])
+              ]),
+              createBaseVNode("div", _hoisted_6$1, [
+                createBaseVNode("input", {
+                  ref_key: "fileInputRef",
+                  ref: fileInputRef,
+                  type: "file",
+                  accept: "application/json",
+                  onChange: onFileChosen
+                }, null, 544),
+                createBaseVNode("button", {
+                  type: "button",
+                  class: "lodestone-primary",
+                  onClick: runImport
+                }, "Import")
+              ]),
+              importError.value ? (openBlock(), createElementBlock("p", _hoisted_7, toDisplayString(importError.value), 1)) : createCommentVNode("", true),
+              importSuccess.value ? (openBlock(), createElementBlock("p", _hoisted_8, "Settings imported.")) : createCommentVNode("", true)
+            ])
           ]),
           _: 1
         });
       };
     }
   });
+  const _hoisted_1$3 = { class: "lodestone-settings-tab" };
   const _sfc_main$3 = /* @__PURE__ */ defineComponent({
     __name: "SettingsTab",
     setup(__props) {
-      const root = /* @__PURE__ */ ref(null);
-      onMounted(() => {
-        var _a, _b;
-        let node = root.value;
-        while (node) {
-          const style = getComputedStyle(node);
-          if (style.backgroundColor !== "rgba(0, 0, 0, 0)" && style.backgroundColor !== "transparent") {
-            (_a = root.value) == null ? void 0 : _a.style.setProperty("--lodestone-bg", style.backgroundColor);
-            (_b = root.value) == null ? void 0 : _b.style.setProperty("--lodestone-fg", style.color);
-            return;
-          }
-          node = node.parentElement;
-        }
-      });
       installSettingsPersistence(useSettingsStore());
       installTelegramButtonsPersistence(useTelegramButtonsStore());
       installGalleryQuickButtonsPersistence(useGalleryQuickButtonsStore());
       installButtonEffectsPersistence(useButtonEffectsStore());
       installButtonGroupsPersistence(useButtonGroupsStore());
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", {
-          ref_key: "root",
-          ref: root,
-          class: "lodestone-settings-tab"
-        }, [
+        return openBlock(), createElementBlock("div", _hoisted_1$3, [
           createVNode(_sfc_main$s),
           createVNode(_sfc_main$r),
           createVNode(_sfc_main$q),
@@ -10673,7 +10665,7 @@
           createVNode(_sfc_main$8),
           createVNode(_sfc_main$t),
           createVNode(_sfc_main$4)
-        ], 512);
+        ]);
       };
     }
   });
@@ -10779,17 +10771,35 @@ ${event}
   function vueErrorHandler(error) {
     report(toReportable(error), { source: "vue" });
   }
-  function addStyle(css) {
-    return GM_addStyle(css);
-  }
-  let injected$3 = false;
-  function ensureSettingsTabStyles() {
-    if (injected$3) {
-      return;
+  function addStyle(css, id) {
+    const existing = id ? document.getElementById(id) : null;
+    if (existing instanceof HTMLStyleElement) {
+      return existing;
     }
-    injected$3 = true;
-    addStyle(`
-    .lodestone-settings-tab {
+    let style;
+    try {
+      style = GM_addStyle(css);
+    } catch {
+      style = void 0;
+    }
+    if (!(style == null ? void 0 : style.isConnected)) {
+      style = document.createElement("style");
+      style.textContent = css;
+      (document.head ?? document.documentElement).append(style);
+    }
+    if (id) {
+      style.id = id;
+    }
+    return style;
+  }
+  const SETTINGS_STYLE_ID = "lodestone-settings-styles";
+  const FIELD = ":is(input:not([type='checkbox'], [type='radio'], [type='color'], [type='file'], [type='range']), select, textarea)";
+  const SCOPE = ":is(.lodestone-settings-section, .lodestone-dialog)";
+  function ensureSettingsTabStyles() {
+    addStyle(
+      `
+    .lodestone-settings-tab,
+    .lodestone-dialog {
       --lodestone-space-1: 4px;
       --lodestone-space-2: 8px;
       --lodestone-space-3: 12px;
@@ -10797,12 +10807,20 @@ ${event}
       --lodestone-space-5: 24px;
       --lodestone-radius: 4px;
       --lodestone-radius-lg: 8px;
-      --lodestone-border: color-mix(in srgb, currentColor 22%, transparent);
-      --lodestone-border-soft: color-mix(in srgb, currentColor 12%, transparent);
+      --lodestone-border: var(--border-color, color-mix(in srgb, currentColor 22%, transparent));
+      --lodestone-border-soft: color-mix(in srgb, var(--border-color, currentColor) 55%, transparent);
       --lodestone-hover: color-mix(in srgb, currentColor 8%, transparent);
       --lodestone-surface: color-mix(in srgb, currentColor 5%, transparent);
       --lodestone-muted: color-mix(in srgb, currentColor 65%, transparent);
-      --lodestone-focus: #3b82f6;
+      --lodestone-bg: var(--background-color, Canvas);
+      --lodestone-fg: var(--foreground-color, CanvasText);
+      --lodestone-input-bg: var(--input-color, transparent);
+      --lodestone-input-border: var(--input-border, var(--lodestone-border));
+      --lodestone-focus: var(--input-border-active, #3b82f6);
+      --lodestone-button-bg: var(--button-background-color, var(--lodestone-surface));
+      --lodestone-button-border: var(--button-border-color, var(--lodestone-border));
+      --lodestone-button-hover-bg: var(--button-hover-background-color, var(--lodestone-hover));
+      --lodestone-button-hover-border: var(--button-hover-border-color, currentColor);
       --lodestone-ok: color-mix(in srgb, #2e9d57 75%, currentColor);
       --lodestone-danger: color-mix(in srgb, #d6402f 75%, currentColor);
       --lodestone-control-height: 32px;
@@ -10826,79 +10844,88 @@ ${event}
       font-weight: 600;
       color: var(--lodestone-muted);
     }
+    /* Every direct child of a section is its own full-width row, whatever its own display value. */
+    .lodestone-settings-section__body { display: flex; flex-direction: column; align-items: stretch; gap: var(--lodestone-space-1); min-width: 0; }
     .lodestone-settings-section__body > h4:first-child { margin-top: 0; }
     .lodestone-hint { display: block; margin: 0; font-size: 0.875em; line-height: 1.4; color: var(--lodestone-muted); }
 
     /* Default row: a value field. Label sits in a fixed-width column so every input in the
        section lines up on the same edge, however long its label text runs. */
-    .lodestone-settings-section label {
+    ${SCOPE} label {
       display: grid;
       grid-template-columns: 160px minmax(0, 1fr);
       align-items: center;
       column-gap: var(--lodestone-space-3);
-      row-gap: 2px;
-      margin: var(--lodestone-space-1) 0;
-      padding: 3px var(--lodestone-space-1);
+      row-gap: var(--lodestone-space-1);
+      margin: 0;
+      padding: var(--lodestone-space-1) var(--lodestone-space-2);
       border-radius: var(--lodestone-radius);
     }
     .lodestone-settings-section label:hover { background: var(--lodestone-hover); }
 
-    /* Toggle row: a checkbox/radio carries its own meaning, so it reads as one sentence. */
-    .lodestone-settings-section label:has(> input[type='checkbox']),
-    .lodestone-settings-section label:has(> input[type='radio']) {
+    /* A label above a wide field (textareas): stacked, full width. */
+    ${SCOPE} label.lodestone-field--stacked { grid-template-columns: minmax(0, 1fr); row-gap: var(--lodestone-space-2); }
+
+    /* Generic toggle: a checkbox/radio carries its own meaning, so it reads as one sentence. */
+    ${SCOPE} label:not(.lodestone-toggle-row):has(> input[type='checkbox']),
+    ${SCOPE} label:not(.lodestone-toggle-row):has(> input[type='radio']) {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: var(--lodestone-space-2);
       min-height: var(--lodestone-control-height);
-      padding-block: 6px;
     }
-    .lodestone-settings-section label > input[type='checkbox'],
-    .lodestone-settings-section label > input[type='radio'] { flex: none; width: 1.1em; height: 1.1em; margin: 0.15em 0 0; }
-    .lodestone-toggle-row__text { display: flex; flex-direction: column; gap: 2px; }
+    ${SCOPE} label > input[type='checkbox'],
+    ${SCOPE} label > input[type='radio'] { flex: none; width: 1.1em; height: 1.1em; margin: 0; }
+
+    /* ToggleRow: checkbox column + text column; the box is centered on the label's first line. */
+    ${SCOPE} label.lodestone-toggle-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: start;
+      column-gap: var(--lodestone-space-2);
+      width: 100%;
+      box-sizing: border-box;
+      padding-block: var(--lodestone-space-2);
+    }
+    ${SCOPE} label.lodestone-toggle-row > input[type='checkbox'] {
+      margin: 0.2em 0 0;
+      margin-top: calc((1lh - 1.1em) / 2);
+    }
+    .lodestone-toggle-row__text { display: flex; flex-direction: column; gap: 2px; line-height: 1.4; }
+    .lodestone-settings-section__body > .lodestone-toggle-row + .lodestone-toggle-row { border-top: 1px solid var(--lodestone-border-soft); border-radius: 0; }
 
     /* ---- Inputs ---- */
-    .lodestone-settings-section input[type='text'],
-    .lodestone-settings-section input[type='password'],
-    .lodestone-settings-section input[type='number'],
-    .lodestone-settings-section select,
-    .lodestone-settings-section textarea {
+    ${SCOPE} ${FIELD} {
       box-sizing: border-box;
       min-height: var(--lodestone-control-height);
-      padding: 4px var(--lodestone-space-2);
-      border: 1px solid var(--lodestone-border);
+      padding: 6px var(--lodestone-space-2);
+      border: 1px solid var(--lodestone-input-border);
       border-radius: var(--lodestone-radius);
       font: inherit;
-      color: inherit;
-      background: transparent;
+      color: var(--input-text-color, inherit);
+      background: var(--lodestone-input-bg);
     }
-    .lodestone-settings-section label > input[type='text'],
-    .lodestone-settings-section label > input[type='password'],
-    .lodestone-settings-section label > input[type='number'],
-    .lodestone-settings-section label > select { width: 100%; min-width: 0; }
-    .lodestone-settings-section label > input[type='color'] { justify-self: start; }
-    .lodestone-settings-section label > textarea { width: 100%; min-width: 0; font-family: monospace; resize: vertical; }
+    ${SCOPE} ${FIELD}:focus { border-color: var(--lodestone-focus); }
+    ${SCOPE} label > ${FIELD} { width: 100%; min-width: 0; }
+    ${SCOPE} label > input[type='color'] { justify-self: start; }
+    ${SCOPE} label > textarea { font-family: monospace; resize: vertical; height: auto; }
     .lodestone-settings-section fieldset { margin: var(--lodestone-space-2) 0; border: 1px solid var(--lodestone-border-soft); border-radius: var(--lodestone-radius); }
 
     /* ---- Buttons ---- */
-    .lodestone-settings-section button,
-    .lodestone-dialog button {
+    ${SCOPE} button {
       min-height: var(--lodestone-control-height);
       padding: 4px var(--lodestone-space-3);
-      border: 1px solid var(--lodestone-border);
+      border: 1px solid var(--lodestone-button-border);
       border-radius: var(--lodestone-radius);
       font: inherit;
-      color: inherit;
-      background: var(--lodestone-surface);
+      color: var(--button-text-color, inherit);
+      background: var(--lodestone-button-bg);
       cursor: pointer;
     }
-    .lodestone-settings-section button:hover:not(:disabled),
-    .lodestone-dialog button:hover:not(:disabled) { background: var(--lodestone-hover); border-color: currentColor; }
-    .lodestone-settings-section button:disabled,
-    .lodestone-dialog button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .lodestone-settings-section button.lodestone-primary,
-    .lodestone-dialog button.lodestone-primary { background: var(--lodestone-focus); border-color: var(--lodestone-focus); color: #fff; font-weight: 600; }
-    .lodestone-settings-section button.lodestone-primary:hover:not(:disabled),
-    .lodestone-dialog button.lodestone-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--lodestone-focus) 85%, #000); border-color: transparent; }
+    ${SCOPE} button:hover:not(:disabled) { background: var(--lodestone-button-hover-bg); border-color: var(--lodestone-button-hover-border); }
+    ${SCOPE} button:disabled { opacity: 0.5; cursor: not-allowed; }
+    ${SCOPE} button.lodestone-primary { background: var(--lodestone-focus); border-color: var(--lodestone-focus); color: #fff; font-weight: 600; }
+    ${SCOPE} button.lodestone-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--lodestone-focus) 85%, #000); border-color: transparent; }
 
     /* Keyboard focus: one consistent ring on every interactive element in the tab and overlays. */
     .lodestone-settings-tab :is(a, button, input, select, textarea, summary):focus-visible,
@@ -10907,7 +10934,10 @@ ${event}
       outline-offset: 2px;
     }
 
-    /* A value row with an inline action button (reset/reveal) shares the value column. */
+    /* Rows of actions (copy / download / import ...) and a value row with an inline action button. */
+    .lodestone-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--lodestone-space-2); margin: var(--lodestone-space-2) 0; }
+    .lodestone-subsection { display: flex; flex-direction: column; gap: var(--lodestone-space-1); }
+    .lodestone-subsection + .lodestone-subsection { margin-top: var(--lodestone-space-4); padding-top: var(--lodestone-space-2); border-top: 1px solid var(--lodestone-border-soft); }
     .lodestone-settings-section label .lodestone-inline-group { display: flex; align-items: center; flex-wrap: wrap; gap: var(--lodestone-space-2); width: 100%; }
     .lodestone-settings-section label .lodestone-inline-group > input { flex: 1 1 160px; }
     .lodestone-settings-section__body > .lodestone-inline-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--lodestone-space-2); margin: var(--lodestone-space-2) 0; }
@@ -10922,8 +10952,8 @@ ${event}
     .lodestone-settings-subfields { background: var(--lodestone-surface); border-radius: 0 var(--lodestone-radius) var(--lodestone-radius) 0; }
 
     /* ---- Feedback ---- */
-    .lodestone-import-export__error { color: var(--lodestone-danger); font-weight: 600; }
-    .lodestone-import-export__success { color: var(--lodestone-ok); font-weight: 600; }
+    .lodestone-import-export__error { color: var(--lodestone-danger); font-weight: 600; margin: var(--lodestone-space-2) 0 0; }
+    .lodestone-import-export__success { color: var(--lodestone-ok); font-weight: 600; margin: var(--lodestone-space-2) 0 0; }
 
     /* ---- Hide-buttons checklist: chip-like rows in as many columns as fit ---- */
     .lodestone-hide-group { column-width: 220px; column-gap: var(--lodestone-space-2); }
@@ -11000,15 +11030,15 @@ ${event}
 
     /* ---- Overlays (native <dialog>, so top layer + focus trap come from the browser) ---- */
     .lodestone-dialog {
-      --lodestone-focus: #3b82f6;
       box-sizing: border-box;
       width: min(640px, calc(100vw - 32px));
       max-height: calc(100vh - 32px);
+      margin: auto;
       padding: 0;
       border: 1px solid var(--lodestone-border);
       border-radius: var(--lodestone-radius-lg);
-      color: var(--lodestone-fg, CanvasText);
-      background: var(--lodestone-bg, Canvas);
+      color: var(--lodestone-fg);
+      background: var(--lodestone-bg);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
     }
     .lodestone-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
@@ -11024,28 +11054,15 @@ ${event}
     .lodestone-stepflow__header li { padding: 2px var(--lodestone-space-3); border: 1px solid var(--lodestone-border-soft); border-radius: 999px; font-size: 0.875em; color: var(--lodestone-muted); }
     .lodestone-stepflow__header li.is-done { color: inherit; }
     .lodestone-stepflow__header li.is-current { color: inherit; font-weight: 700; border-color: var(--lodestone-focus); }
-    .lodestone-stepflow__body { margin: var(--lodestone-space-3) 0; }
+    .lodestone-stepflow__body { display: flex; flex-direction: column; gap: var(--lodestone-space-1); margin: var(--lodestone-space-3) 0; }
     .lodestone-stepflow__actions { display: flex; align-items: center; gap: var(--lodestone-space-2); padding-top: var(--lodestone-space-3); border-top: 1px solid var(--lodestone-border-soft); }
     .lodestone-stepflow__spacer { flex: 1; }
-    .lodestone-dialog label {
-      display: grid;
-      grid-template-columns: 160px minmax(0, 1fr);
-      align-items: center;
-      column-gap: var(--lodestone-space-3);
-      margin: var(--lodestone-space-1) 0;
-    }
-    .lodestone-dialog label:has(> input[type='checkbox']) { display: flex; gap: var(--lodestone-space-2); }
-    .lodestone-dialog :is(input[type='text'], input[type='password'], input[type='number'], select, textarea) {
-      box-sizing: border-box; min-height: var(--lodestone-control-height); padding: 4px var(--lodestone-space-2);
-      border: 1px solid var(--lodestone-border); border-radius: var(--lodestone-radius); font: inherit; color: inherit; background: transparent;
-    }
-    .lodestone-dialog label > :is(input[type='text'], input[type='password'], input[type='number'], select, .lodestone-inline-group) { width: 100%; min-width: 0; }
 
     /* ---- Narrow screens ---- */
     @media (max-width: 560px) {
       .lodestone-settings-section { grid-template-columns: minmax(0, 1fr); row-gap: var(--lodestone-space-3); }
-      .lodestone-settings-section label,
-      .lodestone-dialog label { grid-template-columns: minmax(0, 1fr); }
+      ${SCOPE} label { grid-template-columns: minmax(0, 1fr); }
+      ${SCOPE} label.lodestone-toggle-row { grid-template-columns: auto minmax(0, 1fr); }
       .lodestone-hide-group { column-width: 160px; }
       .lodestone-manager-list__item { align-items: flex-start; flex-direction: column; }
       .lodestone-dialog { width: 100vw; max-width: 100vw; height: 100vh; max-height: 100vh; margin: 0; border-radius: 0; }
@@ -11057,7 +11074,9 @@ ${event}
       .lodestone-settings-section button,
       .lodestone-manager-list__item { transition: background-color 120ms ease, border-color 120ms ease; }
     }
-  `);
+  `,
+      SETTINGS_STYLE_ID
+    );
   }
   const TAB_ID = "lodestones-userscript";
   const TAB_LABEL = "Lodestone's Userscript";
