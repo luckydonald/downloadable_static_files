@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.10.06.0000.16.46.22.0000.cb344
+// @version      2026.10.06.0000.22.39.24.0000.3df70
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -10771,26 +10771,65 @@ ${event}
   function vueErrorHandler(error) {
     report(toReportable(error), { source: "vue" });
   }
+  const adopted = /* @__PURE__ */ new Map();
+  function isApplied(style) {
+    return !!style && style.isConnected && !!style.sheet;
+  }
+  function adoptSheet(css, id) {
+    if (typeof CSSStyleSheet === "undefined" || !Array.isArray(document.adoptedStyleSheets ?? null)) {
+      return void 0;
+    }
+    try {
+      let sheet = id ? adopted.get(id) : void 0;
+      if (!sheet) {
+        sheet = new CSSStyleSheet();
+        sheet.replaceSync(css);
+        if (id) adopted.set(id, sheet);
+      }
+      const target = sheet;
+      if (!document.adoptedStyleSheets.includes(target)) {
+        document.adoptedStyleSheets = [...document.adoptedStyleSheets, target];
+      }
+      return {
+        remove() {
+          document.adoptedStyleSheets = document.adoptedStyleSheets.filter((s) => s !== target);
+          if (id) adopted.delete(id);
+        }
+      };
+    } catch {
+      return void 0;
+    }
+  }
   function addStyle(css, id) {
+    var _a;
     const existing = id ? document.getElementById(id) : null;
-    if (existing instanceof HTMLStyleElement) {
+    if (existing instanceof HTMLStyleElement && isApplied(existing)) {
       return existing;
     }
-    let style;
+    if (id && adopted.has(id) && ((_a = document.adoptedStyleSheets) == null ? void 0 : _a.includes(adopted.get(id)))) {
+      return adoptSheet(css, id);
+    }
+    existing == null ? void 0 : existing.remove();
+    let managed;
     try {
-      style = GM_addStyle(css);
+      managed = GM_addStyle(css);
     } catch {
-      style = void 0;
+      managed = void 0;
     }
-    if (!(style == null ? void 0 : style.isConnected)) {
-      style = document.createElement("style");
-      style.textContent = css;
-      (document.head ?? document.documentElement).append(style);
+    if (managed && isApplied(managed)) {
+      if (id) managed.id = id;
+      return managed;
     }
-    if (id) {
-      style.id = id;
+    managed == null ? void 0 : managed.remove();
+    const plain = document.createElement("style");
+    plain.textContent = css;
+    (document.head ?? document.documentElement).append(plain);
+    if (isApplied(plain)) {
+      if (id) plain.id = id;
+      return plain;
     }
-    return style;
+    plain.remove();
+    return adoptSheet(css, id) ?? plain;
   }
   const SETTINGS_STYLE_ID = "lodestone-settings-styles";
   const FIELD = ":is(input:not([type='checkbox'], [type='radio'], [type='color'], [type='file'], [type='range']), select, textarea)";
