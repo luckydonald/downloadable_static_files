@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.10.06.0000.22.39.24.0000.3df70
+// @version      2026.10.13.0000.18.41.40.0000.c1a44
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -7846,7 +7846,7 @@
     onValueChanged(STORAGE_KEY, (next) => store.$patch(normalizeButtonGroupsState(next)));
   }
   const _hoisted_1$l = ["aria-labelledby"];
-  const _hoisted_2$h = { class: "lodestone-settings-section__intro" };
+  const _hoisted_2$i = { class: "lodestone-settings-section__intro" };
   const _hoisted_3$g = ["id"];
   const _hoisted_4$f = {
     key: 0,
@@ -7866,7 +7866,7 @@
           class: "lodestone-settings-section",
           "aria-labelledby": unref(headingId)
         }, [
-          createBaseVNode("header", _hoisted_2$h, [
+          createBaseVNode("header", _hoisted_2$i, [
             createBaseVNode("h3", { id: unref(headingId) }, toDisplayString(__props.title), 9, _hoisted_3$g),
             __props.description ? (openBlock(), createElementBlock("p", _hoisted_4$f, toDisplayString(__props.description), 1)) : createCommentVNode("", true)
           ]),
@@ -7878,7 +7878,7 @@
     }
   });
   const _hoisted_1$k = { class: "lodestone-toggle-row" };
-  const _hoisted_2$g = ["aria-describedby"];
+  const _hoisted_2$h = ["aria-describedby"];
   const _hoisted_3$f = { class: "lodestone-toggle-row__text" };
   const _hoisted_4$e = ["id"];
   const _sfc_main$u = /* @__PURE__ */ defineComponent({
@@ -7899,7 +7899,7 @@
             "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => model.value = $event),
             type: "checkbox",
             "aria-describedby": __props.hint ? unref(hintId) : void 0
-          }, null, 8, _hoisted_2$g), [
+          }, null, 8, _hoisted_2$h), [
             [vModelCheckbox, model.value]
           ]),
           createBaseVNode("span", _hoisted_3$f, [
@@ -8140,7 +8140,7 @@
     return LINK_CATEGORIES.has(def2.category);
   }
   const _hoisted_1$i = { class: "lodestone-hide-group" };
-  const _hoisted_2$f = ["checked", "onChange"];
+  const _hoisted_2$g = ["checked", "onChange"];
   const _hoisted_3$e = {
     key: 0,
     class: "lodestone-hide-row__new-tab"
@@ -8197,7 +8197,7 @@
                           type: "checkbox",
                           checked: isHidden(button.id),
                           onChange: ($event) => toggle(button.id, $event.target.checked)
-                        }, null, 40, _hoisted_2$f),
+                        }, null, 40, _hoisted_2$g),
                         createBaseVNode("i", {
                           class: normalizeClass(["fa", button.icon]),
                           style: normalizeStyle({ color: button.color }),
@@ -8294,7 +8294,7 @@
     }
   });
   const _hoisted_1$h = { class: "lodestone-icon-picker" };
-  const _hoisted_2$e = ["value"];
+  const _hoisted_2$f = ["value"];
   const _hoisted_3$d = ["value"];
   const CUSTOM_VALUE = "__custom__";
   const _sfc_main$o = /* @__PURE__ */ defineComponent({
@@ -8365,7 +8365,7 @@
               }, toDisplayString(icon), 9, _hoisted_3$d);
             }), 64)),
             createBaseVNode("option", { value: CUSTOM_VALUE }, "Other (custom)...")
-          ], 40, _hoisted_2$e),
+          ], 40, _hoisted_2$f),
           isCustom.value ? withDirectives((openBlock(), createElementBlock("input", {
             key: 0,
             "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => customValue.value = $event),
@@ -8379,7 +8379,7 @@
     }
   });
   const _hoisted_1$g = ["aria-labelledby"];
-  const _hoisted_2$d = {
+  const _hoisted_2$e = {
     key: 0,
     class: "lodestone-dialog__panel"
   };
@@ -8458,7 +8458,7 @@
           onClose,
           onClick: onBackdropClick
         }, [
-          __props.open ? (openBlock(), createElementBlock("div", _hoisted_2$d, [
+          __props.open ? (openBlock(), createElementBlock("div", _hoisted_2$e, [
             createBaseVNode("header", _hoisted_3$c, [
               createBaseVNode("h3", { id: unref(titleId) }, toDisplayString(__props.title), 9, _hoisted_4$c),
               createBaseVNode("button", {
@@ -8480,7 +8480,7 @@
     }
   });
   const _hoisted_1$f = { class: "lodestone-stepflow" };
-  const _hoisted_2$c = {
+  const _hoisted_2$d = {
     class: "lodestone-stepflow__header",
     "aria-label": "Progress"
   };
@@ -8513,7 +8513,7 @@
       return (_ctx, _cache) => {
         var _a, _b;
         return openBlock(), createElementBlock("div", _hoisted_1$f, [
-          createBaseVNode("ol", _hoisted_2$c, [
+          createBaseVNode("ol", _hoisted_2$d, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(__props.steps, (item, index) => {
               return openBlock(), createElementBlock("li", {
                 key: item.id,
@@ -8661,7 +8661,7 @@
     }
   }
   const _hoisted_1$e = { class: "lodestone-telegram-format-caption" };
-  const _hoisted_2$b = ["value"];
+  const _hoisted_2$c = ["value"];
   const _hoisted_3$a = ["value"];
   const _hoisted_4$a = {
     key: 0,
@@ -8694,7 +8694,7 @@
               createBaseVNode("option", { value: "photo" }, "Photo", -1),
               createBaseVNode("option", { value: "document" }, "Document", -1),
               createBaseVNode("option", { value: "both" }, "Both (photo as reply to the document)", -1)
-            ])], 40, _hoisted_2$b)
+            ])], 40, _hoisted_2$c)
           ]),
           createBaseVNode("label", null, [
             _cache[5] || (_cache[5] = createTextVNode(" Caption ", -1)),
@@ -8711,7 +8711,7 @@
     }
   });
   const _hoisted_1$d = { class: "lodestone-json-viewer" };
-  const _hoisted_2$a = {
+  const _hoisted_2$b = {
     key: 0,
     open: ""
   };
@@ -8772,7 +8772,7 @@
         return openBlock(), createElementBlock("ul", _hoisted_1$d, [
           (openBlock(true), createElementBlock(Fragment, null, renderList(entries(), ([key, value]) => {
             return openBlock(), createElementBlock("li", { key }, [
-              isExpandable(value) ? (openBlock(), createElementBlock("details", _hoisted_2$a, [
+              isExpandable(value) ? (openBlock(), createElementBlock("details", _hoisted_2$b, [
                 createBaseVNode("summary", { onClick: onSummaryClick }, [
                   createBaseVNode("button", {
                     type: "button",
@@ -8800,7 +8800,7 @@
     }
   });
   const _hoisted_1$c = { class: "lodestone-caption-editor" };
-  const _hoisted_2$9 = ["value"];
+  const _hoisted_2$a = ["value"];
   const _hoisted_3$8 = { class: "lodestone-caption-editor__preview lodestone-preview-blockquote" };
   const _hoisted_4$8 = { class: "lodestone-caption-editor__variables" };
   const _hoisted_5$8 = { class: "lodestone-caption-editor__json-root" };
@@ -8841,7 +8841,7 @@
             class: "lodestone-caption-editor__textarea",
             rows: "4",
             onInput: _cache[0] || (_cache[0] = ($event) => emit2("update:modelValue", $event.target.value))
-          }, null, 40, _hoisted_2$9),
+          }, null, 40, _hoisted_2$a),
           createBaseVNode("blockquote", _hoisted_3$8, toDisplayString(preview.value), 1),
           createBaseVNode("table", _hoisted_4$8, [
             createBaseVNode("tbody", null, [
@@ -8921,7 +8921,7 @@
     return body.image;
   }
   const _hoisted_1$b = { class: "lodestone-telegram-manager" };
-  const _hoisted_2$8 = { class: "lodestone-inline-group" };
+  const _hoisted_2$9 = { class: "lodestone-inline-group" };
   const _hoisted_3$7 = { class: "lodestone-inline-group" };
   const _hoisted_4$7 = ["type"];
   const _hoisted_5$7 = ["aria-pressed"];
@@ -8931,7 +8931,7 @@
     class: "lodestone-settings-subfield"
   };
   const _hoisted_8$6 = { class: "lodestone-telegram-manager__preview" };
-  const _hoisted_9$4 = {
+  const _hoisted_9$5 = {
     key: 0,
     class: "lodestone-hint"
   };
@@ -9045,7 +9045,7 @@
                   stepId === "destination" ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
                     createBaseVNode("label", null, [
                       _cache[13] || (_cache[13] = createTextVNode(" API URL ", -1)),
-                      createBaseVNode("span", _hoisted_2$8, [
+                      createBaseVNode("span", _hoisted_2$9, [
                         withDirectives(createBaseVNode("input", {
                           "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => draft.apiUrl = $event),
                           type: "text"
@@ -9182,7 +9182,7 @@
             _: 1
           }, 8, ["open", "title"]),
           _cache[23] || (_cache[23] = createBaseVNode("h4", null, "Configured Telegram buttons", -1)),
-          unref(store).buttons.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_9$4, "No Telegram buttons yet.")) : createCommentVNode("", true),
+          unref(store).buttons.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_9$5, "No Telegram buttons yet.")) : createCommentVNode("", true),
           createBaseVNode("ul", _hoisted_10$4, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).buttons, (button) => {
               return openBlock(), createElementBlock("li", {
@@ -9287,7 +9287,7 @@
     }));
   }
   const _hoisted_1$a = { class: "lodestone-gallery-chooser" };
-  const _hoisted_2$7 = { key: 0 };
+  const _hoisted_2$8 = { key: 0 };
   const _hoisted_3$6 = ["value"];
   const _hoisted_4$6 = {
     value: "",
@@ -9320,7 +9320,7 @@
       }
       return (_ctx, _cache) => {
         return openBlock(), createElementBlock("div", _hoisted_1$a, [
-          !manualEntry.value ? (openBlock(), createElementBlock("label", _hoisted_2$7, [
+          !manualEntry.value ? (openBlock(), createElementBlock("label", _hoisted_2$8, [
             _cache[1] || (_cache[1] = createTextVNode(" Gallery ", -1)),
             createBaseVNode("select", {
               value: __props.modelValue,
@@ -9369,7 +9369,7 @@
     }
   });
   const _hoisted_1$9 = { class: "lodestone-quick-button-manager" };
-  const _hoisted_2$6 = {
+  const _hoisted_2$7 = {
     key: 0,
     class: "lodestone-settings-subfield"
   };
@@ -9382,7 +9382,7 @@
   const _hoisted_6$5 = ["href"];
   const _hoisted_7$4 = { class: "lodestone-manager-list__actions" };
   const _hoisted_8$4 = ["onClick"];
-  const _hoisted_9$3 = ["onClick"];
+  const _hoisted_9$4 = ["onClick"];
   const _hoisted_10$3 = ["onClick"];
   const _hoisted_11$3 = { class: "lodestone-quick-button-manager__note" };
   const _hoisted_12$3 = { class: "lodestone-manager-list" };
@@ -9521,7 +9521,7 @@
                       ]),
                       _cache[13] || (_cache[13] = createTextVNode(" Sync colors (use the same color in dark mode) ", -1))
                     ]),
-                    !draft.syncColors ? (openBlock(), createElementBlock("label", _hoisted_2$6, [
+                    !draft.syncColors ? (openBlock(), createElementBlock("label", _hoisted_2$7, [
                       _cache[14] || (_cache[14] = createTextVNode(" Dark mode color ", -1)),
                       withDirectives(createBaseVNode("input", {
                         "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => draft.darkColor = $event),
@@ -9562,7 +9562,7 @@
                   createBaseVNode("button", {
                     type: "button",
                     onClick: ($event) => unref(store).duplicate(button.id)
-                  }, "Duplicate", 8, _hoisted_9$3),
+                  }, "Duplicate", 8, _hoisted_9$4),
                   createBaseVNode("button", {
                     type: "button",
                     title: "Hides it on this booru; it moves to Other boorus unless no other booru uses it",
@@ -9704,14 +9704,14 @@
     return catalog.find((entry) => Array.from(document.querySelectorAll(entry.selector)).includes(el));
   }
   const _hoisted_1$8 = { class: "lodestone-condition-node" };
-  const _hoisted_2$5 = ["value"];
+  const _hoisted_2$6 = ["value"];
   const _hoisted_3$4 = ["checked"];
   const _hoisted_4$4 = ["checked"];
   const _hoisted_5$4 = ["value"];
   const _hoisted_6$4 = ["value"];
   const _hoisted_7$3 = ["value"];
   const _hoisted_8$3 = ["value"];
-  const _hoisted_9$2 = ["value"];
+  const _hoisted_9$3 = ["value"];
   const _hoisted_10$2 = { title: "Only when this button is the one that was just toggled, not merely in that state" };
   const _hoisted_11$2 = ["checked"];
   const _hoisted_12$2 = { class: "lodestone-condition-node__children" };
@@ -9790,7 +9790,7 @@
             createBaseVNode("option", { value: "and" }, "All of (AND)", -1),
             createBaseVNode("option", { value: "or" }, "Any of (OR)", -1),
             createBaseVNode("option", { value: "not" }, "Not (NOT)", -1)
-          ])], 40, _hoisted_2$5),
+          ])], 40, _hoisted_2$6),
           __props.modelValue.type === "leaf" ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
             createBaseVNode("label", null, [
               createBaseVNode("input", {
@@ -9848,7 +9848,7 @@
               createBaseVNode("option", { value: "on" }, "is on", -1),
               createBaseVNode("option", { value: "off" }, "is off", -1),
               createBaseVNode("option", { value: "either" }, "exists (either state)", -1)
-            ])], 40, _hoisted_9$2),
+            ])], 40, _hoisted_9$3),
             createBaseVNode("label", _hoisted_10$2, [
               createBaseVNode("input", {
                 type: "checkbox",
@@ -9890,7 +9890,7 @@
     }
   });
   const _hoisted_1$7 = { class: "lodestone-button-effects-manager" };
-  const _hoisted_2$4 = { key: 1 };
+  const _hoisted_2$5 = { key: 1 };
   const _hoisted_3$3 = ["value"];
   const _hoisted_4$3 = ["value"];
   const _hoisted_5$3 = ["value"];
@@ -9900,7 +9900,7 @@
     class: "lodestone-hint"
   };
   const _hoisted_8$2 = { class: "lodestone-manager-list" };
-  const _hoisted_9$1 = ["checked", "onChange"];
+  const _hoisted_9$2 = ["checked", "onChange"];
   const _hoisted_10$1 = { class: "lodestone-manager-list__target" };
   const _hoisted_11$1 = { class: "lodestone-manager-list__actions" };
   const _hoisted_12$1 = ["onClick"];
@@ -10010,7 +10010,7 @@
                         [vModelSelect, draft.timing]
                       ])
                     ])
-                  ], 64)) : stepId === "then" ? (openBlock(), createElementBlock("fieldset", _hoisted_2$4, [
+                  ], 64)) : stepId === "then" ? (openBlock(), createElementBlock("fieldset", _hoisted_2$5, [
                     _cache[12] || (_cache[12] = createBaseVNode("legend", null, "Then", -1)),
                     createBaseVNode("label", null, [
                       _cache[10] || (_cache[10] = createTextVNode(" Button ", -1)),
@@ -10073,7 +10073,7 @@
                     type: "checkbox",
                     checked: rule.enabled,
                     onChange: ($event) => unref(store).update(rule.id, { enabled: $event.target.checked })
-                  }, null, 40, _hoisted_9$1),
+                  }, null, 40, _hoisted_9$2),
                   createTextVNode(" " + toDisplayString(rule.label), 1)
                 ]),
                 createBaseVNode("span", _hoisted_10$1, [
@@ -10192,7 +10192,7 @@
     return rules.join("\n");
   }
   const _hoisted_1$5 = { class: "lodestone-button-groups-manager" };
-  const _hoisted_2$3 = ["checked", "onChange"];
+  const _hoisted_2$4 = ["checked", "onChange"];
   const _hoisted_3$2 = ["onUpdate:modelValue"];
   const _hoisted_4$2 = ["onClick"];
   const _hoisted_5$2 = ["onUpdate:modelValue"];
@@ -10202,7 +10202,7 @@
     key: 0,
     class: "lodestone-hint"
   };
-  const _hoisted_9 = { class: "lodestone-manager-list" };
+  const _hoisted_9$1 = { class: "lodestone-manager-list" };
   const _hoisted_10 = { class: "lodestone-manager-list__actions" };
   const _hoisted_11 = ["onClick"];
   const _hoisted_12 = ["onClick"];
@@ -10340,7 +10340,7 @@
                             type: "checkbox",
                             checked: isSelected(entry.id),
                             onChange: ($event) => setSelected2(entry.id, $event.target.checked)
-                          }, null, 40, _hoisted_2$3),
+                          }, null, 40, _hoisted_2$4),
                           createVNode(_sfc_main$l, {
                             icon: entry.icon,
                             label: unref(displayLabel)(entry),
@@ -10432,7 +10432,7 @@
           }, 8, ["open", "title"]),
           _cache[11] || (_cache[11] = createBaseVNode("h4", null, "Configured button groups", -1)),
           unref(store).groups.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_8$1, "No button groups yet.")) : createCommentVNode("", true),
-          createBaseVNode("ul", _hoisted_9, [
+          createBaseVNode("ul", _hoisted_9$1, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).groups, (group) => {
               return openBlock(), createElementBlock("li", {
                 key: group.id,
@@ -10472,10 +10472,33 @@
       };
     }
   });
+  const APP_VERSION = "2026.10.13.0000.18.41.40.0000.c1a44";
+  function numericSegments(version2) {
+    const segments = [];
+    for (const part of version2.split(".")) {
+      if (!/^\d+$/.test(part)) {
+        break;
+      }
+      segments.push(Number(part));
+    }
+    return segments;
+  }
+  function compareVersions(a, b) {
+    const left = numericSegments(a);
+    const right = numericSegments(b);
+    for (let i = 0; i < Math.max(left.length, right.length); i++) {
+      const difference = (left[i] ?? 0) - (right[i] ?? 0);
+      if (difference !== 0) {
+        return difference < 0 ? -1 : 1;
+      }
+    }
+    return 0;
+  }
   const SETTINGS_BACKUP_VERSION = 1;
   function exportAllSettings() {
     return {
       version: SETTINGS_BACKUP_VERSION,
+      appVersion: APP_VERSION,
       settings: { ...useSettingsStore().$state },
       telegramButtons: { ...useTelegramButtonsStore().$state },
       galleryQuickButtons: { ...useGalleryQuickButtonsStore().$state },
@@ -10485,6 +10508,9 @@
   }
   function isRecord(value) {
     return typeof value === "object" && value !== null;
+  }
+  function readBackupAppVersion(data) {
+    return isRecord(data) && typeof data.appVersion === "string" ? data.appVersion : null;
   }
   function importAllSettings(data) {
     if (!isRecord(data) || typeof data.version !== "number") {
@@ -10517,18 +10543,19 @@
     );
   }
   const _hoisted_1$4 = { class: "lodestone-subsection" };
-  const _hoisted_2$2 = { class: "lodestone-field--stacked" };
+  const _hoisted_2$3 = { class: "lodestone-field--stacked" };
   const _hoisted_3$1 = ["value"];
-  const _hoisted_4$1 = { class: "lodestone-subsection" };
-  const _hoisted_5$1 = { class: "lodestone-field--stacked" };
-  const _hoisted_6$1 = { class: "lodestone-actions" };
-  const _hoisted_7 = {
-    key: 0,
+  const _hoisted_4$1 = { class: "lodestone-hint" };
+  const _hoisted_5$1 = { class: "lodestone-subsection" };
+  const _hoisted_6$1 = { class: "lodestone-field--stacked" };
+  const _hoisted_7 = { class: "lodestone-actions" };
+  const _hoisted_8 = {
+    key: 1,
     class: "lodestone-import-export__error",
     role: "alert"
   };
-  const _hoisted_8 = {
-    key: 1,
+  const _hoisted_9 = {
+    key: 2,
     class: "lodestone-import-export__success",
     role: "status"
   };
@@ -10539,6 +10566,25 @@
       const importText = /* @__PURE__ */ ref("");
       const importError = /* @__PURE__ */ ref("");
       const importSuccess = /* @__PURE__ */ ref(false);
+      const importVersionNotice = computed(() => {
+        let parsed;
+        try {
+          parsed = JSON.parse(importText.value);
+        } catch {
+          return null;
+        }
+        const fileVersion = readBackupAppVersion(parsed);
+        if (fileVersion === null) {
+          return { kind: "unknown", text: "Exported by an unknown, older version of the userscript." };
+        }
+        if (compareVersions(fileVersion, APP_VERSION) < 0) {
+          return {
+            kind: "older",
+            text: `Exported by an older version (${fileVersion}, you have ${APP_VERSION}). Newer settings will be reset to their defaults.`
+          };
+        }
+        return { kind: "ok", text: `Exported by version ${fileVersion} (you have ${APP_VERSION}).` };
+      });
       const fileInputRef = /* @__PURE__ */ ref(null);
       async function copyExport() {
         await navigator.clipboard.writeText(exportJson.value);
@@ -10590,7 +10636,7 @@
           default: withCtx(() => [
             createBaseVNode("div", _hoisted_1$4, [
               _cache[2] || (_cache[2] = createBaseVNode("h4", null, "Export", -1)),
-              createBaseVNode("label", _hoisted_2$2, [
+              createBaseVNode("label", _hoisted_2$3, [
                 _cache[1] || (_cache[1] = createTextVNode(" Settings JSON ", -1)),
                 createBaseVNode("textarea", {
                   readonly: "",
@@ -10598,6 +10644,7 @@
                   value: exportJson.value
                 }, null, 8, _hoisted_3$1)
               ]),
+              createBaseVNode("p", _hoisted_4$1, "Written by version " + toDisplayString(unref(APP_VERSION)) + ".", 1),
               createBaseVNode("div", { class: "lodestone-actions" }, [
                 createBaseVNode("button", {
                   type: "button",
@@ -10609,9 +10656,9 @@
                 }, "Download as file")
               ])
             ]),
-            createBaseVNode("div", _hoisted_4$1, [
+            createBaseVNode("div", _hoisted_5$1, [
               _cache[4] || (_cache[4] = createBaseVNode("h4", null, "Import", -1)),
-              createBaseVNode("label", _hoisted_5$1, [
+              createBaseVNode("label", _hoisted_6$1, [
                 _cache[3] || (_cache[3] = createTextVNode(" Paste JSON ", -1)),
                 withDirectives(createBaseVNode("textarea", {
                   "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => importText.value = $event),
@@ -10621,7 +10668,12 @@
                   [vModelText, importText.value]
                 ])
               ]),
-              createBaseVNode("div", _hoisted_6$1, [
+              importVersionNotice.value ? (openBlock(), createElementBlock("p", {
+                key: 0,
+                class: normalizeClass(["lodestone-hint", `lodestone-import-export__version--${importVersionNotice.value.kind}`]),
+                role: "status"
+              }, toDisplayString(importVersionNotice.value.text), 3)) : createCommentVNode("", true),
+              createBaseVNode("div", _hoisted_7, [
                 createBaseVNode("input", {
                   ref_key: "fileInputRef",
                   ref: fileInputRef,
@@ -10635,8 +10687,8 @@
                   onClick: runImport
                 }, "Import")
               ]),
-              importError.value ? (openBlock(), createElementBlock("p", _hoisted_7, toDisplayString(importError.value), 1)) : createCommentVNode("", true),
-              importSuccess.value ? (openBlock(), createElementBlock("p", _hoisted_8, "Settings imported.")) : createCommentVNode("", true)
+              importError.value ? (openBlock(), createElementBlock("p", _hoisted_8, toDisplayString(importError.value), 1)) : createCommentVNode("", true),
+              importSuccess.value ? (openBlock(), createElementBlock("p", _hoisted_9, "Settings imported.")) : createCommentVNode("", true)
             ])
           ]),
           _: 1
@@ -10645,6 +10697,7 @@
     }
   });
   const _hoisted_1$3 = { class: "lodestone-settings-tab" };
+  const _hoisted_2$2 = { class: "lodestone-hint lodestone-settings-tab__version" };
   const _sfc_main$3 = /* @__PURE__ */ defineComponent({
     __name: "SettingsTab",
     setup(__props) {
@@ -10664,7 +10717,8 @@
           createVNode(_sfc_main$5),
           createVNode(_sfc_main$8),
           createVNode(_sfc_main$t),
-          createVNode(_sfc_main$4)
+          createVNode(_sfc_main$4),
+          createBaseVNode("p", _hoisted_2$2, "Userscript version " + toDisplayString(unref(APP_VERSION)), 1)
         ]);
       };
     }
@@ -10992,6 +11046,8 @@ ${event}
 
     /* ---- Feedback ---- */
     .lodestone-import-export__error { color: var(--lodestone-danger); font-weight: 600; margin: var(--lodestone-space-2) 0 0; }
+    .lodestone-import-export__version--ok { color: var(--lodestone-ok); }
+    .lodestone-import-export__version--older { color: #d98a1f; font-weight: 600; }
     .lodestone-import-export__success { color: var(--lodestone-ok); font-weight: 600; margin: var(--lodestone-space-2) 0 0; }
 
     /* ---- Hide-buttons checklist: chip-like rows in as many columns as fit ---- */
@@ -11668,7 +11724,7 @@ ${striped}`;
   const _hoisted_1$1 = { class: "lodestone-gallery-grid__title-bar" };
   const _hoisted_2$1 = ["title", "onClick"];
   const _hoisted_3 = { class: "lodestone-gallery-grid__title" };
-  const _hoisted_4 = ["onClick"];
+  const _hoisted_4 = ["onClick", "onDblclick"];
   const _hoisted_5 = ["src"];
   const _hoisted_6 = {
     key: 1,
@@ -11682,10 +11738,16 @@ ${striped}`;
       leftAlign: { type: Boolean },
       pinnedIds: {}
     },
-    emits: ["toggleMembership", "togglePin"],
+    emits: ["toggleMembership", "togglePin", "toggleAndClose"],
     setup(__props, { emit: __emit }) {
       const props = __props;
       const emit2 = __emit;
+      function onThumbClick(event, item) {
+        if (event.detail >= 2) {
+          return;
+        }
+        emit2("toggleMembership", item);
+      }
       function isPinned(item) {
         return props.pinnedIds.includes(item.id);
       }
@@ -11712,14 +11774,15 @@ ${striped}`;
               createBaseVNode("button", {
                 type: "button",
                 class: normalizeClass(["lodestone-gallery-grid__thumb-button", { "lodestone-gallery-grid__item--active": item.active }]),
-                onClick: ($event) => emit2("toggleMembership", item)
+                onClick: ($event) => onThumbClick($event, item),
+                onDblclick: ($event) => emit2("toggleAndClose", item)
               }, [
                 __props.showIcons && item.thumbnailUrl ? (openBlock(), createElementBlock("img", {
                   key: 0,
                   src: item.thumbnailUrl,
                   class: "lodestone-gallery-grid__thumb"
                 }, null, 8, _hoisted_5)) : __props.showIcons ? (openBlock(), createElementBlock("i", _hoisted_6)) : createCommentVNode("", true)
-              ], 10, _hoisted_4)
+              ], 42, _hoisted_4)
             ]);
           }), 128))
         ], 2);
@@ -11765,7 +11828,8 @@ ${striped}`;
         } catch {
         }
       });
-      async function toggleMembership(item) {
+      let pendingToggle = null;
+      async function runToggle(item) {
         loading.value = true;
         try {
           const result = await toggleGalleryMembership(Number(item.id), props.imageId, item.active ? "remove" : "add");
@@ -11775,8 +11839,17 @@ ${striped}`;
               target.active = !target.active;
             }
           }
+          return result.ok;
         } finally {
           loading.value = false;
+        }
+      }
+      function toggleMembership(item) {
+        pendingToggle = runToggle(item);
+      }
+      async function toggleAndClose() {
+        if (await pendingToggle) {
+          emit2("close");
         }
       }
       function togglePin(item) {
@@ -11812,6 +11885,7 @@ ${striped}`;
               "pinned-ids": unref(store).pinnedGalleryIds,
               "show-icons": unref(store).galleryShowIcons,
               onToggleMembership: toggleMembership,
+              onToggleAndClose: toggleAndClose,
               onTogglePin: togglePin
             }, null, 8, ["items", "left-align", "pinned-ids", "show-icons"])
           ], 2),
@@ -11993,16 +12067,32 @@ ${striped}`;
     }
   }
   let injected = false;
+  function readableOn(color) {
+    var _a;
+    const hex = (_a = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(color.trim())) == null ? void 0 : _a[1];
+    if (!hex) {
+      return "#fff";
+    }
+    const full = hex.length === 3 ? [...hex].map((c) => c + c).join("") : hex;
+    const [r, g, b] = [0, 2, 4].map((i) => {
+      const channel = parseInt(full.slice(i, i + 2), 16) / 255;
+      return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.179 ? "#000" : "#fff";
+  }
   function ensureGalleryQuickButtonStyles() {
     if (injected) {
       return;
     }
     injected = true;
     addStyle(`
+    .lodestone-gallery-quick-button {
+      color: var(--lodestone-qb-color);
+    }
     .lodestone-gallery-quick-button[data-active="true"] {
-      outline: 2px solid #5bc0de;
       border-radius: 4px;
-      background: rgba(91, 192, 222, 0.2);
+      background: var(--lodestone-qb-color);
+      color: var(--lodestone-qb-on-color);
     }
   `);
   }
@@ -12012,7 +12102,8 @@ ${striped}`;
     el.href = "#";
     el.className = "lodestone-gallery-quick-button";
     el.title = config.label;
-    el.style.color = config.color;
+    el.style.setProperty("--lodestone-qb-color", config.color);
+    el.style.setProperty("--lodestone-qb-on-color", readableOn(config.color));
     el.dataset.galleryQuickButtonId = config.id;
     el.dataset.active = isActive ? "true" : "false";
     el.innerHTML = `<i class="fa ${config.icon}"></i>`;
