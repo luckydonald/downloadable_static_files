@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.10.15.0000.23.07.18.0000.6c2d8
+// @version      2026.10.17.0000.13.03.07.0000.57763
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -7449,13 +7449,11 @@
     { id: "faves", label: "Faved", token: "my:faves", defaultOn: true, untested: true, testUrl: "/search?q=my:faves" },
     { id: "downvotes", label: "Downvoted", token: "my:downvotes", defaultOn: true, untested: true, testUrl: "/search?q=my:downvotes" },
     { id: "hidden", label: "Hidden", token: "my:hidden", defaultOn: true, untested: true, testUrl: "/search?q=my:hidden" },
-    // `gallery_id` is a documented literal field and literal fields take `*` wildcards, but no page shows it for galleries.
-    { id: "galleries", label: "In any gallery", token: "gallery_id:*", defaultOn: true, untested: true, testUrl: "/search?q=gallery_id:*" },
-    { id: "quickGalleries", label: "In one of your gallery quick buttons", defaultOn: false },
     { id: "subs", label: "Subscribed (not officially implemented yet)", token: "my:subs", defaultOn: false, untested: true, testUrl: "/images?q=my:subs" }
   ];
+  const DEFAULT_FILTER_IDS = EXCLUDE_FILTERS.filter((filter) => filter.defaultOn).map((filter) => filter.id);
   function createExcludeQueryDefaults() {
-    return { commaPrefix: true, userPrefix: "", filters: null, userSuffix: "" };
+    return { commaPrefix: true, userPrefix: "", filters: [...DEFAULT_FILTER_IDS], galleries: null, userSuffix: "" };
   }
   function normalizeExcludeQuery(raw) {
     const defaults = createExcludeQueryDefaults();
@@ -7464,21 +7462,26 @@
     }
     const record = raw;
     const known = new Set(EXCLUDE_FILTERS.map((filter) => filter.id));
+    const strings = (value) => [...new Set(value.filter((entry) => typeof entry === "string"))];
+    const storedFilters = Array.isArray(record.filters) ? strings(record.filters) : null;
     return {
       commaPrefix: typeof record.commaPrefix === "boolean" ? record.commaPrefix : defaults.commaPrefix,
       userPrefix: typeof record.userPrefix === "string" ? record.userPrefix : "",
-      filters: Array.isArray(record.filters) ? [...new Set(record.filters.filter((id) => typeof id === "string" && known.has(id)))] : null,
+      // `null` was "all filters"; the wildcard `galleries` and `quickGalleries` ids became the galleries selection.
+      filters: storedFilters === null ? defaults.filters : storedFilters.filter((id) => known.has(id)),
+      galleries: Array.isArray(record.galleries) ? strings(record.galleries) : storedFilters !== null && !storedFilters.some((id) => id === "galleries" || id === "quickGalleries") && !("galleries" in record) ? [] : null,
       userSuffix: typeof record.userSuffix === "string" ? record.userSuffix : ""
     };
   }
-  function activeFilterIds(settings) {
-    return settings.filters ?? EXCLUDE_FILTERS.filter((filter) => filter.defaultOn).map((filter) => filter.id);
+  function activeGalleryIds(settings, quickGalleries) {
+    return quickGalleries.filter((button) => button.galleryId !== "" && (settings.galleries === null || settings.galleries.includes(button.id))).map((button) => button.galleryId);
   }
-  function buildExcludeQuery(settings, quickGalleryIds = []) {
-    const active = new Set(activeFilterIds(settings));
-    const terms = EXCLUDE_FILTERS.filter((filter) => active.has(filter.id)).flatMap(
-      (filter) => filter.token ? [`-${filter.token}`] : quickGalleryIds.filter((id) => id !== "").map((id) => `-gallery_id:${id}`)
-    );
+  function buildExcludeQuery(settings, quickGalleries = []) {
+    const active = new Set(settings.filters);
+    const terms = [
+      ...EXCLUDE_FILTERS.filter((filter) => active.has(filter.id)).map((filter) => `-${filter.token}`),
+      ...activeGalleryIds(settings, quickGalleries).map((id) => `-gallery_id:${id}`)
+    ];
     const parts = [settings.userPrefix.trim(), ...terms, settings.userSuffix.trim()].filter((part) => part !== "");
     const query = parts.join(", ");
     return settings.commaPrefix && query !== "" ? `, ${query}` : query;
@@ -7981,7 +7984,7 @@
     store.$subscribe(() => setValue(STORAGE_KEY, store.$state), { flush: "sync" });
     onValueChanged(STORAGE_KEY, (next) => store.$patch(normalizeButtonGroupsState(next)));
   }
-  const APP_VERSION = "2026.10.15.0000.23.07.18.0000.6c2d8";
+  const APP_VERSION = "2026.10.17.0000.13.03.07.0000.57763";
   function numericSegments(version2) {
     const segments = [];
     for (const part of version2.split(".")) {
@@ -8398,7 +8401,7 @@
     key: 1,
     class: "lodestone-hide-row__new-tab"
   };
-  const _hoisted_6$d = ["checked", "aria-label", "onChange"];
+  const _hoisted_6$e = ["checked", "aria-label", "onChange"];
   const _sfc_main$u = /* @__PURE__ */ defineComponent({
     __name: "HideButtonsSection",
     setup(__props) {
@@ -8479,7 +8482,7 @@
                           checked: isIconOnly(button.id),
                           "aria-label": `Show only the icon of ${button.label}`,
                           onChange: ($event) => setIconOnly(button.id, $event.target.checked)
-                        }, null, 40, _hoisted_6$d),
+                        }, null, 40, _hoisted_6$e),
                         _cache[1] || (_cache[1] = createTextVNode(" icon only ", -1))
                       ])) : createCommentVNode("", true)
                     ]);
@@ -8654,7 +8657,7 @@
   const _hoisted_3$g = { class: "lodestone-dialog__header" };
   const _hoisted_4$g = ["id"];
   const _hoisted_5$e = { class: "lodestone-dialog__body" };
-  const _hoisted_6$c = { class: "lodestone-dialog__footer" };
+  const _hoisted_6$d = { class: "lodestone-dialog__footer" };
   const _sfc_main$r = /* @__PURE__ */ defineComponent({
     __name: "ModalDialog",
     props: {
@@ -8739,7 +8742,7 @@
             createBaseVNode("div", _hoisted_5$e, [
               renderSlot(_ctx.$slots, "default")
             ]),
-            createBaseVNode("footer", _hoisted_6$c, [
+            createBaseVNode("footer", _hoisted_6$d, [
               renderSlot(_ctx.$slots, "footer")
             ])
           ])) : createCommentVNode("", true)
@@ -8755,9 +8758,9 @@
   const _hoisted_3$f = ["aria-current"];
   const _hoisted_4$f = { class: "lodestone-hint" };
   const _hoisted_5$d = { class: "lodestone-stepflow__body" };
-  const _hoisted_6$b = { class: "lodestone-stepflow__actions" };
-  const _hoisted_7$a = ["disabled"];
-  const _hoisted_8$8 = ["disabled"];
+  const _hoisted_6$c = { class: "lodestone-stepflow__actions" };
+  const _hoisted_7$b = ["disabled"];
+  const _hoisted_8$9 = ["disabled"];
   const _sfc_main$q = /* @__PURE__ */ defineComponent({
     __name: "StepFlow",
     props: /* @__PURE__ */ mergeModels({
@@ -8796,7 +8799,7 @@
               step: (_b = step.value) == null ? void 0 : _b.id
             })
           ]),
-          createBaseVNode("div", _hoisted_6$b, [
+          createBaseVNode("div", _hoisted_6$c, [
             createBaseVNode("button", {
               type: "button",
               onClick: _cache[0] || (_cache[0] = ($event) => emit2("cancel"))
@@ -8813,13 +8816,13 @@
               class: "lodestone-primary",
               disabled: !canAdvance.value,
               onClick: _cache[2] || (_cache[2] = ($event) => current.value++)
-            }, "Next", 8, _hoisted_7$a)) : (openBlock(), createElementBlock("button", {
+            }, "Next", 8, _hoisted_7$b)) : (openBlock(), createElementBlock("button", {
               key: 2,
               type: "button",
               class: "lodestone-primary",
               disabled: !canAdvance.value,
               onClick: _cache[3] || (_cache[3] = ($event) => emit2("save"))
-            }, toDisplayString(__props.saveLabel), 9, _hoisted_8$8))
+            }, toDisplayString(__props.saveLabel), 9, _hoisted_8$9))
           ])
         ]);
       };
@@ -8986,8 +8989,8 @@
   const _hoisted_3$d = ["onClick"];
   const _hoisted_4$d = { class: "lodestone-json-viewer__key" };
   const _hoisted_5$c = ["onClick"];
-  const _hoisted_6$a = { class: "lodestone-json-viewer__key" };
-  const _hoisted_7$9 = { class: "lodestone-json-viewer__value" };
+  const _hoisted_6$b = { class: "lodestone-json-viewer__key" };
+  const _hoisted_7$a = { class: "lodestone-json-viewer__value" };
   const _sfc_main$m = /* @__PURE__ */ defineComponent({
     ...{ name: "CaptionJsonViewer" },
     __name: "CaptionJsonViewer",
@@ -9058,8 +9061,8 @@
                   type: "button",
                   onClick: ($event) => emit2("insert", childPath(key))
                 }, "+", 8, _hoisted_5$c),
-                createBaseVNode("span", _hoisted_6$a, toDisplayString(key), 1),
-                createBaseVNode("span", _hoisted_7$9, toDisplayString(value), 1)
+                createBaseVNode("span", _hoisted_6$b, toDisplayString(key), 1),
+                createBaseVNode("span", _hoisted_7$a, toDisplayString(value), 1)
               ], 64))
             ]);
           }), 128))
@@ -9193,17 +9196,17 @@
   const _hoisted_3$b = { class: "lodestone-inline-group" };
   const _hoisted_4$b = ["type"];
   const _hoisted_5$a = ["aria-pressed"];
-  const _hoisted_6$9 = ["placeholder"];
-  const _hoisted_7$8 = {
+  const _hoisted_6$a = ["placeholder"];
+  const _hoisted_7$9 = {
     key: 0,
     class: "lodestone-settings-subfield"
   };
-  const _hoisted_8$7 = { class: "lodestone-telegram-manager__preview" };
-  const _hoisted_9$6 = {
+  const _hoisted_8$8 = { class: "lodestone-telegram-manager__preview" };
+  const _hoisted_9$7 = {
     key: 0,
     class: "lodestone-hint"
   };
-  const _hoisted_10$6 = { class: "lodestone-manager-list" };
+  const _hoisted_10$7 = { class: "lodestone-manager-list" };
   const _hoisted_11$6 = { class: "lodestone-manager-list__actions" };
   const _hoisted_12$6 = ["onClick"];
   const _hoisted_13$5 = ["onClick"];
@@ -9368,7 +9371,7 @@
                         "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => booruInput.value = $event),
                         placeholder: `e.g. ${unref(location2).hostname}; empty = all boorus`,
                         type: "text"
-                      }, null, 8, _hoisted_6$9), [
+                      }, null, 8, _hoisted_6$a), [
                         [
                           vModelText,
                           booruInput.value,
@@ -9412,7 +9415,7 @@
                       ]),
                       _cache[21] || (_cache[21] = createTextVNode(" Sync colors (use the same color in dark mode) ", -1))
                     ]),
-                    !draft.syncColors ? (openBlock(), createElementBlock("label", _hoisted_7$8, [
+                    !draft.syncColors ? (openBlock(), createElementBlock("label", _hoisted_7$9, [
                       _cache[22] || (_cache[22] = createTextVNode(" Dark mode color ", -1)),
                       withDirectives(createBaseVNode("input", {
                         "onUpdate:modelValue": _cache[10] || (_cache[10] = ($event) => draft.darkColor = $event),
@@ -9421,7 +9424,7 @@
                         [vModelText, draft.darkColor]
                       ])
                     ])) : createCommentVNode("", true),
-                    createBaseVNode("div", _hoisted_8$7, [
+                    createBaseVNode("div", _hoisted_8$8, [
                       createVNode(_sfc_main$o, { config: draft }, null, 8, ["config"])
                     ])
                   ], 64)) : (openBlock(), createElementBlock(Fragment, { key: 2 }, [
@@ -9450,8 +9453,8 @@
             _: 1
           }, 8, ["open", "title"]),
           _cache[23] || (_cache[23] = createBaseVNode("h4", null, "Configured Telegram buttons", -1)),
-          unref(store).buttons.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_9$6, "No Telegram buttons yet.")) : createCommentVNode("", true),
-          createBaseVNode("ul", _hoisted_10$6, [
+          unref(store).buttons.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_9$7, "No Telegram buttons yet.")) : createCommentVNode("", true),
+          createBaseVNode("ul", _hoisted_10$7, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).buttons, (button) => {
               return openBlock(), createElementBlock("li", {
                 key: button.id,
@@ -9633,9 +9636,9 @@
     disabled: ""
   };
   const _hoisted_5$9 = ["value"];
-  const _hoisted_6$8 = { key: 1 };
-  const _hoisted_7$7 = ["value"];
-  const _hoisted_8$6 = {
+  const _hoisted_6$9 = { key: 1 };
+  const _hoisted_7$8 = ["value"];
+  const _hoisted_8$7 = {
     key: 2,
     class: "lodestone-quick-button-manager__note"
   };
@@ -9673,15 +9676,15 @@
                 }, toDisplayString(gallery.title) + " (#" + toDisplayString(gallery.id) + ") ", 9, _hoisted_5$9);
               }), 128))
             ], 40, _hoisted_3$a)
-          ])) : (openBlock(), createElementBlock("label", _hoisted_6$8, [
+          ])) : (openBlock(), createElementBlock("label", _hoisted_6$9, [
             _cache[2] || (_cache[2] = createTextVNode(" Gallery id or slug ", -1)),
             createBaseVNode("input", {
               value: __props.modelValue,
               type: "text",
               onInput
-            }, null, 40, _hoisted_7$7)
+            }, null, 40, _hoisted_7$8)
           ])),
-          __props.lookupState === "error" ? (openBlock(), createElementBlock("p", _hoisted_8$6, " Couldn't look up your galleries automatically -- enter the id manually. ")) : createCommentVNode("", true),
+          __props.lookupState === "error" ? (openBlock(), createElementBlock("p", _hoisted_8$7, " Couldn't look up your galleries automatically -- enter the id manually. ")) : createCommentVNode("", true),
           createBaseVNode("button", {
             type: "button",
             class: "lodestone-quick-button-manager__toggle-entry",
@@ -9702,8 +9705,8 @@
   };
   const _hoisted_4$9 = { class: "lodestone-hint" };
   const _hoisted_5$8 = { class: "lodestone-actions" };
-  const _hoisted_6$7 = ["disabled"];
-  const _hoisted_7$6 = {
+  const _hoisted_6$8 = ["disabled"];
+  const _hoisted_7$7 = {
     key: 1,
     class: "lodestone-import-export__error",
     role: "alert"
@@ -9740,11 +9743,11 @@
                   type: "button",
                   disabled: __props.updating,
                   onClick: _cache[2] || (_cache[2] = ($event) => _ctx.$emit("update"))
-                }, toDisplayString(__props.updating ? "Updating…" : "Update gallery"), 9, _hoisted_6$7)
+                }, toDisplayString(__props.updating ? "Updating…" : "Update gallery"), 9, _hoisted_6$8)
               ])
             ], 64))
           ], 64)) : createCommentVNode("", true),
-          __props.error ? (openBlock(), createElementBlock("p", _hoisted_7$6, toDisplayString(__props.error), 1)) : createCommentVNode("", true)
+          __props.error ? (openBlock(), createElementBlock("p", _hoisted_7$7, toDisplayString(__props.error), 1)) : createCommentVNode("", true)
         ]);
       };
     }
@@ -9773,18 +9776,18 @@
   const _hoisted_3$8 = { class: "lodestone-quick-button-manager__preview" };
   const _hoisted_4$8 = { class: "lodestone-actions" };
   const _hoisted_5$7 = ["disabled"];
-  const _hoisted_6$6 = {
+  const _hoisted_6$7 = {
     key: 0,
     class: "lodestone-hint"
   };
-  const _hoisted_7$5 = {
+  const _hoisted_7$6 = {
     key: 1,
     class: "lodestone-import-export__error",
     role: "alert"
   };
-  const _hoisted_8$5 = ["maxlength"];
-  const _hoisted_9$5 = { class: "lodestone-hint" };
-  const _hoisted_10$5 = { class: "lodestone-field--stacked" };
+  const _hoisted_8$6 = ["maxlength"];
+  const _hoisted_9$6 = { class: "lodestone-hint" };
+  const _hoisted_10$6 = { class: "lodestone-field--stacked" };
   const _hoisted_11$5 = ["value", "placeholder"];
   const _hoisted_12$5 = {
     key: 2,
@@ -10059,18 +10062,18 @@
                         onClick: loadRemote
                       }, toDisplayString(remoteState.value === "loading" ? "Loading…" : remote.value ? "Reload from gallery" : "Load from gallery"), 9, _hoisted_5$7)
                     ]),
-                    numericGalleryId.value === null ? (openBlock(), createElementBlock("p", _hoisted_6$6, "Only galleries with a numeric id can be compared with the booru.")) : createCommentVNode("", true),
-                    remoteError.value ? (openBlock(), createElementBlock("p", _hoisted_7$5, toDisplayString(remoteError.value), 1)) : createCommentVNode("", true),
+                    numericGalleryId.value === null ? (openBlock(), createElementBlock("p", _hoisted_6$7, "Only galleries with a numeric id can be compared with the booru.")) : createCommentVNode("", true),
+                    remoteError.value ? (openBlock(), createElementBlock("p", _hoisted_7$6, toDisplayString(remoteError.value), 1)) : createCommentVNode("", true),
                     createBaseVNode("label", null, [
                       _cache[26] || (_cache[26] = createTextVNode(" Spoiler ", -1)),
                       withDirectives(createBaseVNode("input", {
                         "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => draft.spoiler = $event),
                         type: "text",
                         maxlength: unref(maxSpoilerLength)
-                      }, null, 8, _hoisted_8$5), [
+                      }, null, 8, _hoisted_8$6), [
                         [vModelText, draft.spoiler]
                       ]),
-                      createBaseVNode("small", _hoisted_9$5, toDisplayString(draft.spoiler.length) + " / " + toDisplayString(unref(maxSpoilerLength)), 1)
+                      createBaseVNode("small", _hoisted_9$6, toDisplayString(draft.spoiler.length) + " / " + toDisplayString(unref(maxSpoilerLength)), 1)
                     ]),
                     createVNode(_sfc_main$h, {
                       "remote-text": remoteText("spoiler"),
@@ -10082,7 +10085,7 @@
                       onIgnore: _cache[8] || (_cache[8] = ($event) => ignored.spoiler = true),
                       onUpdate: _cache[9] || (_cache[9] = ($event) => updateRemote("spoiler"))
                     }, null, 8, ["remote-text", "differs", "ignored", "updating", "error"]),
-                    createBaseVNode("label", _hoisted_10$5, [
+                    createBaseVNode("label", _hoisted_10$6, [
                       _cache[27] || (_cache[27] = createTextVNode(" Description ", -1)),
                       withDirectives(createBaseVNode("textarea", {
                         "onUpdate:modelValue": _cache[10] || (_cache[10] = ($event) => draft.description = $event),
@@ -10240,10 +10243,7 @@
     const settings = useSettingsStore();
     const quickButtons = useGalleryQuickButtonsStore();
     return computed(
-      () => buildExcludeQuery(
-        settings.excludeQuery,
-        quickButtons.buttons.map((button) => button.galleryId)
-      )
+      () => buildExcludeQuery(settings.excludeQuery, quickButtons.buttons)
     );
   }
   const _hoisted_1$b = { class: "lodestone-exclude-query-field" };
@@ -10304,26 +10304,44 @@
     id: "lodestone-exclude-query-settings",
     class: "lodestone-exclude-query-settings"
   };
-  const _hoisted_2$8 = {
-    key: 0,
-    class: "lodestone-settings-subfields"
-  };
+  const _hoisted_2$8 = { class: "lodestone-settings-subfields" };
   const _hoisted_3$6 = ["checked", "onChange"];
   const _hoisted_4$6 = { class: "lodestone-hint" };
   const _hoisted_5$6 = ["href"];
+  const _hoisted_6$6 = { class: "lodestone-exclude-query-galleries" };
+  const _hoisted_7$5 = {
+    key: 0,
+    class: "lodestone-settings-subfields"
+  };
+  const _hoisted_8$5 = {
+    key: 0,
+    class: "lodestone-hint"
+  };
+  const _hoisted_9$5 = ["checked", "onChange"];
+  const _hoisted_10$5 = { class: "lodestone-hint" };
   const _sfc_main$d = /* @__PURE__ */ defineComponent({
     __name: "ExcludeQuerySettings",
     setup(__props) {
       const store = useSettingsStore();
+      const quickButtons = useGalleryQuickButtonsStore();
       const query = computed(() => store.excludeQuery);
-      const allFilters = computed({
-        get: () => query.value.filters === null,
-        set: (all) => {
-          query.value.filters = all ? null : activeFilterIds(query.value);
+      const specificOpen = /* @__PURE__ */ ref(query.value.galleries !== null && query.value.galleries.length > 0);
+      const galleryMode = computed({
+        get: () => specificOpen.value ? "specific" : query.value.galleries === null ? "all" : "none",
+        set: (mode) => {
+          var _a;
+          specificOpen.value = mode === "specific";
+          if (mode === "all") {
+            query.value.galleries = null;
+          } else if (mode === "none") {
+            query.value.galleries = [];
+          } else {
+            (_a = query.value).galleries ?? (_a.galleries = quickButtons.buttons.map((button) => button.id));
+          }
         }
       });
       function toggleFilter(id, checked) {
-        const selected = new Set(query.value.filters ?? []);
+        const selected = new Set(query.value.filters);
         if (checked) {
           selected.add(id);
         } else {
@@ -10331,22 +10349,31 @@
         }
         query.value.filters = EXCLUDE_FILTERS.map((filter) => filter.id).filter((filterId) => selected.has(filterId));
       }
+      function toggleGallery(buttonId, checked) {
+        const selected = new Set(query.value.galleries ?? []);
+        if (checked) {
+          selected.add(buttonId);
+        } else {
+          selected.delete(buttonId);
+        }
+        query.value.galleries = quickButtons.buttons.map((button) => button.id).filter((id) => selected.has(id));
+      }
       return (_ctx, _cache) => {
         return openBlock(), createElementBlock("div", _hoisted_1$a, [
-          _cache[12] || (_cache[12] = createBaseVNode("h4", null, "Exclude query", -1)),
-          _cache[13] || (_cache[13] = createBaseVNode("p", { class: "lodestone-hint" }, " Add this to a search to hide images you already voted on, hid, or saved in a gallery. The default excludes everything listed below except the quick-button galleries and subscriptions. ", -1)),
+          _cache[17] || (_cache[17] = createBaseVNode("h4", null, "Exclude query", -1)),
+          _cache[18] || (_cache[18] = createBaseVNode("p", { class: "lodestone-hint" }, " Add this to a search to hide images you already voted on, hid, or saved in one of your quick-button galleries. The default excludes everything listed below except subscriptions. ", -1)),
           createVNode(_sfc_main$y, {
             modelValue: query.value.commaPrefix,
             "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => query.value.commaPrefix = $event),
             hint: "Starts with a comma so the text can be appended to an existing query."
           }, {
-            default: withCtx(() => [..._cache[4] || (_cache[4] = [
+            default: withCtx(() => [..._cache[6] || (_cache[6] = [
               createTextVNode(' Start with ", " ', -1)
             ])]),
             _: 1
           }, 8, ["modelValue"]),
           createBaseVNode("label", null, [
-            _cache[5] || (_cache[5] = createTextVNode("Your own prefix ", -1)),
+            _cache[7] || (_cache[7] = createTextVNode("Your own prefix ", -1)),
             withDirectives(createBaseVNode("input", {
               "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => query.value.userPrefix = $event),
               type: "text",
@@ -10355,32 +10382,22 @@
               [vModelText, query.value.userPrefix]
             ])
           ]),
-          createVNode(_sfc_main$y, {
-            modelValue: allFilters.value,
-            "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => allFilters.value = $event)
-          }, {
-            default: withCtx(() => [..._cache[6] || (_cache[6] = [
-              createTextVNode("All filters (including ones added in the future)", -1)
-            ])]),
-            _: 1
-          }, 8, ["modelValue"]),
-          !allFilters.value ? (openBlock(), createElementBlock("div", _hoisted_2$8, [
+          createBaseVNode("div", _hoisted_2$8, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(unref(EXCLUDE_FILTERS), (filter) => {
-              var _a;
               return openBlock(), createElementBlock("label", {
                 key: filter.id
               }, [
                 createBaseVNode("input", {
                   type: "checkbox",
-                  checked: (_a = query.value.filters) == null ? void 0 : _a.includes(filter.id),
+                  checked: query.value.filters.includes(filter.id),
                   onChange: ($event) => toggleFilter(filter.id, $event.target.checked)
                 }, null, 40, _hoisted_3$6),
                 createTextVNode(" " + toDisplayString(filter.label), 1)
               ]);
             }), 128))
-          ])) : createCommentVNode("", true),
+          ]),
           createBaseVNode("p", _hoisted_4$6, [
-            _cache[7] || (_cache[7] = createTextVNode(" Untested on the live site, check each search once before relying on it: ", -1)),
+            _cache[8] || (_cache[8] = createTextVNode(" Untested on the live site, check each search once before relying on it: ", -1)),
             (openBlock(true), createElementBlock(Fragment, null, renderList(unref(EXCLUDE_FILTERS).filter((entry) => entry.testUrl), (filter, index) => {
               return openBlock(), createElementBlock(Fragment, {
                 key: filter.id
@@ -10395,14 +10412,64 @@
                 ], 64)) : createCommentVNode("", true)
               ], 64);
             }), 128)),
-            _cache[8] || (_cache[8] = createTextVNode(" . Subscriptions are off by default because ", -1)),
-            _cache[9] || (_cache[9] = createBaseVNode("code", null, "my:subs", -1)),
-            _cache[10] || (_cache[10] = createTextVNode(" is not officially implemented yet. ", -1))
+            _cache[9] || (_cache[9] = createTextVNode(" . Subscriptions are off by default because ", -1)),
+            _cache[10] || (_cache[10] = createBaseVNode("code", null, "my:subs", -1)),
+            _cache[11] || (_cache[11] = createTextVNode(" is not officially implemented yet. ", -1))
+          ]),
+          createBaseVNode("fieldset", _hoisted_6$6, [
+            _cache[15] || (_cache[15] = createBaseVNode("legend", null, "In your gallery quick buttons", -1)),
+            createBaseVNode("label", null, [
+              withDirectives(createBaseVNode("input", {
+                "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => galleryMode.value = $event),
+                type: "radio",
+                value: "all"
+              }, null, 512), [
+                [vModelRadio, galleryMode.value]
+              ]),
+              _cache[12] || (_cache[12] = createTextVNode(" All (including ones added later)", -1))
+            ]),
+            createBaseVNode("label", null, [
+              withDirectives(createBaseVNode("input", {
+                "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => galleryMode.value = $event),
+                type: "radio",
+                value: "none"
+              }, null, 512), [
+                [vModelRadio, galleryMode.value]
+              ]),
+              _cache[13] || (_cache[13] = createTextVNode(" None", -1))
+            ]),
+            createBaseVNode("label", null, [
+              withDirectives(createBaseVNode("input", {
+                "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => galleryMode.value = $event),
+                type: "radio",
+                value: "specific"
+              }, null, 512), [
+                [vModelRadio, galleryMode.value]
+              ]),
+              _cache[14] || (_cache[14] = createTextVNode(" Only specific galleries", -1))
+            ]),
+            galleryMode.value === "specific" ? (openBlock(), createElementBlock("div", _hoisted_7$5, [
+              unref(quickButtons).buttons.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_8$5, "No gallery quick buttons on this booru yet.")) : createCommentVNode("", true),
+              (openBlock(true), createElementBlock(Fragment, null, renderList(unref(quickButtons).buttons, (button) => {
+                var _a;
+                return openBlock(), createElementBlock("label", {
+                  key: button.id
+                }, [
+                  createBaseVNode("input", {
+                    type: "checkbox",
+                    checked: (_a = query.value.galleries) == null ? void 0 : _a.includes(button.id),
+                    onChange: ($event) => toggleGallery(button.id, $event.target.checked)
+                  }, null, 40, _hoisted_9$5),
+                  createTextVNode(" " + toDisplayString(button.label) + " ", 1),
+                  createBaseVNode("small", _hoisted_10$5, "gallery " + toDisplayString(button.galleryId || "not set"), 1)
+                ]);
+              }), 128))
+            ])) : createCommentVNode("", true)
           ]),
           createBaseVNode("label", null, [
-            _cache[11] || (_cache[11] = createTextVNode("Your own suffix ", -1)),
+            _cache[16] || (_cache[16] = createTextVNode("Your own suffix ", -1)),
             withDirectives(createBaseVNode("input", {
-              "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => query.value.userSuffix = $event),
+              "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => query.value.userSuffix = $event),
               type: "text"
             }, null, 512), [
               [vModelText, query.value.userSuffix]
@@ -13613,9 +13680,9 @@ ${icons} { font-size: var(${ICON_SIZE_VAR}, ${FALLBACK_ICON_SIZE}) !important; }
     const settingsStore = useSettingsStore();
     const { register } = useButtonRegistry();
     const { run } = useSpinnerAction();
-    const activeGalleryIds = readActiveGalleryIds();
+    const activeGalleryIds2 = readActiveGalleryIds();
     for (const config of quickButtonsStore.buttons) {
-      const el = createButtonElement(config, activeGalleryIds.has(config.galleryId));
+      const el = createButtonElement(config, activeGalleryIds2.has(config.galleryId));
       toolbar.append(el);
       register({
         id: `gallery-quick-${config.id}`,
