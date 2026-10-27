@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.10.24.0000.17.45.15.0000.eef28
+// @version      2026.10.27.0000.11.53.19.0000.8d52a
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -7486,6 +7486,76 @@
     const query = parts.join(", ");
     return settings.commaPrefix && query !== "" ? `, ${query}` : query;
   }
+  function bareQuery(query) {
+    return query.trim().replace(/^,\s*/, "");
+  }
+  function hasExcludeQuery(value, query) {
+    const bare = bareQuery(query);
+    const trimmed = value.trim();
+    return bare !== "" && (trimmed === bare || trimmed.endsWith(bare) && /,\s*$/.test(trimmed.slice(0, -bare.length)));
+  }
+  function addExcludeQuery(value, query) {
+    const bare = bareQuery(query);
+    if (bare === "" || hasExcludeQuery(value, query)) {
+      return value;
+    }
+    const trimmed = value.trim();
+    return trimmed === "" ? bare : `${trimmed}, ${bare}`;
+  }
+  function removeExcludeQuery(value, query) {
+    if (!hasExcludeQuery(value, query)) {
+      return value;
+    }
+    return value.trim().slice(0, -bareQuery(query).length).replace(/\s*,\s*$/, "");
+  }
+  const DEFAULT_SORT_FIELD = "first_seen_at";
+  const SORT_FIELDS = [
+    "first_seen_at",
+    "id",
+    "updated_at",
+    "aspect_ratio",
+    "faves",
+    "upvotes",
+    "downvotes",
+    "score",
+    "wilson_score",
+    "_score",
+    "width",
+    "height",
+    "comment_count",
+    "tag_count",
+    "pixels",
+    "size",
+    "duration",
+    "random"
+  ];
+  function isSortablePath(pathname) {
+    return /^\/search\/?$/.test(pathname) || /^\/tags\/[^/]+\/?$/.test(pathname);
+  }
+  function sortFieldKey(sf) {
+    return (sf || DEFAULT_SORT_FIELD).split(":")[0];
+  }
+  function isSortDirection(value) {
+    return value === "asc" || value === "desc";
+  }
+  function normalizeSortDirectionPreferences(raw) {
+    if (typeof raw !== "object" || raw === null) {
+      return {};
+    }
+    return Object.fromEntries(Object.entries(raw).filter(([, direction]) => isSortDirection(direction)));
+  }
+  function applyPreferredDirection(url, preferences) {
+    if (url.searchParams.get("sd")) {
+      return null;
+    }
+    const direction = preferences[sortFieldKey(url.searchParams.get("sf"))];
+    if (!direction) {
+      return null;
+    }
+    const next = new URL(url.href);
+    next.searchParams.set("sd", direction);
+    return next;
+  }
   const ALIAS_MAP = {
     "trixiebooru.org": "derpibooru.org",
     "tentabus.ai": "lunabooru.org"
@@ -7535,7 +7605,11 @@
     galleryLeftAlign: false,
     galleryShowIcons: false,
     pinnedGalleryIdsByInstance: {},
-    excludeQuery: createExcludeQueryDefaults()
+    excludeQuery: createExcludeQueryDefaults(),
+    excludeQueryToggleEnabled: false,
+    querySortRewriteEnabled: false,
+    querySortRedirectEnabled: false,
+    sortDirectionByField: {}
   };
   function isRecord$6(value) {
     return typeof value === "object" && value !== null;
@@ -7549,6 +7623,7 @@
       ...settingsDefaults,
       ...record,
       excludeQuery: normalizeExcludeQuery(record.excludeQuery),
+      sortDirectionByField: normalizeSortDirectionPreferences(record.sortDirectionByField),
       pinnedGalleryIdsByInstance: migrateInstanceKeyedData(pinnedGalleryIdsByInstance, (existing, incoming) => [
         .../* @__PURE__ */ new Set([...existing, ...incoming])
       ])
@@ -8165,7 +8240,7 @@
     onValueChanged(STORAGE_KEY, () => store.$patch((state) => Object.assign(state, loadState())));
     onValueChanged(SYNCED_STORAGE_KEY, () => store.$patch((state) => Object.assign(state, loadState())));
   }
-  const APP_VERSION = "2026.10.24.0000.17.45.15.0000.eef28";
+  const APP_VERSION = "2026.10.27.0000.11.53.19.0000.8d52a";
   function numericSegments(version2) {
     const segments = [];
     for (const part of version2.split(".")) {
@@ -8260,7 +8335,7 @@
       )
     );
   }
-  const _hoisted_1$r = ["aria-labelledby"];
+  const _hoisted_1$s = ["aria-labelledby"];
   const _hoisted_2$n = { class: "lodestone-settings-section__intro" };
   const _hoisted_3$k = ["id"];
   const _hoisted_4$j = {
@@ -8268,7 +8343,7 @@
     class: "lodestone-hint"
   };
   const _hoisted_5$g = { class: "lodestone-settings-section__body" };
-  const _sfc_main$A = /* @__PURE__ */ defineComponent({
+  const _sfc_main$B = /* @__PURE__ */ defineComponent({
     __name: "SettingsSection",
     props: {
       title: {},
@@ -8288,15 +8363,15 @@
           createBaseVNode("div", _hoisted_5$g, [
             renderSlot(_ctx.$slots, "default")
           ])
-        ], 8, _hoisted_1$r);
+        ], 8, _hoisted_1$s);
       };
     }
   });
-  const _hoisted_1$q = { class: "lodestone-toggle-row" };
+  const _hoisted_1$r = { class: "lodestone-toggle-row" };
   const _hoisted_2$m = ["aria-describedby"];
   const _hoisted_3$j = { class: "lodestone-toggle-row__text" };
   const _hoisted_4$i = ["id"];
-  const _sfc_main$z = /* @__PURE__ */ defineComponent({
+  const _sfc_main$A = /* @__PURE__ */ defineComponent({
     __name: "ToggleRow",
     props: /* @__PURE__ */ mergeModels({
       hint: {}
@@ -8309,7 +8384,7 @@
       const model = useModel(__props, "modelValue");
       const hintId = useId();
       return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("label", _hoisted_1$q, [
+        return openBlock(), createElementBlock("label", _hoisted_1$r, [
           withDirectives(createBaseVNode("input", {
             "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => model.value = $event),
             type: "checkbox",
@@ -8337,19 +8412,19 @@
       }
     });
   }
-  const _sfc_main$y = /* @__PURE__ */ defineComponent({
+  const _sfc_main$z = /* @__PURE__ */ defineComponent({
     __name: "ErrorReportingSection",
     setup(__props) {
       const store = useSettingsStore();
       const errorReportingEnabled = useToggle(store, "errorReportingEnabled");
       const sentryDsn = useToggle(store, "sentryDsn");
       return (_ctx, _cache) => {
-        return openBlock(), createBlock(_sfc_main$A, {
+        return openBlock(), createBlock(_sfc_main$B, {
           title: "Error Reporting",
           description: "Help fix bugs without sharing personal data."
         }, {
           default: withCtx(() => [
-            createVNode(_sfc_main$z, {
+            createVNode(_sfc_main$A, {
               modelValue: unref(errorReportingEnabled),
               "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => /* @__PURE__ */ isRef(errorReportingEnabled) ? errorReportingEnabled.value = $event : null)
             }, {
@@ -8374,11 +8449,11 @@
       };
     }
   });
-  const _hoisted_1$p = {
+  const _hoisted_1$q = {
     key: 0,
     class: "lodestone-settings-subfields"
   };
-  const _sfc_main$x = /* @__PURE__ */ defineComponent({
+  const _sfc_main$y = /* @__PURE__ */ defineComponent({
     __name: "ScoreButtonsSection",
     setup(__props) {
       const store = useSettingsStore();
@@ -8390,12 +8465,12 @@
       const showScoreList = useToggle(store, "showScoreList");
       const showScoreImage = useToggle(store, "showScoreImage");
       return (_ctx, _cache) => {
-        return openBlock(), createBlock(_sfc_main$A, {
+        return openBlock(), createBlock(_sfc_main$B, {
           title: "Score Buttons",
           description: "Size and numbers on the favorite, upvote and downvote buttons."
         }, {
           default: withCtx(() => [
-            createVNode(_sfc_main$z, {
+            createVNode(_sfc_main$A, {
               modelValue: unref(biggerButtonsEnabled),
               "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => /* @__PURE__ */ isRef(biggerButtonsEnabled) ? biggerButtonsEnabled.value = $event : null)
             }, {
@@ -8404,7 +8479,7 @@
               ])]),
               _: 1
             }, 8, ["modelValue"]),
-            unref(biggerButtonsEnabled) ? (openBlock(), createElementBlock("div", _hoisted_1$p, [
+            unref(biggerButtonsEnabled) ? (openBlock(), createElementBlock("div", _hoisted_1$q, [
               createBaseVNode("label", null, [
                 _cache[8] || (_cache[8] = createTextVNode(" List button size (px) ", -1)),
                 withDirectives(createBaseVNode("input", {
@@ -8439,7 +8514,7 @@
               ])
             ])) : createCommentVNode("", true),
             _cache[14] || (_cache[14] = createBaseVNode("h4", null, "Numbers — List", -1)),
-            createVNode(_sfc_main$z, {
+            createVNode(_sfc_main$A, {
               modelValue: unref(showVoteNumbersList),
               "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => /* @__PURE__ */ isRef(showVoteNumbersList) ? showVoteNumbersList.value = $event : null)
             }, {
@@ -8448,7 +8523,7 @@
               ])]),
               _: 1
             }, 8, ["modelValue"]),
-            createVNode(_sfc_main$z, {
+            createVNode(_sfc_main$A, {
               modelValue: unref(showScoreList),
               "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => /* @__PURE__ */ isRef(showScoreList) ? showScoreList.value = $event : null)
             }, {
@@ -8458,7 +8533,7 @@
               _: 1
             }, 8, ["modelValue"]),
             _cache[15] || (_cache[15] = createBaseVNode("h4", null, "Numbers — Image", -1)),
-            createVNode(_sfc_main$z, {
+            createVNode(_sfc_main$A, {
               modelValue: unref(showVoteNumbersImage),
               "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => /* @__PURE__ */ isRef(showVoteNumbersImage) ? showVoteNumbersImage.value = $event : null)
             }, {
@@ -8467,7 +8542,7 @@
               ])]),
               _: 1
             }, 8, ["modelValue"]),
-            createVNode(_sfc_main$z, {
+            createVNode(_sfc_main$A, {
               modelValue: unref(showScoreImage),
               "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => /* @__PURE__ */ isRef(showScoreImage) ? showScoreImage.value = $event : null)
             }, {
@@ -8482,11 +8557,11 @@
       };
     }
   });
-  const _hoisted_1$o = {
+  const _hoisted_1$p = {
     key: 0,
     class: "lodestone-settings-subfield"
   };
-  const _sfc_main$w = /* @__PURE__ */ defineComponent({
+  const _sfc_main$x = /* @__PURE__ */ defineComponent({
     __name: "VoteSection",
     setup(__props) {
       const store = useSettingsStore();
@@ -8494,12 +8569,12 @@
       const voteHoverStyleEnabled = useToggle(store, "voteHoverStyleEnabled");
       const hideButtonColorEnabled = useToggle(store, "hideButtonColorEnabled");
       return (_ctx, _cache) => {
-        return openBlock(), createBlock(_sfc_main$A, {
+        return openBlock(), createBlock(_sfc_main$B, {
           title: "Vote Buttons",
           description: "How the vote, navigation and subscribe buttons respond."
         }, {
           default: withCtx(() => [
-            createVNode(_sfc_main$z, {
+            createVNode(_sfc_main$A, {
               modelValue: unref(voteProgressEnabled),
               "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => /* @__PURE__ */ isRef(voteProgressEnabled) ? voteProgressEnabled.value = $event : null)
             }, {
@@ -8508,7 +8583,7 @@
               ])]),
               _: 1
             }, 8, ["modelValue"]),
-            createVNode(_sfc_main$z, {
+            createVNode(_sfc_main$A, {
               modelValue: unref(voteHoverStyleEnabled),
               "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => /* @__PURE__ */ isRef(voteHoverStyleEnabled) ? voteHoverStyleEnabled.value = $event : null)
             }, {
@@ -8517,7 +8592,7 @@
               ])]),
               _: 1
             }, 8, ["modelValue"]),
-            createVNode(_sfc_main$z, {
+            createVNode(_sfc_main$A, {
               modelValue: unref(hideButtonColorEnabled),
               "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => /* @__PURE__ */ isRef(hideButtonColorEnabled) ? hideButtonColorEnabled.value = $event : null)
             }, {
@@ -8526,7 +8601,7 @@
               ])]),
               _: 1
             }, 8, ["modelValue"]),
-            unref(store).hideButtonColorEnabled ? (openBlock(), createElementBlock("label", _hoisted_1$o, [
+            unref(store).hideButtonColorEnabled ? (openBlock(), createElementBlock("label", _hoisted_1$p, [
               _cache[7] || (_cache[7] = createTextVNode(" Hide button color ", -1)),
               withDirectives(createBaseVNode("input", {
                 "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => unref(store).hideButtonColor = $event),
@@ -8535,6 +8610,68 @@
                 [vModelText, unref(store).hideButtonColor]
               ])
             ])) : createCommentVNode("", true)
+          ]),
+          _: 1
+        });
+      };
+    }
+  });
+  const _hoisted_1$o = ["value", "onChange"];
+  const _sfc_main$w = /* @__PURE__ */ defineComponent({
+    __name: "QuerySortSection",
+    setup(__props) {
+      const store = useSettingsStore();
+      const querySortRewriteEnabled = useToggle(store, "querySortRewriteEnabled");
+      const querySortRedirectEnabled = useToggle(store, "querySortRedirectEnabled");
+      function setDirection(field, value) {
+        const next = { ...store.sortDirectionByField };
+        if (isSortDirection(value)) {
+          next[field] = value;
+        } else {
+          delete next[field];
+        }
+        store.sortDirectionByField = next;
+      }
+      return (_ctx, _cache) => {
+        return openBlock(), createBlock(_sfc_main$B, {
+          title: "Search Sorting",
+          description: "Preferred sort direction per sort field, for /search and tag listings. Takes effect on the next page load."
+        }, {
+          default: withCtx(() => [
+            createVNode(_sfc_main$A, {
+              modelValue: unref(querySortRewriteEnabled),
+              "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => /* @__PURE__ */ isRef(querySortRewriteEnabled) ? querySortRewriteEnabled.value = $event : null)
+            }, {
+              default: withCtx(() => [..._cache[2] || (_cache[2] = [
+                createTextVNode("Preselect the preferred direction in the search forms", -1)
+              ])]),
+              _: 1
+            }, 8, ["modelValue"]),
+            createVNode(_sfc_main$A, {
+              modelValue: unref(querySortRedirectEnabled),
+              "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => /* @__PURE__ */ isRef(querySortRedirectEnabled) ? querySortRedirectEnabled.value = $event : null)
+            }, {
+              default: withCtx(() => [..._cache[3] || (_cache[3] = [
+                createTextVNode("Redirect searches without a direction to the preferred one", -1)
+              ])]),
+              _: 1
+            }, 8, ["modelValue"]),
+            (openBlock(true), createElementBlock(Fragment, null, renderList(unref(SORT_FIELDS), (field) => {
+              return openBlock(), createElementBlock("label", {
+                key: field,
+                class: "lodestone-settings-subfield"
+              }, [
+                createBaseVNode("code", null, toDisplayString(field), 1),
+                createBaseVNode("select", {
+                  value: unref(store).sortDirectionByField[field] ?? "",
+                  onChange: ($event) => setDirection(field, $event.target.value)
+                }, [..._cache[4] || (_cache[4] = [
+                  createBaseVNode("option", { value: "" }, "Site default", -1),
+                  createBaseVNode("option", { value: "asc" }, "Ascending", -1),
+                  createBaseVNode("option", { value: "desc" }, "Descending", -1)
+                ])], 40, _hoisted_1$o)
+              ]);
+            }), 128))
           ]),
           _: 1
         });
@@ -8626,7 +8763,7 @@
         { title: "Hide buttons — Image", defs: imageButtonDefs }
       ];
       return (_ctx, _cache) => {
-        return openBlock(), createBlock(_sfc_main$A, {
+        return openBlock(), createBlock(_sfc_main$B, {
           title: "Hidden Buttons",
           description: "Tick a button to remove it from the page."
         }, {
@@ -8697,12 +8834,12 @@
       const galleryLeftAlign = useToggle(store, "galleryLeftAlign");
       const galleryShowIcons = useToggle(store, "galleryShowIcons");
       return (_ctx, _cache) => {
-        return openBlock(), createBlock(_sfc_main$A, {
+        return openBlock(), createBlock(_sfc_main$B, {
           title: "Galleries",
           description: "The gallery picker on image pages."
         }, {
           default: withCtx(() => [
-            createVNode(_sfc_main$z, {
+            createVNode(_sfc_main$A, {
               modelValue: unref(galleryProgressEnabled),
               "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => /* @__PURE__ */ isRef(galleryProgressEnabled) ? galleryProgressEnabled.value = $event : null)
             }, {
@@ -8711,7 +8848,7 @@
               ])]),
               _: 1
             }, 8, ["modelValue"]),
-            createVNode(_sfc_main$z, {
+            createVNode(_sfc_main$A, {
               modelValue: unref(galleryFullPageEnabled),
               "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => /* @__PURE__ */ isRef(galleryFullPageEnabled) ? galleryFullPageEnabled.value = $event : null),
               hint: "Opens a full page of galleries instead of the small dropdown."
@@ -8721,7 +8858,7 @@
               ])]),
               _: 1
             }, 8, ["modelValue"]),
-            createVNode(_sfc_main$z, {
+            createVNode(_sfc_main$A, {
               modelValue: unref(gallerySortAlphabetical),
               "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => /* @__PURE__ */ isRef(gallerySortAlphabetical) ? gallerySortAlphabetical.value = $event : null),
               hint: "You can still flip the order each time you open the picker."
@@ -8731,7 +8868,7 @@
               ])]),
               _: 1
             }, 8, ["modelValue"]),
-            createVNode(_sfc_main$z, {
+            createVNode(_sfc_main$A, {
               modelValue: unref(galleryLeftAlign),
               "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => /* @__PURE__ */ isRef(galleryLeftAlign) ? galleryLeftAlign.value = $event : null)
             }, {
@@ -8740,7 +8877,7 @@
               ])]),
               _: 1
             }, 8, ["modelValue"]),
-            createVNode(_sfc_main$z, {
+            createVNode(_sfc_main$A, {
               modelValue: unref(galleryShowIcons),
               "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => /* @__PURE__ */ isRef(galleryShowIcons) ? galleryShowIcons.value = $event : null)
             }, {
@@ -8947,11 +9084,16 @@
     "aria-label": "Progress"
   };
   const _hoisted_3$f = ["aria-current"];
-  const _hoisted_4$f = { class: "lodestone-hint" };
-  const _hoisted_5$d = { class: "lodestone-stepflow__body" };
-  const _hoisted_6$c = { class: "lodestone-stepflow__actions" };
-  const _hoisted_7$b = ["disabled"];
-  const _hoisted_8$9 = ["disabled"];
+  const _hoisted_4$f = ["onClick"];
+  const _hoisted_5$d = {
+    key: 0,
+    class: "lodestone-visually-hidden"
+  };
+  const _hoisted_6$c = { class: "lodestone-hint" };
+  const _hoisted_7$b = { class: "lodestone-stepflow__body" };
+  const _hoisted_8$9 = { class: "lodestone-stepflow__actions" };
+  const _hoisted_9$8 = ["disabled"];
+  const _hoisted_10$8 = ["disabled"];
   const _sfc_main$r = /* @__PURE__ */ defineComponent({
     __name: "StepFlow",
     props: /* @__PURE__ */ mergeModels({
@@ -8972,6 +9114,7 @@
         var _a;
         return ((_a = step.value) == null ? void 0 : _a.valid) !== false;
       });
+      const canSave = computed(() => props.steps.every((item) => item.valid !== false));
       return (_ctx, _cache) => {
         var _a, _b;
         return openBlock(), createElementBlock("div", _hoisted_1$k, [
@@ -8980,17 +9123,25 @@
               return openBlock(), createElementBlock("li", {
                 key: item.id,
                 "aria-current": index === current.value ? "step" : void 0,
-                class: normalizeClass({ "is-done": index < current.value, "is-current": index === current.value })
-              }, toDisplayString(item.title), 11, _hoisted_3$f);
+                class: normalizeClass({ "is-done": index < current.value, "is-current": index === current.value, "is-invalid": item.valid === false })
+              }, [
+                createBaseVNode("button", {
+                  type: "button",
+                  onClick: ($event) => current.value = index
+                }, [
+                  createTextVNode(toDisplayString(item.title), 1),
+                  item.valid === false ? (openBlock(), createElementBlock("span", _hoisted_5$d, " (incomplete)")) : createCommentVNode("", true)
+                ], 8, _hoisted_4$f)
+              ], 10, _hoisted_3$f);
             }), 128))
           ]),
-          createBaseVNode("p", _hoisted_4$f, "Step " + toDisplayString(current.value + 1) + " of " + toDisplayString(__props.steps.length) + ": " + toDisplayString((_a = step.value) == null ? void 0 : _a.title), 1),
-          createBaseVNode("div", _hoisted_5$d, [
+          createBaseVNode("p", _hoisted_6$c, "Step " + toDisplayString(current.value + 1) + " of " + toDisplayString(__props.steps.length) + ": " + toDisplayString((_a = step.value) == null ? void 0 : _a.title), 1),
+          createBaseVNode("div", _hoisted_7$b, [
             renderSlot(_ctx.$slots, "default", {
               step: (_b = step.value) == null ? void 0 : _b.id
             })
           ]),
-          createBaseVNode("div", _hoisted_6$c, [
+          createBaseVNode("div", _hoisted_8$9, [
             createBaseVNode("button", {
               type: "button",
               onClick: _cache[0] || (_cache[0] = ($event) => emit2("cancel"))
@@ -9007,13 +9158,13 @@
               class: "lodestone-primary",
               disabled: !canAdvance.value,
               onClick: _cache[2] || (_cache[2] = ($event) => current.value++)
-            }, "Next", 8, _hoisted_7$b)) : (openBlock(), createElementBlock("button", {
+            }, "Next", 8, _hoisted_9$8)) : (openBlock(), createElementBlock("button", {
               key: 2,
               type: "button",
               class: "lodestone-primary",
-              disabled: !canAdvance.value,
+              disabled: !canSave.value,
               onClick: _cache[3] || (_cache[3] = ($event) => emit2("save"))
-            }, toDisplayString(__props.saveLabel), 9, _hoisted_8$9))
+            }, toDisplayString(__props.saveLabel), 9, _hoisted_10$8))
           ])
         ]);
       };
@@ -9677,7 +9828,7 @@
     __name: "TelegramSection",
     setup(__props) {
       return (_ctx, _cache) => {
-        return openBlock(), createBlock(_sfc_main$A, {
+        return openBlock(), createBlock(_sfc_main$B, {
           title: "Send to Telegram",
           description: "Add a button that sends the current image and caption to a Telegram chat."
         }, {
@@ -10514,6 +10665,7 @@
     __name: "ExcludeQuerySettings",
     setup(__props) {
       const store = useSettingsStore();
+      const settings = store;
       const quickButtons = useGalleryQuickButtonsStore();
       const query = computed(() => store.excludeQuery);
       const specificOpen = /* @__PURE__ */ ref(query.value.galleries !== null && query.value.galleries.length > 0);
@@ -10551,20 +10703,20 @@
       }
       return (_ctx, _cache) => {
         return openBlock(), createElementBlock("div", _hoisted_1$b, [
-          _cache[17] || (_cache[17] = createBaseVNode("h4", null, "Exclude query", -1)),
-          _cache[18] || (_cache[18] = createBaseVNode("p", { class: "lodestone-hint" }, " Add this to a search to hide images you already voted on, hid, or saved in one of your quick-button galleries. The default excludes everything listed below except subscriptions. ", -1)),
-          createVNode(_sfc_main$z, {
+          _cache[19] || (_cache[19] = createBaseVNode("h4", null, "Exclude query", -1)),
+          _cache[20] || (_cache[20] = createBaseVNode("p", { class: "lodestone-hint" }, " Add this to a search to hide images you already voted on, hid, or saved in one of your quick-button galleries. The default excludes everything listed below except subscriptions. ", -1)),
+          createVNode(_sfc_main$A, {
             modelValue: query.value.commaPrefix,
             "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => query.value.commaPrefix = $event),
             hint: "Starts with a comma so the text can be appended to an existing query."
           }, {
-            default: withCtx(() => [..._cache[6] || (_cache[6] = [
+            default: withCtx(() => [..._cache[7] || (_cache[7] = [
               createTextVNode(' Start with ", " ', -1)
             ])]),
             _: 1
           }, 8, ["modelValue"]),
           createBaseVNode("label", null, [
-            _cache[7] || (_cache[7] = createTextVNode("Your own prefix ", -1)),
+            _cache[8] || (_cache[8] = createTextVNode("Your own prefix ", -1)),
             withDirectives(createBaseVNode("input", {
               "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => query.value.userPrefix = $event),
               type: "text",
@@ -10588,7 +10740,7 @@
             }), 128))
           ]),
           createBaseVNode("p", _hoisted_4$6, [
-            _cache[8] || (_cache[8] = createTextVNode(" Untested on the live site, check each search once before relying on it: ", -1)),
+            _cache[9] || (_cache[9] = createTextVNode(" Untested on the live site, check each search once before relying on it: ", -1)),
             (openBlock(true), createElementBlock(Fragment, null, renderList(unref(EXCLUDE_FILTERS).filter((entry) => entry.testUrl), (filter, index) => {
               return openBlock(), createElementBlock(Fragment, {
                 key: filter.id
@@ -10603,12 +10755,12 @@
                 ], 64)) : createCommentVNode("", true)
               ], 64);
             }), 128)),
-            _cache[9] || (_cache[9] = createTextVNode(" . Subscriptions are off by default because ", -1)),
-            _cache[10] || (_cache[10] = createBaseVNode("code", null, "my:subs", -1)),
-            _cache[11] || (_cache[11] = createTextVNode(" is not officially implemented yet. ", -1))
+            _cache[10] || (_cache[10] = createTextVNode(" . Subscriptions are off by default because ", -1)),
+            _cache[11] || (_cache[11] = createBaseVNode("code", null, "my:subs", -1)),
+            _cache[12] || (_cache[12] = createTextVNode(" is not officially implemented yet. ", -1))
           ]),
           createBaseVNode("fieldset", _hoisted_6$6, [
-            _cache[15] || (_cache[15] = createBaseVNode("legend", null, "In your gallery quick buttons", -1)),
+            _cache[16] || (_cache[16] = createBaseVNode("legend", null, "In your gallery quick buttons", -1)),
             createBaseVNode("label", null, [
               withDirectives(createBaseVNode("input", {
                 "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => galleryMode.value = $event),
@@ -10617,7 +10769,7 @@
               }, null, 512), [
                 [vModelRadio, galleryMode.value]
               ]),
-              _cache[12] || (_cache[12] = createTextVNode(" All (including ones added later)", -1))
+              _cache[13] || (_cache[13] = createTextVNode(" All (including ones added later)", -1))
             ]),
             createBaseVNode("label", null, [
               withDirectives(createBaseVNode("input", {
@@ -10627,7 +10779,7 @@
               }, null, 512), [
                 [vModelRadio, galleryMode.value]
               ]),
-              _cache[13] || (_cache[13] = createTextVNode(" None", -1))
+              _cache[14] || (_cache[14] = createTextVNode(" None", -1))
             ]),
             createBaseVNode("label", null, [
               withDirectives(createBaseVNode("input", {
@@ -10637,7 +10789,7 @@
               }, null, 512), [
                 [vModelRadio, galleryMode.value]
               ]),
-              _cache[14] || (_cache[14] = createTextVNode(" Only specific galleries", -1))
+              _cache[15] || (_cache[15] = createTextVNode(" Only specific galleries", -1))
             ]),
             galleryMode.value === "specific" ? (openBlock(), createElementBlock("div", _hoisted_7$5, [
               unref(quickButtons).buttons.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_8$5, "No gallery quick buttons on this booru yet.")) : createCommentVNode("", true),
@@ -10658,7 +10810,7 @@
             ])) : createCommentVNode("", true)
           ]),
           createBaseVNode("label", null, [
-            _cache[16] || (_cache[16] = createTextVNode("Your own suffix ", -1)),
+            _cache[17] || (_cache[17] = createTextVNode("Your own suffix ", -1)),
             withDirectives(createBaseVNode("input", {
               "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => query.value.userSuffix = $event),
               type: "text"
@@ -10666,7 +10818,17 @@
               [vModelText, query.value.userSuffix]
             ])
           ]),
-          createVNode(_sfc_main$f)
+          createVNode(_sfc_main$f),
+          createVNode(_sfc_main$A, {
+            modelValue: unref(settings).excludeQueryToggleEnabled,
+            "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => unref(settings).excludeQueryToggleEnabled = $event),
+            hint: "Takes effect on the next page load."
+          }, {
+            default: withCtx(() => [..._cache[18] || (_cache[18] = [
+              createTextVNode(" Show a button in the search boxes that adds or removes the exclude query ", -1)
+            ])]),
+            _: 1
+          }, 8, ["modelValue"])
         ]);
       };
     }
@@ -10679,7 +10841,7 @@
         (_a = document.getElementById("lodestone-exclude-query-settings")) == null ? void 0 : _a.scrollIntoView({ behavior: "smooth", block: "start" });
       }
       return (_ctx, _cache) => {
-        return openBlock(), createBlock(_sfc_main$A, {
+        return openBlock(), createBlock(_sfc_main$B, {
           title: "Gallery quick buttons",
           description: "One-click buttons that add or remove the current image from a gallery."
         }, {
@@ -11312,7 +11474,7 @@
     __name: "ButtonEffectsSection",
     setup(__props) {
       return (_ctx, _cache) => {
-        return openBlock(), createBlock(_sfc_main$A, {
+        return openBlock(), createBlock(_sfc_main$B, {
           title: "Button effects",
           description: "Change one button when the state of others matches a rule."
         }, {
@@ -11660,7 +11822,7 @@
     __name: "ButtonGroupsSection",
     setup(__props) {
       return (_ctx, _cache) => {
-        return openBlock(), createBlock(_sfc_main$A, {
+        return openBlock(), createBlock(_sfc_main$B, {
           title: "Button groups",
           description: "Lay out chosen buttons in columns that adapt to the window width."
         }, {
@@ -12268,7 +12430,7 @@
         }
       }
       return (_ctx, _cache) => {
-        return openBlock(), createBlock(_sfc_main$A, {
+        return openBlock(), createBlock(_sfc_main$B, {
           title: "Import / Export",
           description: "Back up your settings or move them to another browser."
         }, {
@@ -12329,7 +12491,7 @@
                 }, null, 8, _hoisted_5$1)
               ]),
               createBaseVNode("p", _hoisted_6$1, "Written by version " + toDisplayString(unref(APP_VERSION)) + ".", 1),
-              createVNode(_sfc_main$z, {
+              createVNode(_sfc_main$A, {
                 modelValue: unref(exportFileNameUtc),
                 "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => /* @__PURE__ */ isRef(exportFileNameUtc) ? exportFileNameUtc.value = $event : null)
               }, {
@@ -12424,7 +12586,7 @@
         store.setMode(id, event.target.value, current);
       }
       return (_ctx, _cache) => {
-        return openBlock(), createBlock(_sfc_main$A, {
+        return openBlock(), createBlock(_sfc_main$B, {
           title: "Local Tab Settings",
           description: "Choose where each setting of the Local tab is kept. You still change the values on that tab. The chosen place is copied into this booru's browser storage on every page load, so a value that changed elsewhere applies from the next page load."
         }, {
@@ -12470,16 +12632,17 @@
             class: "block block--fixed block--warning lodestone-settings-tab__saved-note",
             role: "note"
           }, " Changes on this tab are saved immediately. They are stored in your userscript manager and are independent of your login. ", -1)),
+          createVNode(_sfc_main$y),
           createVNode(_sfc_main$x),
-          createVNode(_sfc_main$w),
           createVNode(_sfc_main$v),
+          createVNode(_sfc_main$w),
           createVNode(_sfc_main$4),
           createVNode(_sfc_main$u),
           createVNode(_sfc_main$d),
           createVNode(_sfc_main$k),
           createVNode(_sfc_main$7),
           createVNode(_sfc_main$a),
-          createVNode(_sfc_main$y),
+          createVNode(_sfc_main$z),
           createVNode(_sfc_main$5),
           createBaseVNode("p", _hoisted_2$2, "Userscript version " + toDisplayString(unref(APP_VERSION)), 1)
         ]);
@@ -12945,9 +13108,13 @@ ${event}
     .lodestone-dialog__footer { display: flex; justify-content: flex-end; gap: var(--lodestone-space-2); padding: var(--lodestone-space-3) var(--lodestone-space-4); border-top: 1px solid var(--lodestone-border); }
 
     .lodestone-stepflow__header { display: flex; flex-wrap: wrap; gap: var(--lodestone-space-2); margin: 0 0 var(--lodestone-space-2); padding: 0; list-style: none; }
-    .lodestone-stepflow__header li { padding: 2px var(--lodestone-space-3); border: 1px solid var(--lodestone-border-soft); border-radius: 999px; font-size: 0.875em; color: var(--lodestone-muted); }
+    .lodestone-stepflow__header li { border: 1px solid var(--lodestone-border-soft); border-radius: 999px; font-size: 0.875em; color: var(--lodestone-muted); }
+    .lodestone-stepflow__header li button { padding: 2px var(--lodestone-space-3); border: 0; border-radius: inherit; background: none; font: inherit; color: inherit; cursor: pointer; }
+    .lodestone-stepflow__header li button:focus-visible { outline: 2px solid var(--lodestone-focus); outline-offset: 1px; }
     .lodestone-stepflow__header li.is-done { color: inherit; }
     .lodestone-stepflow__header li.is-current { color: inherit; font-weight: 700; border-color: var(--lodestone-focus); }
+    .lodestone-stepflow__header li.is-invalid { color: var(--lodestone-danger); border-color: var(--lodestone-danger); }
+    .lodestone-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     .lodestone-stepflow__body { display: flex; flex-direction: column; gap: var(--lodestone-space-1); margin: var(--lodestone-space-3) 0; }
     .lodestone-stepflow__actions { display: flex; align-items: center; gap: var(--lodestone-space-2); padding-top: var(--lodestone-space-3); border-top: 1px solid var(--lodestone-border-soft); }
     .lodestone-stepflow__spacer { flex: 1; }
@@ -13115,6 +13282,24 @@ ${event}
       observer.observe(container, { childList: true, subtree: true, characterData: true, attributes: true, attributeOldValue: true });
     });
   }
+  function waitForActiveChange(el, wasActive, timeoutMs = 4e3) {
+    return new Promise((resolve2) => {
+      const timeout = setTimeout(() => {
+        observer.disconnect();
+        resolve2();
+      }, timeoutMs);
+      const observer = new MutationObserver(() => {
+        if (el.classList.contains("active") === wasActive) {
+          return;
+        }
+        observer.disconnect();
+        clearTimeout(timeout);
+        resolve2();
+      });
+      observer.observe(el, { attributes: true, attributeFilter: ["class"] });
+    });
+  }
+  const ENGINE_CLICK_ATTRIBUTE = "data-lodestone-effect";
   const eventListeners = /* @__PURE__ */ new Set();
   function notifyButtonEvent(event) {
     for (const listener of eventListeners) {
@@ -13146,16 +13331,18 @@ ${event}
       "click",
       (event) => {
         var _a;
-        if (!store.voteProgressEnabled) {
-          return;
-        }
         const target = (_a = event.target) == null ? void 0 : _a.closest(ACTION_SELECTOR);
-        if (!target) {
+        if (!target || target.hasAttribute(ENGINE_CLICK_ATTRIBUTE)) {
           return;
         }
         const container = target.closest(".stretched-mobile-links, .media-box__overlay") ?? target.parentElement ?? target;
         notifyNativeButtonEvent(target, "on-click");
-        void run(target, () => waitForMutation(container).then(() => notifyNativeButtonEvent(target, "after-settle")));
+        const settle = () => waitForMutation(container).then(() => notifyNativeButtonEvent(target, "after-settle"));
+        if (store.voteProgressEnabled) {
+          void run(target, settle);
+        } else {
+          void settle();
+        }
       },
       { capture: true }
     );
@@ -13188,8 +13375,10 @@ ${striped}`;
       { immediate: true, flush: "sync" }
     );
   }
+  const STATE_SUFFIXES$1 = ["", ":hover", ":focus", ":active", ".active"];
   function buildHideButtonColorCss(color) {
-    return `.interaction--hide.interaction--hide { color: ${color}; }`;
+    const selectors = STATE_SUFFIXES$1.map((suffix) => `.interaction--hide.interaction--hide${suffix}`);
+    return `${selectors.join(", ")} { color: ${color}; }`;
   }
   function initHideButtonColor() {
     const store = useSettingsStore();
@@ -13222,18 +13411,19 @@ ${striped}`;
   }
   const FALLBACK_ICON_SIZE = "14px";
   const ICON_SIZE_VAR = "--lodestone-icon-size";
+  const OUTRANK_BIGGER_BUTTONS = ":not(#searchform *):not(#searchform *)";
   function selectedSelectors(iconOnlyIds) {
     return allButtonDefs.filter((def2) => hasTextLabel(def2) && iconOnlyIds.includes(def2.id)).map((def2) => def2.selector);
   }
-  function buildIconOnlyCss(iconOnlyIds) {
-    const selectors = selectedSelectors(iconOnlyIds);
+  function buildIconOnlyCss(iconOnlyIds, iconSize = `var(${ICON_SIZE_VAR}, ${FALLBACK_ICON_SIZE})`) {
+    const selectors = selectedSelectors(iconOnlyIds).map((selector) => `${selector}${OUTRANK_BIGGER_BUTTONS}`);
     if (selectors.length === 0) {
       return "";
     }
     const links = selectors.join(", ");
     const icons = selectors.map((selector) => `${selector} > i`).join(", ");
     return `${links} { font-size: 0 !important; }
-${icons} { font-size: var(${ICON_SIZE_VAR}, ${FALLBACK_ICON_SIZE}) !important; }`;
+${icons} { font-size: ${iconSize} !important; }`;
   }
   function readIconSize(selectors) {
     const link = selectors.map((selector) => document.querySelector(selector)).find((el) => el !== null);
@@ -13253,11 +13443,11 @@ ${icons} { font-size: var(${ICON_SIZE_VAR}, ${FALLBACK_ICON_SIZE}) !important; }
     const store = useSettingsStore();
     let styleEl = null;
     watch(
-      () => store.iconOnlyButtonIds,
-      (iconOnlyIds) => {
+      () => [store.iconOnlyButtonIds, store.biggerButtonsEnabled, store.imageButtonSize],
+      ([iconOnlyIds, biggerEnabled, imageSize]) => {
         styleEl == null ? void 0 : styleEl.remove();
         document.documentElement.style.removeProperty(ICON_SIZE_VAR);
-        const css = buildIconOnlyCss(iconOnlyIds);
+        const css = buildIconOnlyCss(iconOnlyIds, biggerEnabled ? `${imageSize}px` : void 0);
         if (!css) {
           styleEl = null;
           return;
@@ -13918,22 +14108,26 @@ ${icons} { font-size: var(${ICON_SIZE_VAR}, ${FALLBACK_ICON_SIZE}) !important; }
     });
     return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.179 ? "#000" : "#fff";
   }
+  const STATE_SUFFIXES = ["", ":hover", ":focus", ":active"];
+  function buildGalleryQuickButtonCss() {
+    const states = (attribute) => STATE_SUFFIXES.map((suffix) => `.lodestone-gallery-quick-button.lodestone-gallery-quick-button${attribute}${suffix}`).join(", ");
+    return `
+    ${states("[data-active]")} {
+      color: var(--lodestone-qb-color);
+    }
+    ${states('[data-active="true"]')} {
+      border-radius: 4px;
+      background: var(--lodestone-qb-color);
+      color: var(--lodestone-qb-on-color);
+    }
+  `;
+  }
   function ensureGalleryQuickButtonStyles() {
     if (injected) {
       return;
     }
     injected = true;
-    addStyle(`
-    /* The attribute selector lifts this above the site's ".block__header a" link color (specificity 0,1,1). */
-    .lodestone-gallery-quick-button[data-active] {
-      color: var(--lodestone-qb-color);
-    }
-    .lodestone-gallery-quick-button[data-active="true"] {
-      border-radius: 4px;
-      background: var(--lodestone-qb-color);
-      color: var(--lodestone-qb-on-color);
-    }
-  `);
+    addStyle(buildGalleryQuickButtonCss());
   }
   const TOOLBAR_SELECTOR = ".block__header .stretched-mobile-links";
   function createButtonElement(config, isActive) {
@@ -14064,16 +14258,24 @@ ${icons} { font-size: var(${ICON_SIZE_VAR}, ${FALLBACK_ICON_SIZE}) !important; }
     }
     await trigger2();
   }
-  function performNativeAction(entry, verb) {
+  async function performNativeAction(entry, verb) {
     const el = resolveCatalogElement(entry);
     if (!el) {
       return;
     }
     const desiredOn = desiredOnFor(verb);
-    if (desiredOn !== void 0 && readCatalogState(entry) === desiredOn) {
+    const wasActive = readCatalogState(entry) ?? false;
+    if (desiredOn !== void 0 && wasActive === desiredOn) {
       return;
     }
-    el.click();
+    const settled = waitForActiveChange(el, wasActive);
+    el.setAttribute(ENGINE_CLICK_ATTRIBUTE, "");
+    try {
+      el.click();
+    } finally {
+      el.removeAttribute(ENGINE_CLICK_ATTRIBUTE);
+    }
+    await settled;
   }
   async function runAction(action, catalog) {
     const target = catalog.find((entry) => entry.id === action.targetId);
@@ -14083,7 +14285,7 @@ ${icons} { font-size: var(${ICON_SIZE_VAR}, ${FALLBACK_ICON_SIZE}) !important; }
     if (getButtonAction(target.id)) {
       await performRegisteredAction(target, action.verb);
     } else {
-      performNativeAction(target, action.verb);
+      await performNativeAction(target, action.verb);
     }
   }
   async function runActions(rule, catalog) {
@@ -14108,7 +14310,7 @@ ${icons} { font-size: var(${ICON_SIZE_VAR}, ${FALLBACK_ICON_SIZE}) !important; }
   }
   function initButtonEffects() {
     const store = useButtonEffectsStore();
-    subscribeButtonEvents((event) => handleButtonEvent(store, event));
+    return subscribeButtonEvents((event) => handleButtonEvent(store, event));
   }
   const SCOPES = [
     { prefix: ".media-box", numbers: "showVoteNumbersList", score: "showScoreList" },
@@ -14266,11 +14468,85 @@ ${icons} { font-size: var(${ICON_SIZE_VAR}, ${FALLBACK_ICON_SIZE}) !important; }
     });
     store.$subscribe(applySiteLocalSettings, { flush: "sync" });
   }
+  function initQuerySort() {
+    const store = useSettingsStore();
+    const url = new URL(location.href);
+    if (store.querySortRedirectEnabled && isSortablePath(url.pathname)) {
+      const next = applyPreferredDirection(url, store.sortDirectionByField);
+      if (next) {
+        location.replace(next.href);
+        return;
+      }
+    }
+    if (store.querySortRewriteEnabled) {
+      rewriteSortControls(url, store.sortDirectionByField);
+    }
+  }
+  function rewriteSortControls(url, preferences) {
+    const sortSelect = document.querySelector('#searchform select[name="sf"]');
+    const directionSelect = document.querySelector('#searchform select[name="sd"]');
+    if (sortSelect && directionSelect) {
+      if (!url.searchParams.get("sd")) {
+        directionSelect.value = preferences[sortFieldKey(sortSelect.value)] ?? directionSelect.value;
+      }
+      sortSelect.addEventListener("change", () => {
+        const preferred2 = preferences[sortFieldKey(sortSelect.value)];
+        if (preferred2) {
+          directionSelect.value = preferred2;
+        }
+      });
+    }
+    const headerForm = document.querySelector("form.header__search");
+    const preferred = preferences[sortFieldKey(url.searchParams.get("sf"))];
+    if (headerForm && preferred && !headerForm.querySelector('input[name="sd"]')) {
+      const hidden = document.createElement("input");
+      hidden.type = "hidden";
+      hidden.name = "sd";
+      hidden.value = preferred;
+      headerForm.append(hidden);
+    }
+  }
+  const SEARCH_INPUT_SELECTOR = 'form.header__search input[name="q"], form#searchform input[name="q"]';
+  const EXCLUDE_TOGGLE_CSS = `
+.lodestone-exclude-toggle { cursor: pointer; margin-left: 0.25em; }
+.lodestone-exclude-toggle[aria-pressed="true"] { font-weight: bold; text-decoration: underline; }
+`;
+  function initExcludeQueryToggle() {
+    const settings = useSettingsStore();
+    if (!settings.excludeQueryToggleEnabled) {
+      return;
+    }
+    const query = buildExcludeQuery(settings.excludeQuery, useGalleryQuickButtonsStore().buttons);
+    const inputs = document.querySelectorAll(SEARCH_INPUT_SELECTOR);
+    if (query === "" || inputs.length === 0) {
+      return;
+    }
+    addStyle(EXCLUDE_TOGGLE_CSS);
+    for (const input of inputs) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "lodestone-exclude-toggle";
+      button.textContent = "−filter";
+      button.title = query;
+      const sync = () => button.setAttribute("aria-pressed", String(hasExcludeQuery(input.value, query)));
+      button.addEventListener("click", () => {
+        input.value = hasExcludeQuery(input.value, query) ? removeExcludeQuery(input.value, query) : addExcludeQuery(input.value, query);
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      input.addEventListener("input", sync);
+      sync();
+      input.after(button);
+    }
+  }
   const pinia = createPinia();
   setActivePinia(pinia);
   installErrorReporting();
   const page = detectPage(location.pathname);
   initSiteLocalSettings(page);
+  if (page !== "settings") {
+    initQuerySort();
+    initExcludeQueryToggle();
+  }
   if (page === "settings") {
     mountSettingsTab(pinia);
   }
