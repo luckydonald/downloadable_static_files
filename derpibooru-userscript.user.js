@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.10.27.0000.11.53.19.0000.8d52a
+// @version      2026.11.04.0000.17.23.14.0000.a25fc
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -8240,7 +8240,7 @@
     onValueChanged(STORAGE_KEY, () => store.$patch((state) => Object.assign(state, loadState())));
     onValueChanged(SYNCED_STORAGE_KEY, () => store.$patch((state) => Object.assign(state, loadState())));
   }
-  const APP_VERSION = "2026.10.27.0000.11.53.19.0000.8d52a";
+  const APP_VERSION = "2026.11.04.0000.17.23.14.0000.a25fc";
   function numericSegments(version2) {
     const segments = [];
     for (const part of version2.split(".")) {
@@ -9525,12 +9525,20 @@
     const match = Object.entries(EXAMPLE_IMAGE_IDS).find(([host]) => hostname.endsWith(host));
     return match == null ? void 0 : match[1];
   }
+  async function readJson(response, what) {
+    try {
+      return await response.json();
+    } catch (cause) {
+      const contentType = response.headers.get("content-type") ?? "none";
+      throw new Error(`${what}: response was not JSON (HTTP ${response.status}, content-type ${contentType})`, { cause });
+    }
+  }
   async function fetchImageMetadata(imageId) {
     const response = await fetch(`/api/v1/json/images/${imageId}`, { credentials: "same-origin" });
     if (!response.ok) {
       throw new Error(`Failed to fetch image metadata for ${imageId}: HTTP ${response.status}`);
     }
-    const body = await response.json();
+    const body = await readJson(response, `Image metadata for ${imageId}`);
     return body.image;
   }
   const _hoisted_1$g = { class: "lodestone-telegram-manager" };
@@ -9892,7 +9900,7 @@
     if (!response.ok) {
       throw new Error(`Failed to search galleries for ${username}: HTTP ${response.status}`);
     }
-    const body = await response.json();
+    const body = await readJson(response, `Gallery search for ${username}`);
     return body.galleries.map(({ id, title, thumbnail }) => ({
       id,
       title,
@@ -9916,7 +9924,7 @@
     if (!response.ok) {
       throw new Error(`Failed to load gallery ${galleryId}: HTTP ${response.status}`);
     }
-    const body = await response.json();
+    const body = await readJson(response, `Gallery ${galleryId}`);
     const gallery = (_a = body.galleries) == null ? void 0 : _a.find((candidate) => String(candidate.id) === String(galleryId));
     if (!gallery) {
       throw new Error(`Gallery ${galleryId} was not found on this booru.`);
@@ -12747,6 +12755,7 @@ ${event}
   }
   const IGNORED_MESSAGES = [
     /^The play\(\) request was interrupted/,
+    /^The operation was aborted\.?$/,
     /^(Load failed|Failed to fetch)$/,
     /^Received error from server$/
   ];
@@ -12781,6 +12790,9 @@ ${event}
     window.addEventListener("unhandledrejection", (event) => {
       report(toReportable(event.reason), { source: "unhandledrejection" });
     });
+  }
+  function reportError(error, source) {
+    report(toReportable(error), { source });
   }
   function vueErrorHandler(error) {
     report(toReportable(error), { source: "vue" });
@@ -14090,7 +14102,10 @@ ${icons} { font-size: ${iconSize} !important; }`;
       registerButtonAction(catalogId, trigger2);
       el.addEventListener("click", (event) => {
         event.preventDefault();
-        void trigger2();
+        trigger2().catch((error) => {
+          console.error("[Lodestone] Telegram send failed", error);
+          reportError(error, "telegram-send");
+        });
       });
     }
   }
