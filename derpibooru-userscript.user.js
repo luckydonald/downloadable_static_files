@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.11.04.0000.17.23.14.0000.a25fc
+// @version      2026.11.04.0000.23.39.05.0000.5e5f4
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -8240,7 +8240,7 @@
     onValueChanged(STORAGE_KEY, () => store.$patch((state) => Object.assign(state, loadState())));
     onValueChanged(SYNCED_STORAGE_KEY, () => store.$patch((state) => Object.assign(state, loadState())));
   }
-  const APP_VERSION = "2026.11.04.0000.17.23.14.0000.a25fc";
+  const APP_VERSION = "2026.11.04.0000.23.39.05.0000.5e5f4";
   function numericSegments(version2) {
     const segments = [];
     for (const part of version2.split(".")) {
@@ -13359,21 +13359,17 @@ ${event}
       { capture: true }
     );
   }
-  const RULES = [
-    { selector: ".interaction--fave", color: "#f2b70c" },
-    { selector: ".interaction--upvote", color: "#5cb85c" },
-    { selector: ".interaction--downvote", color: "#d9534f" },
-    { selector: ".interaction--hide", color: "#8a8a8a" }
-  ];
+  const OUTLINE_STATES = [":hover", ":focus", ":active"];
+  function buildStripedOutlineCss(selector) {
+    const states = OUTLINE_STATES.map((state) => `${selector}${state}`).join(", ");
+    return [
+      `${selector} { border: 2px solid transparent; border-radius: 4px; box-sizing: border-box; }`,
+      `${states} { border-image: repeating-linear-gradient(45deg, currentColor 0 4px, transparent 4px 8px) 4; }`
+    ].join("\n");
+  }
+  const SELECTORS = [".interaction--fave", ".interaction--upvote", ".interaction--downvote", ".interaction--hide"];
   function buildVoteHoverCss() {
-    const base2 = RULES.map((rule) => `${rule.selector} { border: 2px solid transparent; border-radius: 4px; box-sizing: border-box; }`).join(
-      "\n"
-    );
-    const striped = RULES.map(
-      (rule) => `${rule.selector}:hover, ${rule.selector}:active { border-image: repeating-linear-gradient(45deg, ${rule.color} 0 4px, transparent 4px 8px) 4; }`
-    ).join("\n");
-    return `${base2}
-${striped}`;
+    return SELECTORS.map(buildStripedOutlineCss).join("\n");
   }
   function initVoteHoverStyle() {
     const store = useSettingsStore();
@@ -13387,10 +13383,29 @@ ${striped}`;
       { immediate: true, flush: "sync" }
     );
   }
-  const STATE_SUFFIXES$1 = ["", ":hover", ":focus", ":active", ".active"];
+  const WHITE_TEXT_MAX_LUMINANCE = 0.25;
+  function readableOn(color) {
+    var _a;
+    const hex = (_a = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(color.trim())) == null ? void 0 : _a[1];
+    if (!hex) {
+      return "#fff";
+    }
+    const full = hex.length === 3 ? [...hex].map((c) => c + c).join("") : hex;
+    const [r, g, b] = [0, 2, 4].map((i) => {
+      const channel = parseInt(full.slice(i, i + 2), 16) / 255;
+      return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b > WHITE_TEXT_MAX_LUMINANCE ? "#000" : "#fff";
+  }
+  const STATES = ["", ":hover", ":focus", ":active"];
+  const BUTTON = ".interaction--hide.interaction--hide.interaction--hide";
   function buildHideButtonColorCss(color) {
-    const selectors = STATE_SUFFIXES$1.map((suffix) => `.interaction--hide.interaction--hide${suffix}`);
-    return `${selectors.join(", ")} { color: ${color}; }`;
+    const states = (modifier) => STATES.map((state) => `${BUTTON}${modifier}${state}`).join(", ");
+    return [
+      `${states(":not(.active)")} { color: ${color}; background: transparent; }`,
+      `${states(".active")} { background: ${color}; color: ${readableOn(color)}; }`,
+      buildStripedOutlineCss(BUTTON)
+    ].join("\n");
   }
   function initHideButtonColor() {
     const store = useSettingsStore();
@@ -14110,31 +14125,20 @@ ${icons} { font-size: ${iconSize} !important; }`;
     }
   }
   let injected = false;
-  function readableOn(color) {
-    var _a;
-    const hex = (_a = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(color.trim())) == null ? void 0 : _a[1];
-    if (!hex) {
-      return "#fff";
-    }
-    const full = hex.length === 3 ? [...hex].map((c) => c + c).join("") : hex;
-    const [r, g, b] = [0, 2, 4].map((i) => {
-      const channel = parseInt(full.slice(i, i + 2), 16) / 255;
-      return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
-    });
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.179 ? "#000" : "#fff";
-  }
   const STATE_SUFFIXES = ["", ":hover", ":focus", ":active"];
   function buildGalleryQuickButtonCss() {
     const states = (attribute) => STATE_SUFFIXES.map((suffix) => `.lodestone-gallery-quick-button.lodestone-gallery-quick-button${attribute}${suffix}`).join(", ");
     return `
     ${states("[data-active]")} {
       color: var(--lodestone-qb-color);
+      background: transparent;
     }
     ${states('[data-active="true"]')} {
       border-radius: 4px;
       background: var(--lodestone-qb-color);
       color: var(--lodestone-qb-on-color);
     }
+    ${buildStripedOutlineCss(".lodestone-gallery-quick-button.lodestone-gallery-quick-button")}
   `;
   }
   function ensureGalleryQuickButtonStyles() {
