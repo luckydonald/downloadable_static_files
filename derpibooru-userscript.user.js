@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.11.05.0000.01.33.12.0000.9b37a
+// @version      2026.11.05.0000.02.57.01.0000.e81f4
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -7921,10 +7921,27 @@
   function mergeBoorus(existing, incoming) {
     return existing === null || incoming === null ? null : [.../* @__PURE__ */ new Set([...existing, ...incoming])];
   }
+  function conditionIsImagePageOnly(node) {
+    switch (node.type) {
+      case "and":
+      case "or":
+        return node.children.length > 0 && node.children.every(conditionIsImagePageOnly);
+      case "not":
+        return conditionIsImagePageOnly(node.child);
+      case "leaf":
+        return node.targetKind === "id" && /^(image-|gallery-quick-|telegram-)/.test(node.targetId);
+    }
+  }
+  function correctListTargets(rule) {
+    if (!isRecord$4(rule.condition) || !conditionIsImagePageOnly(rule.condition)) {
+      return rule;
+    }
+    return { ...rule, actions: rule.actions.map((action) => action.targetId.startsWith("list-") ? { ...action, targetId: action.targetId.replace(/^list-/, "image-") } : action) };
+  }
   function normalizeRule(raw) {
     const { actionTargetId, actionVerb, ...rule } = raw;
     const actions = Array.isArray(rule.actions) ? rule.actions.filter((action) => isRecord$4(action) && typeof action.targetId === "string") : [createButtonEffectAction({ targetId: typeof actionTargetId === "string" ? actionTargetId : "", verb: actionVerb ?? "toggle" })];
-    return { ...rule, actions, boorus: normalizeBoorus(rule.boorus) };
+    return correctListTargets({ ...rule, actions, boorus: normalizeBoorus(rule.boorus) });
   }
   function normalizeButtonEffectsState(raw) {
     const record = isRecord$4(raw) ? raw : {};
@@ -8240,7 +8257,7 @@
     onValueChanged(STORAGE_KEY, () => store.$patch((state) => Object.assign(state, loadState())));
     onValueChanged(SYNCED_STORAGE_KEY, () => store.$patch((state) => Object.assign(state, loadState())));
   }
-  const APP_VERSION = "2026.11.05.0000.01.33.12.0000.9b37a";
+  const APP_VERSION = "2026.11.05.0000.02.57.01.0000.e81f4";
   function numericSegments(version2) {
     const segments = [];
     for (const part of version2.split(".")) {
@@ -10891,10 +10908,37 @@
       actions: [{ targetId: "image-upvote", verb: "turn-on" }]
     }
   ];
+  const VARIANT_SUFFIX = { image: " (image page)", list: " (lists)", both: " (both)" };
+  function pickerLabel(entry) {
+    return displayLabel(entry) + (entry.variant ? VARIANT_SUFFIX[entry.variant] : "");
+  }
   function displayLabel(entry) {
     return entry.label.trim() || entry.icon;
   }
+  function twinSuffixesOf(defs) {
+    const ids = new Set(defs.map((def2) => def2.id));
+    return new Set(defs.filter((def2) => def2.id.startsWith("image-") && ids.has(def2.id.replace(/^image-/, "list-"))).map((def2) => def2.id.replace(/^image-/, "")));
+  }
+  function bothEntries(defs, twinSuffixes) {
+    return [...twinSuffixes].map((suffix) => {
+      const image = defs.find((def2) => def2.id === `image-${suffix}`);
+      const list = defs.find((def2) => def2.id === `list-${suffix}`);
+      return {
+        id: suffix,
+        label: image.label,
+        category: image.category,
+        selector: `${image.selector}, ${list.selector}`,
+        stateKind: "toggle",
+        icon: image.icon,
+        color: image.color,
+        source: "native",
+        scope: "image",
+        variant: "both"
+      };
+    });
+  }
   function buildButtonCatalog(options = {}) {
+    const twinSuffixes = twinSuffixesOf(allButtonDefs);
     const native = allButtonDefs.filter((def2) => options.includeNav || def2.category !== "nav").map((def2) => ({
       id: def2.id,
       label: def2.label,
@@ -10904,8 +10948,10 @@
       icon: def2.icon,
       color: def2.color,
       source: "native",
-      scope: def2.scope
+      scope: def2.scope,
+      variant: twinSuffixes.has(def2.id.replace(/^(image|list)-/, "")) ? def2.scope : void 0
     }));
+    const both = options.includeBoth ? bothEntries(allButtonDefs, twinSuffixes) : [];
     const galleryQuick = useGalleryQuickButtonsStore().buttons.map((config) => ({
       id: `gallery-quick-${config.id}`,
       label: config.label,
@@ -10928,7 +10974,7 @@
       source: "telegram",
       scope: "image"
     }));
-    return [...native, ...galleryQuick, ...telegram];
+    return [...native, ...both, ...galleryQuick, ...telegram];
   }
   function resolveCatalogElement(entry) {
     return document.querySelector(entry.selector);
@@ -10943,8 +10989,8 @@
     }
     return entry.category === "gallery-quick" ? el.dataset.active === "true" : el.classList.contains("active");
   }
-  function findCatalogEntryForElement(catalog, el) {
-    return catalog.find((entry) => Array.from(document.querySelectorAll(entry.selector)).includes(el));
+  function findCatalogEntriesForElement(catalog, el) {
+    return catalog.filter((entry) => Array.from(document.querySelectorAll(entry.selector)).includes(el));
   }
   const _hoisted_1$a = { class: "lodestone-condition-node" };
   const _hoisted_2$8 = ["value"];
@@ -11066,7 +11112,7 @@
                 return openBlock(), createElementBlock("option", {
                   key: entry.id,
                   value: entry.id
-                }, toDisplayString(unref(displayLabel)(entry)), 9, _hoisted_6$5);
+                }, toDisplayString(unref(pickerLabel)(entry)), 9, _hoisted_6$5);
               }), 128))
             ], 40, _hoisted_5$5)) : (openBlock(), createElementBlock("select", {
               key: 1,
@@ -11180,7 +11226,7 @@
         { id: "where", title: "Where", valid: draft.boorus === null || draft.boorus.length > 0 },
         { id: "name", title: "Name", valid: draft.label.trim() !== "" }
       ]);
-      const catalog = computed(() => buildButtonCatalog());
+      const catalog = computed(() => buildButtonCatalog({ includeBoth: true }));
       const categories = computed(() => [...new Set(catalog.value.map((entry) => entry.category))]);
       function verbOptionsFor(action) {
         var _a;
@@ -11312,7 +11358,7 @@
                               return openBlock(), createElementBlock("option", {
                                 key: entry.id,
                                 value: entry.id
-                              }, toDisplayString(unref(displayLabel)(entry)), 9, _hoisted_4$4);
+                              }, toDisplayString(unref(pickerLabel)(entry)), 9, _hoisted_4$4);
                             }), 128))
                           ], 40, _hoisted_3$4)
                         ]),
@@ -11415,7 +11461,7 @@
                       entryFor(action.targetId) ? (openBlock(), createBlock(_sfc_main$q, {
                         key: 0,
                         icon: entryFor(action.targetId).icon,
-                        label: unref(displayLabel)(entryFor(action.targetId)),
+                        label: unref(pickerLabel)(entryFor(action.targetId)),
                         color: entryFor(action.targetId).color
                       }, null, 8, ["icon", "label", "color"])) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
                         createTextVNode(toDisplayString(action.targetId), 1)
@@ -11465,7 +11511,7 @@
                       entryFor(action.targetId) ? (openBlock(), createBlock(_sfc_main$q, {
                         key: 0,
                         icon: entryFor(action.targetId).icon,
-                        label: unref(displayLabel)(entryFor(action.targetId)),
+                        label: unref(pickerLabel)(entryFor(action.targetId)),
                         color: entryFor(action.targetId).color
                       }, null, 8, ["icon", "label", "color"])) : createCommentVNode("", true)
                     ], 64);
@@ -13378,8 +13424,7 @@ ${event}
     return () => eventListeners.delete(listener);
   }
   function notifyNativeButtonEvent(el, phase) {
-    const entry = findCatalogEntryForElement(buildButtonCatalog(), el);
-    if (entry) {
+    for (const entry of findCatalogEntriesForElement(buildButtonCatalog({ includeBoth: true }), el)) {
       notifyButtonEvent({ buttonId: entry.id, phase });
     }
   }
@@ -14333,6 +14378,62 @@ ${icons} { font-size: ${iconSize} !important; }`;
         return node.targetKind === "category" ? node.targetId === entry.category : node.targetId === entry.id;
     }
   }
+  const NOTICE_ID = "lodestone-error-notice";
+  const STYLE_ID = "lodestone-error-notice-style";
+  const CSS = `
+#${NOTICE_ID} {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 100000;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 10px 12px;
+  border: 2px solid #b02a2a;
+  border-radius: 4px;
+  background: #fff1f0;
+  color: #4a0d0d;
+  font: 14px/1.4 sans-serif;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+#${NOTICE_ID} ul { margin: 4px 0 0; padding-left: 18px; }
+#${NOTICE_ID} button { float: right; margin-left: 8px; cursor: pointer; }
+`;
+  function showErrorNotice(message) {
+    addStyle(CSS, STYLE_ID);
+    let box = document.getElementById(NOTICE_ID);
+    if (!box) {
+      box = document.createElement("div");
+      box.id = NOTICE_ID;
+      box.setAttribute("role", "alert");
+      const close = document.createElement("button");
+      close.type = "button";
+      close.textContent = "Dismiss";
+      const owner = box;
+      close.addEventListener("click", () => owner.remove());
+      const title = document.createElement("strong");
+      title.textContent = "Lodestone's Userscript";
+      box.append(close, title, document.createElement("ul"));
+      document.body.append(box);
+    }
+    const list = box.querySelector("ul");
+    const known = Array.from(list.children).some((item) => item.textContent === message);
+    if (!known) {
+      const item = document.createElement("li");
+      item.textContent = message;
+      list.append(item);
+    }
+  }
+  class ButtonEffectError extends Error {
+    constructor(message, expected) {
+      super(message);
+      this.expected = expected;
+      this.name = "ButtonEffectError";
+    }
+  }
+  function belongsToOtherPageType(entry) {
+    const page2 = detectPage(location.pathname);
+    return entry.variant !== "both" && (page2 === "image" || page2 === "list") && entry.scope !== page2;
+  }
   function desiredOnFor(verb) {
     return verb === "turn-on" ? true : verb === "turn-off" ? false : void 0;
   }
@@ -14354,7 +14455,7 @@ ${icons} { font-size: ${iconSize} !important; }`;
   async function performNativeAction(entry, verb) {
     const el = resolveCatalogElement(entry);
     if (!el) {
-      return;
+      throw new ButtonEffectError(`the button "${pickerLabel(entry)}" is not on this page`, belongsToOtherPageType(entry));
     }
     const desiredOn = desiredOnFor(verb);
     const wasActive = readCatalogState(entry) ?? false;
@@ -14382,7 +14483,7 @@ ${icons} { font-size: ${iconSize} !important; }`;
   async function runAction(action, catalog) {
     const target = catalog.find((entry) => entry.id === action.targetId);
     if (!target) {
-      return;
+      throw new ButtonEffectError(`the button "${action.targetId}" does not exist (any more)`, false);
     }
     if (getButtonAction(target.id)) {
       await performRegisteredAction(target, action.verb);
@@ -14391,12 +14492,23 @@ ${icons} { font-size: ${iconSize} !important; }`;
     }
   }
   async function runActions(rule, catalog) {
-    for (const action of rule.actions) {
-      await runAction(action, catalog);
+    try {
+      for (const action of rule.actions) {
+        await runAction(action, catalog);
+      }
+    } catch (error) {
+      if (!(error instanceof ButtonEffectError)) {
+        throw error;
+      }
+      const wrapped = new ButtonEffectError(`Button Effects rule "${rule.label}" stopped: ${error.message}.`, error.expected);
+      showErrorNotice(wrapped.message);
+      if (!wrapped.expected) {
+        reportError(wrapped, "button-effects");
+      }
     }
   }
   function handleButtonEvent(store, event) {
-    const catalog = buildButtonCatalog();
+    const catalog = buildButtonCatalog({ includeBoth: true });
     const changedEntry = catalog.find((entry) => entry.id === event.buttonId);
     if (!changedEntry) {
       return;
