@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.11.04.0000.23.39.05.0000.5e5f4
+// @version      2026.11.05.0000.01.33.12.0000.9b37a
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -6892,7 +6892,7 @@
         );
         const multiple = el.multiple;
         const assignedValue = multiple ? isSet(el._modelValue) ? new Set(selectedVal) : selectedVal : selectedVal[0];
-        const pending = el._pendingValue = [
+        const pending2 = el._pendingValue = [
           multiple,
           multiple ? isArray(assignedValue) ? selectedVal.slice() : selectedVal : assignedValue
         ];
@@ -6900,7 +6900,7 @@
           el[assignKey](assignedValue);
         } finally {
           nextTick(() => {
-            if (el._pendingValue === pending) {
+            if (el._pendingValue === pending2) {
               el._pendingValue = void 0;
             }
           });
@@ -6918,9 +6918,9 @@
       el[assignKey] = getModelAssigner(vnode);
     },
     updated(el, { value }) {
-      const pending = el._pendingValue;
+      const pending2 = el._pendingValue;
       el._pendingValue = void 0;
-      if (!pending || pending[0] !== el.multiple || !isSameSelectValue(value, pending[1], pending[0])) {
+      if (!pending2 || pending2[0] !== el.multiple || !isSameSelectValue(value, pending2[1], pending2[0])) {
         setSelected(el, value);
       }
     }
@@ -8240,7 +8240,7 @@
     onValueChanged(STORAGE_KEY, () => store.$patch((state) => Object.assign(state, loadState())));
     onValueChanged(SYNCED_STORAGE_KEY, () => store.$patch((state) => Object.assign(state, loadState())));
   }
-  const APP_VERSION = "2026.11.04.0000.23.39.05.0000.5e5f4";
+  const APP_VERSION = "2026.11.05.0000.01.33.12.0000.9b37a";
   function numericSegments(version2) {
     const segments = [];
     for (const part of version2.split(".")) {
@@ -13311,6 +13311,61 @@ ${event}
       observer.observe(el, { attributes: true, attributeFilter: ["class"] });
     });
   }
+  const pending = /* @__PURE__ */ new Map();
+  const idleWaiters = /* @__PURE__ */ new Set();
+  function keyOf(imageId, kind) {
+    return `${imageId}:${kind}`;
+  }
+  function notifyIdle() {
+    for (const waiter of [...idleWaiters]) {
+      const stillPending = waiter.key === void 0 ? pending.size > 0 : (pending.get(waiter.key) ?? 0) > 0;
+      if (!stillPending) {
+        idleWaiters.delete(waiter);
+        waiter.resolve();
+      }
+    }
+  }
+  function beginPendingAction(imageId, kind) {
+    const key = keyOf(imageId, kind);
+    pending.set(key, (pending.get(key) ?? 0) + 1);
+    let finished = false;
+    return () => {
+      if (finished) {
+        return;
+      }
+      finished = true;
+      const left = (pending.get(key) ?? 1) - 1;
+      if (left <= 0) {
+        pending.delete(key);
+      } else {
+        pending.set(key, left);
+      }
+      notifyIdle();
+    };
+  }
+  function hasPendingActions() {
+    return pending.size > 0;
+  }
+  function whenIdle(imageId, kind) {
+    const key = imageId !== void 0 && kind !== void 0 ? keyOf(imageId, kind) : void 0;
+    const stillPending = key === void 0 ? pending.size > 0 : (pending.get(key) ?? 0) > 0;
+    if (!stillPending) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve2) => idleWaiters.add({ key, resolve: resolve2 }));
+  }
+  function pendingKindOf(el) {
+    if (el.matches(".interaction--upvote, .interaction--downvote")) {
+      return "vote";
+    }
+    if (el.matches(".interaction--fave")) {
+      return "fave";
+    }
+    if (el.matches(".interaction--hide")) {
+      return "hide";
+    }
+    return void 0;
+  }
   const ENGINE_CLICK_ATTRIBUTE = "data-lodestone-effect";
   const eventListeners = /* @__PURE__ */ new Set();
   function notifyButtonEvent(event) {
@@ -13336,6 +13391,14 @@ ${event}
     return actionRegistry.get(id);
   }
   const ACTION_SELECTOR = '.interaction--fave, .interaction--upvote, .interaction--downvote, .interaction--hide, .js-prev, .js-up, .js-next, .js-rand, a[href$="/subscription"]';
+  const NAVIGATION_SELECTOR = ".js-prev, .js-up, .js-next, .js-rand";
+  function isNavigation(target) {
+    return target.matches(NAVIGATION_SELECTOR) && target instanceof HTMLAnchorElement && target.href !== "";
+  }
+  function holdsNavigation(event, anchor) {
+    const modified = event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0;
+    return hasPendingActions() && !modified && !event.defaultPrevented && (anchor.target === "" || anchor.target === "_self");
+  }
   function initVoteProgress() {
     const store = useSettingsStore();
     const { run } = useSpinnerAction();
@@ -13347,9 +13410,19 @@ ${event}
         if (!target || target.hasAttribute(ENGINE_CLICK_ATTRIBUTE)) {
           return;
         }
+        if (isNavigation(target) && holdsNavigation(event, target)) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          void run(target, () => whenIdle()).then(() => window.location.assign(target.href));
+          return;
+        }
+        const kind = pendingKindOf(target);
         const container = target.closest(".stretched-mobile-links, .media-box__overlay") ?? target.parentElement ?? target;
         notifyNativeButtonEvent(target, "on-click");
-        const settle = () => waitForMutation(container).then(() => notifyNativeButtonEvent(target, "after-settle"));
+        const imageId = target.dataset.imageId;
+        const finish = kind && imageId ? beginPendingAction(imageId, kind) : void 0;
+        const wasActive = target.classList.contains("active");
+        const settle = () => (finish ? waitForActiveChange(target, wasActive, 8e3) : waitForMutation(container)).finally(() => finish == null ? void 0 : finish()).then(() => notifyNativeButtonEvent(target, "after-settle"));
         if (store.voteProgressEnabled) {
           void run(target, settle);
         } else {
@@ -14228,14 +14301,14 @@ ${icons} { font-size: ${iconSize} !important; }`;
     }
     return expected === "on" ? actual : !actual;
   }
-  function evaluateCondition(node, catalog, readState, triggerEntry) {
+  function evaluateCondition(node, catalog, readState, triggerEntry, readTriggerState = readState) {
     switch (node.type) {
       case "and":
-        return node.children.every((child) => evaluateCondition(child, catalog, readState, triggerEntry));
+        return node.children.every((child) => evaluateCondition(child, catalog, readState, triggerEntry, readTriggerState));
       case "or":
-        return node.children.some((child) => evaluateCondition(child, catalog, readState, triggerEntry));
+        return node.children.some((child) => evaluateCondition(child, catalog, readState, triggerEntry, readTriggerState));
       case "not":
-        return !evaluateCondition(node.child, catalog, readState, triggerEntry);
+        return !evaluateCondition(node.child, catalog, readState, triggerEntry, readTriggerState);
       case "leaf": {
         const entries = node.targetKind === "category" ? catalog.filter((entry) => entry.category === node.targetId) : catalog.filter((entry) => entry.id === node.targetId);
         if (entries.length === 0) {
@@ -14244,7 +14317,8 @@ ${icons} { font-size: ${iconSize} !important; }`;
         if (node.trigger && !(triggerEntry && entries.includes(triggerEntry))) {
           return false;
         }
-        return entries.some((entry) => matchesState(readState(entry), node.state));
+        const read = node.trigger ? readTriggerState : readState;
+        return entries.some((entry) => matchesState(read(entry), node.state));
       }
     }
   }
@@ -14287,7 +14361,16 @@ ${icons} { font-size: ${iconSize} !important; }`;
     if (desiredOn !== void 0 && wasActive === desiredOn) {
       return;
     }
-    const settled = waitForActiveChange(el, wasActive);
+    const kind = pendingKindOf(el);
+    const imageId = el.dataset.imageId;
+    if (kind && imageId) {
+      await whenIdle(imageId, kind);
+      if (desiredOn !== void 0 && (readCatalogState(entry) ?? false) === desiredOn) {
+        return;
+      }
+    }
+    const finish = kind && imageId ? beginPendingAction(imageId, kind) : void 0;
+    const settled = waitForActiveChange(el, el.classList.contains("active")).finally(() => finish == null ? void 0 : finish());
     el.setAttribute(ENGINE_CLICK_ATTRIBUTE, "");
     try {
       el.click();
@@ -14318,11 +14401,15 @@ ${icons} { font-size: ${iconSize} !important; }`;
     if (!changedEntry) {
       return;
     }
+    const readTriggerState = (entry) => {
+      const state = readCatalogState(entry);
+      return event.phase === "on-click" && state !== void 0 ? !state : state;
+    };
     const matchingRules = store.rules.filter(
       (rule) => rule.enabled && rule.timing === event.phase && conditionReferencesEntry(rule.condition, changedEntry)
     );
     for (const rule of matchingRules) {
-      if (evaluateCondition(rule.condition, catalog, readCatalogState, changedEntry)) {
+      if (evaluateCondition(rule.condition, catalog, readCatalogState, changedEntry, readTriggerState)) {
         void runActions(rule, catalog);
       }
     }
