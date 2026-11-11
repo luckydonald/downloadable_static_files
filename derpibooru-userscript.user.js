@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.11.05.0000.02.57.01.0000.e81f4
+// @version      2026.11.11.0000.22.50.34.0000.8863d
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -85,7 +85,7 @@
   const camelizeRE = /-\w/g;
   const camelize = cacheStringFunction(
     (str) => {
-      return str.replace(camelizeRE, (c) => c.slice(1).toUpperCase());
+      return str.replace(camelizeRE, (c2) => c2.slice(1).toUpperCase());
     }
   );
   const hyphenateRE = /\B([A-Z])/g;
@@ -2496,9 +2496,9 @@
   function findNonCommentChild(children) {
     let child = children[0];
     if (children.length > 1) {
-      for (const c of children) {
-        if (c.type !== Comment) {
-          child = c;
+      for (const c2 of children) {
+        if (c2.type !== Comment) {
+          child = c2;
           break;
         }
       }
@@ -3105,15 +3105,15 @@
         const opt = computedOptions[key];
         const get = isFunction(opt) ? opt.bind(publicThis, publicThis) : isFunction(opt.get) ? opt.get.bind(publicThis, publicThis) : NOOP;
         const set = !isFunction(opt) && isFunction(opt.set) ? opt.set.bind(publicThis) : NOOP;
-        const c = computed({
+        const c2 = computed({
           get,
           set
         });
         Object.defineProperty(ctx, key, {
           enumerable: true,
           configurable: true,
-          get: () => c.value,
-          set: (v) => c.value = v
+          get: () => c2.value,
+          set: (v) => c2.value = v
         });
       }
     }
@@ -3269,24 +3269,24 @@
     }
     return resolved;
   }
-  function mergeOptions(to, from, strats, asMixin = false) {
+  function mergeOptions(to2, from, strats, asMixin = false) {
     const { mixins, extends: extendsOptions } = from;
     if (extendsOptions) {
-      mergeOptions(to, extendsOptions, strats, true);
+      mergeOptions(to2, extendsOptions, strats, true);
     }
     if (mixins) {
       mixins.forEach(
-        (m) => mergeOptions(to, m, strats, true)
+        (m) => mergeOptions(to2, m, strats, true)
       );
     }
     for (const key in from) {
       if (asMixin && key === "expose") ;
       else {
         const strat = internalOptionMergeStrats[key] || strats && strats[key];
-        to[key] = strat ? strat(to[key], from[key]) : from[key];
+        to2[key] = strat ? strat(to2[key], from[key]) : from[key];
       }
     }
-    return to;
+    return to2;
   }
   const internalOptionMergeStrats = {
     data: mergeDataFn,
@@ -3319,22 +3319,22 @@
     provide: mergeDataFn,
     inject: mergeInject
   };
-  function mergeDataFn(to, from) {
+  function mergeDataFn(to2, from) {
     if (!from) {
-      return to;
+      return to2;
     }
-    if (!to) {
+    if (!to2) {
       return from;
     }
     return function mergedDataFn() {
       return extend(
-        isFunction(to) ? to.call(this, this) : to,
+        isFunction(to2) ? to2.call(this, this) : to2,
         isFunction(from) ? from.call(this, this) : from
       );
     };
   }
-  function mergeInject(to, from) {
-    return mergeObjectOptions(normalizeInject(to), normalizeInject(from));
+  function mergeInject(to2, from) {
+    return mergeObjectOptions(normalizeInject(to2), normalizeInject(from));
   }
   function normalizeInject(raw) {
     if (isArray(raw)) {
@@ -3346,32 +3346,32 @@
     }
     return raw;
   }
-  function mergeAsArray(to, from) {
-    return to ? [...new Set([].concat(to, from))] : from;
+  function mergeAsArray(to2, from) {
+    return to2 ? [...new Set([].concat(to2, from))] : from;
   }
-  function mergeObjectOptions(to, from) {
-    return to ? extend(/* @__PURE__ */ Object.create(null), to, from) : from;
+  function mergeObjectOptions(to2, from) {
+    return to2 ? extend(/* @__PURE__ */ Object.create(null), to2, from) : from;
   }
-  function mergeEmitsOrPropsOptions(to, from) {
-    if (to) {
-      if (isArray(to) && isArray(from)) {
-        return [.../* @__PURE__ */ new Set([...to, ...from])];
+  function mergeEmitsOrPropsOptions(to2, from) {
+    if (to2) {
+      if (isArray(to2) && isArray(from)) {
+        return [.../* @__PURE__ */ new Set([...to2, ...from])];
       }
       return extend(
         /* @__PURE__ */ Object.create(null),
-        normalizePropsOrEmits(to),
+        normalizePropsOrEmits(to2),
         normalizePropsOrEmits(from != null ? from : {})
       );
     } else {
       return from;
     }
   }
-  function mergeWatchOptions(to, from) {
-    if (!to) return from;
-    if (!from) return to;
-    const merged = extend(/* @__PURE__ */ Object.create(null), to);
+  function mergeWatchOptions(to2, from) {
+    if (!to2) return from;
+    if (!from) return to2;
+    const merged = extend(/* @__PURE__ */ Object.create(null), to2);
     for (const key in from) {
-      merged[key] = mergeAsArray(to[key], from[key]);
+      merged[key] = mergeAsArray(to2[key], from[key]);
     }
     return merged;
   }
@@ -5583,7 +5583,7 @@
   function getSequence(arr) {
     const p2 = arr.slice();
     const result = [0];
-    let i, j, u, v, c;
+    let i, j, u, v, c2;
     const len = arr.length;
     for (i = 0; i < len; i++) {
       const arrI = arr[i];
@@ -5597,11 +5597,11 @@
         u = 0;
         v = result.length - 1;
         while (u < v) {
-          c = u + v >> 1;
-          if (arr[result[c]] < arrI) {
-            u = c + 1;
+          c2 = u + v >> 1;
+          if (arr[result[c2]] < arrI) {
+            u = c2 + 1;
           } else {
-            v = c;
+            v = c2;
           }
         }
         if (arrI < arr[result[u]]) {
@@ -6101,10 +6101,10 @@
   let internalSetCurrentInstance;
   let setInSSRSetupState;
   {
-    const g = getGlobalThis();
+    const g2 = getGlobalThis();
     const registerGlobalSetter = (key, setter) => {
       let setters;
-      if (!(setters = g[key])) setters = g[key] = [];
+      if (!(setters = g2[key])) setters = g2[key] = [];
       setters.push(setter);
       return (v) => {
         if (setters.length > 1) setters.forEach((set) => set(v));
@@ -6260,7 +6260,7 @@
     }
   }
   const classifyRE = /(?:^|[-_])\w/g;
-  const classify = (str) => str.replace(classifyRE, (c) => c.toUpperCase()).replace(/[-_]/g, "");
+  const classify = (str) => str.replace(classifyRE, (c2) => c2.toUpperCase()).replace(/[-_]/g, "");
   function getComponentName(Component, includeInferred = true) {
     return isFunction(Component) ? Component.displayName || Component.name : Component.name || includeInferred && Component.__name;
   }
@@ -6290,9 +6290,34 @@
     return isFunction(value) && "__vccOpts" in value;
   }
   const computed = (getterOrOptions, debugOptions) => {
-    const c = /* @__PURE__ */ computed$1(getterOrOptions, debugOptions, isInSSRComponentSetup);
-    return c;
+    const c2 = /* @__PURE__ */ computed$1(getterOrOptions, debugOptions, isInSSRComponentSetup);
+    return c2;
   };
+  function h$1(type, propsOrChildren, children) {
+    try {
+      setBlockTracking(-1);
+      const l = arguments.length;
+      if (l === 2) {
+        if (isObject(propsOrChildren) && !isArray(propsOrChildren)) {
+          if (isVNode(propsOrChildren)) {
+            return createVNode(type, null, [propsOrChildren]);
+          }
+          return createVNode(type, propsOrChildren);
+        } else {
+          return createVNode(type, null, propsOrChildren);
+        }
+      } else {
+        if (l > 3) {
+          children = Array.prototype.slice.call(arguments, 2);
+        } else if (l === 3 && isVNode(children)) {
+          children = [children];
+        }
+        return createVNode(type, propsOrChildren, children);
+      }
+    } finally {
+      setBlockTracking(1);
+    }
+  }
   const version = "3.5.43";
   /**
   * @vue/runtime-dom v3.5.43
@@ -6300,10 +6325,10 @@
   * @license MIT
   **/
   let policy = void 0;
-  const tt = typeof window !== "undefined" && window.trustedTypes;
-  if (tt) {
+  const tt$1 = typeof window !== "undefined" && window.trustedTypes;
+  if (tt$1) {
     try {
-      policy = /* @__PURE__ */ tt.createPolicy("vue", {
+      policy = /* @__PURE__ */ tt$1.createPolicy("vue", {
         createHTML: (val) => val
       });
     } catch (e) {
@@ -6608,8 +6633,8 @@
     return [event, options];
   }
   let cachedNow = 0;
-  const p = /* @__PURE__ */ Promise.resolve();
-  const getNow = () => cachedNow || (p.then(() => cachedNow = 0), cachedNow = Date.now());
+  const p$1 = /* @__PURE__ */ Promise.resolve();
+  const getNow = () => cachedNow || (p$1.then(() => cachedNow = 0), cachedNow = Date.now());
   function createInvoker(initialValue, instance) {
     const invoker = (e) => {
       if (!e._vts) {
@@ -7886,12 +7911,62 @@
     store.$subscribe(() => setValue(STORAGE_KEY$3, store.$state), { flush: "sync" });
     onValueChanged(STORAGE_KEY$3, (next) => store.$patch(normalizeGalleryQuickButtonsState(next)));
   }
+  const imageButtonDefs = [
+    { id: "image-nav-prev", scope: "image", selector: ".block__header .js-prev", label: "Previous image", icon: "fa-chevron-left", color: "#8a8a8a", category: "nav" },
+    { id: "image-nav-up", scope: "image", selector: ".block__header .js-up", label: "Find in list", icon: "fa-chevron-up", color: "#8a8a8a", category: "nav" },
+    { id: "image-nav-next", scope: "image", selector: ".block__header .js-next", label: "Next image", icon: "fa-chevron-right", color: "#8a8a8a", category: "nav" },
+    { id: "image-nav-random", scope: "image", selector: ".block__header .js-rand", label: "Random image", icon: "fa-random", color: "#8a8a8a", category: "nav" },
+    { id: "image-fave", scope: "image", selector: ".block__header .interaction--fave", label: "Favorite", icon: "fa-star", color: "#f2b70c", category: "vote" },
+    { id: "image-upvote", scope: "image", selector: ".block__header .interaction--upvote", label: "Upvote", icon: "fa-arrow-up", color: "#5cb85c", category: "vote" },
+    { id: "image-downvote", scope: "image", selector: ".block__header .interaction--downvote", label: "Downvote", icon: "fa-arrow-down", color: "#d9534f", category: "vote" },
+    { id: "image-comments", scope: "image", selector: ".block__header .interaction--comments", label: "Comments", icon: "fa-comments", color: "#5bc0de", category: "comments" },
+    { id: "image-hide", scope: "image", selector: ".block__header .interaction--hide", label: "Hide image", icon: "fa-eye-slash", color: "#8a8a8a", category: "hide" },
+    /**
+     * Not confirmed live logged-in (M1's survey only saw the logged-out `/sessions/new`
+     * placeholder) -- best guess from Philomena's known REST convention: a single toggle link
+     * whose href stays `/images/:id/subscription` both ways, `data-method` distinguishing
+     * subscribe (post) from unsubscribe (delete).
+     */
+    { id: "image-subscribe", scope: "image", selector: '.block__header a[href$="/subscription"]', label: "Subscribe", icon: "fa-bell", color: "#8a8a8a", category: "subscribe" },
+    { id: "image-galleries", scope: "image", selector: ".block__header .block__header__dropdown-tab", label: "Galleries", icon: "fa-images", color: "#8a8a8a", category: "galleries" },
+    { id: "image-related", scope: "image", selector: '.block__header a[href$="/related"]', label: "Related", icon: "fa-sitemap", color: "#8a8a8a", category: "related" },
+    { id: "image-view-detailed", scope: "image", selector: '.block__header a[title="View (tags in filename)"]', label: "View", icon: "fa-eye", color: "#8a8a8a", category: "view" },
+    { id: "image-view-numeric", scope: "image", selector: '.block__header a[title="View (no tags in filename)"]', label: "View (short)", icon: "fa-eye", color: "#8a8a8a", category: "view" },
+    { id: "image-download-detailed", scope: "image", selector: '.block__header a[title="Download (tags in filename)"]', label: "Download", icon: "fa-download", color: "#8a8a8a", category: "download" },
+    { id: "image-download-numeric", scope: "image", selector: '.block__header a[title="Download (no tags in filename)"]', label: "Download (short)", icon: "fa-download", color: "#8a8a8a", category: "download" }
+  ];
+  const listButtonDefs = [
+    { id: "list-fave", scope: "list", selector: ".media-box .interaction--fave", label: "Favorite", icon: "fa-star", color: "#f2b70c", category: "vote" },
+    { id: "list-upvote", scope: "list", selector: ".media-box .interaction--upvote", label: "Upvote", icon: "fa-arrow-up", color: "#5cb85c", category: "vote" },
+    { id: "list-downvote", scope: "list", selector: ".media-box .interaction--downvote", label: "Downvote", icon: "fa-arrow-down", color: "#d9534f", category: "vote" },
+    { id: "list-comments", scope: "list", selector: ".media-box .interaction--comments", label: "Comments", icon: "fa-comments", color: "#5bc0de", category: "comments" },
+    { id: "list-hide", scope: "list", selector: ".media-box .interaction--hide", label: "Hide image", icon: "fa-eye-slash", color: "#8a8a8a", category: "hide" }
+  ];
+  const allButtonDefs = [...imageButtonDefs, ...listButtonDefs];
+  const LINK_CATEGORIES = /* @__PURE__ */ new Set(["nav", "related", "view", "download"]);
+  function isLinkButton(def2) {
+    return LINK_CATEGORIES.has(def2.category);
+  }
+  const TEXT_CATEGORIES = /* @__PURE__ */ new Set(["subscribe"]);
+  function hasTextLabel(def2) {
+    return TEXT_CATEGORIES.has(def2.category);
+  }
+  function twinSuffixesOf(defs) {
+    const ids = new Set(defs.map((def2) => def2.id));
+    return new Set(defs.filter((def2) => def2.id.startsWith("image-") && ids.has(def2.id.replace(/^image-/, "list-"))).map((def2) => def2.id.replace(/^image-/, "")));
+  }
+  const TWIN_SUFFIXES = twinSuffixesOf(allButtonDefs);
+  function mergedTwinId(id) {
+    const suffix = id.replace(/^(image|list)-/, "");
+    return suffix !== id && TWIN_SUFFIXES.has(suffix) ? suffix : id;
+  }
   const STORAGE_KEY$2 = "lodestone-userscript-button-effects";
+  const REVERSE_VALUES = ["nothing", "revert", "toggle", "turn-on", "turn-off"];
   function ruleAppliesOn(rule, instanceId) {
     return rule.boorus === null || rule.boorus.includes(instanceId);
   }
   function createButtonEffectAction(overrides2 = {}) {
-    return { targetId: "", verb: "toggle", ...overrides2 };
+    return { targetId: "", verb: "toggle", reverse: "nothing", ...overrides2 };
   }
   function createButtonEffectRule(overrides2 = {}) {
     return {
@@ -7901,6 +7976,7 @@
       timing: "after-settle",
       condition: { type: "leaf", targetKind: "id", targetId: "", state: "on" },
       actions: [createButtonEffectAction()],
+      reverseOrder: "inverted",
       boorus: null,
       ...overrides2
     };
@@ -7921,27 +7997,30 @@
   function mergeBoorus(existing, incoming) {
     return existing === null || incoming === null ? null : [.../* @__PURE__ */ new Set([...existing, ...incoming])];
   }
-  function conditionIsImagePageOnly(node) {
+  function mergeConditionTwins(node) {
     switch (node.type) {
       case "and":
       case "or":
-        return node.children.length > 0 && node.children.every(conditionIsImagePageOnly);
+        return { ...node, children: node.children.map(mergeConditionTwins) };
       case "not":
-        return conditionIsImagePageOnly(node.child);
+        return { ...node, child: mergeConditionTwins(node.child) };
       case "leaf":
-        return node.targetKind === "id" && /^(image-|gallery-quick-|telegram-)/.test(node.targetId);
+        return node.targetKind === "id" ? { ...node, targetId: mergedTwinId(node.targetId) } : node;
     }
   }
-  function correctListTargets(rule) {
-    if (!isRecord$4(rule.condition) || !conditionIsImagePageOnly(rule.condition)) {
-      return rule;
-    }
-    return { ...rule, actions: rule.actions.map((action) => action.targetId.startsWith("list-") ? { ...action, targetId: action.targetId.replace(/^list-/, "image-") } : action) };
+  function mergeTwinTargets(rule) {
+    const seen = /* @__PURE__ */ new Set();
+    const actions = rule.actions.map((action) => ({ ...action, targetId: mergedTwinId(action.targetId) })).filter((action) => {
+      const key = `${action.targetId}\0${action.verb}\0${action.reverse}`;
+      return seen.has(key) ? false : Boolean(seen.add(key));
+    });
+    return { ...rule, actions, condition: isRecord$4(rule.condition) ? mergeConditionTwins(rule.condition) : rule.condition };
   }
   function normalizeRule(raw) {
     const { actionTargetId, actionVerb, ...rule } = raw;
-    const actions = Array.isArray(rule.actions) ? rule.actions.filter((action) => isRecord$4(action) && typeof action.targetId === "string") : [createButtonEffectAction({ targetId: typeof actionTargetId === "string" ? actionTargetId : "", verb: actionVerb ?? "toggle" })];
-    return correctListTargets({ ...rule, actions, boorus: normalizeBoorus(rule.boorus) });
+    const actions = Array.isArray(rule.actions) ? rule.actions.filter((action) => isRecord$4(action) && typeof action.targetId === "string").map((action) => ({ ...action, reverse: REVERSE_VALUES.includes(action.reverse) ? action.reverse : "nothing" })) : [createButtonEffectAction({ targetId: typeof actionTargetId === "string" ? actionTargetId : "", verb: actionVerb ?? "toggle" })];
+    const reverseOrder = rule.reverseOrder === "listed" ? "listed" : "inverted";
+    return mergeTwinTargets({ ...rule, actions, reverseOrder, boorus: normalizeBoorus(rule.boorus) });
   }
   function normalizeButtonEffectsState(raw) {
     const record = isRecord$4(raw) ? raw : {};
@@ -8004,6 +8083,31 @@
       },
       remove(id) {
         this.allRules = this.allRules.filter((rule) => rule.id !== id);
+      },
+      /** Moves a rule to `toIndex` (clamped); the array order is the order the engine runs the rules in. */
+      move(id, toIndex) {
+        const from = this.allRules.findIndex((rule) => rule.id === id);
+        if (from === -1) {
+          return;
+        }
+        const to2 = Math.min(Math.max(toIndex, 0), this.allRules.length - 1);
+        if (to2 === from) {
+          return;
+        }
+        const next = [...this.allRules];
+        const [moved] = next.splice(from, 1);
+        next.splice(to2, 0, moved);
+        this.allRules = next;
+      },
+      /** Applies an id order; unknown ids are ignored and rules missing from it keep their relative order at the end, so none is ever dropped. */
+      reorder(ids) {
+        const byId = new Map(this.allRules.map((rule) => [rule.id, rule]));
+        const ordered = ids.flatMap((id) => {
+          const rule = byId.get(id);
+          byId.delete(id);
+          return rule ? [rule] : [];
+        });
+        this.allRules = [...ordered, ...byId.values()];
       }
     }
   });
@@ -8257,7 +8361,7 @@
     onValueChanged(STORAGE_KEY, () => store.$patch((state) => Object.assign(state, loadState())));
     onValueChanged(SYNCED_STORAGE_KEY, () => store.$patch((state) => Object.assign(state, loadState())));
   }
-  const APP_VERSION = "2026.11.05.0000.02.57.01.0000.e81f4";
+  const APP_VERSION = "2026.11.11.0000.22.50.34.0000.8863d";
   function numericSegments(version2) {
     const segments = [];
     for (const part of version2.split(".")) {
@@ -8695,46 +8799,6 @@
       };
     }
   });
-  const imageButtonDefs = [
-    { id: "image-nav-prev", scope: "image", selector: ".block__header .js-prev", label: "Previous image", icon: "fa-chevron-left", color: "#8a8a8a", category: "nav" },
-    { id: "image-nav-up", scope: "image", selector: ".block__header .js-up", label: "Find in list", icon: "fa-chevron-up", color: "#8a8a8a", category: "nav" },
-    { id: "image-nav-next", scope: "image", selector: ".block__header .js-next", label: "Next image", icon: "fa-chevron-right", color: "#8a8a8a", category: "nav" },
-    { id: "image-nav-random", scope: "image", selector: ".block__header .js-rand", label: "Random image", icon: "fa-random", color: "#8a8a8a", category: "nav" },
-    { id: "image-fave", scope: "image", selector: ".block__header .interaction--fave", label: "Favorite", icon: "fa-star", color: "#f2b70c", category: "vote" },
-    { id: "image-upvote", scope: "image", selector: ".block__header .interaction--upvote", label: "Upvote", icon: "fa-arrow-up", color: "#5cb85c", category: "vote" },
-    { id: "image-downvote", scope: "image", selector: ".block__header .interaction--downvote", label: "Downvote", icon: "fa-arrow-down", color: "#d9534f", category: "vote" },
-    { id: "image-comments", scope: "image", selector: ".block__header .interaction--comments", label: "Comments", icon: "fa-comments", color: "#5bc0de", category: "comments" },
-    { id: "image-hide", scope: "image", selector: ".block__header .interaction--hide", label: "Hide image", icon: "fa-eye-slash", color: "#8a8a8a", category: "hide" },
-    /**
-     * Not confirmed live logged-in (M1's survey only saw the logged-out `/sessions/new`
-     * placeholder) -- best guess from Philomena's known REST convention: a single toggle link
-     * whose href stays `/images/:id/subscription` both ways, `data-method` distinguishing
-     * subscribe (post) from unsubscribe (delete).
-     */
-    { id: "image-subscribe", scope: "image", selector: '.block__header a[href$="/subscription"]', label: "Subscribe", icon: "fa-bell", color: "#8a8a8a", category: "subscribe" },
-    { id: "image-galleries", scope: "image", selector: ".block__header .block__header__dropdown-tab", label: "Galleries", icon: "fa-images", color: "#8a8a8a", category: "galleries" },
-    { id: "image-related", scope: "image", selector: '.block__header a[href$="/related"]', label: "Related", icon: "fa-sitemap", color: "#8a8a8a", category: "related" },
-    { id: "image-view-detailed", scope: "image", selector: '.block__header a[title="View (tags in filename)"]', label: "View", icon: "fa-eye", color: "#8a8a8a", category: "view" },
-    { id: "image-view-numeric", scope: "image", selector: '.block__header a[title="View (no tags in filename)"]', label: "View (short)", icon: "fa-eye", color: "#8a8a8a", category: "view" },
-    { id: "image-download-detailed", scope: "image", selector: '.block__header a[title="Download (tags in filename)"]', label: "Download", icon: "fa-download", color: "#8a8a8a", category: "download" },
-    { id: "image-download-numeric", scope: "image", selector: '.block__header a[title="Download (no tags in filename)"]', label: "Download (short)", icon: "fa-download", color: "#8a8a8a", category: "download" }
-  ];
-  const listButtonDefs = [
-    { id: "list-fave", scope: "list", selector: ".media-box .interaction--fave", label: "Favorite", icon: "fa-star", color: "#f2b70c", category: "vote" },
-    { id: "list-upvote", scope: "list", selector: ".media-box .interaction--upvote", label: "Upvote", icon: "fa-arrow-up", color: "#5cb85c", category: "vote" },
-    { id: "list-downvote", scope: "list", selector: ".media-box .interaction--downvote", label: "Downvote", icon: "fa-arrow-down", color: "#d9534f", category: "vote" },
-    { id: "list-comments", scope: "list", selector: ".media-box .interaction--comments", label: "Comments", icon: "fa-comments", color: "#5bc0de", category: "comments" },
-    { id: "list-hide", scope: "list", selector: ".media-box .interaction--hide", label: "Hide image", icon: "fa-eye-slash", color: "#8a8a8a", category: "hide" }
-  ];
-  const allButtonDefs = [...imageButtonDefs, ...listButtonDefs];
-  const LINK_CATEGORIES = /* @__PURE__ */ new Set(["nav", "related", "view", "download"]);
-  function isLinkButton(def2) {
-    return LINK_CATEGORIES.has(def2.category);
-  }
-  const TEXT_CATEGORIES = /* @__PURE__ */ new Set(["subscribe"]);
-  function hasTextLabel(def2) {
-    return TEXT_CATEGORIES.has(def2.category);
-  }
   const _hoisted_1$n = { class: "lodestone-hide-group" };
   const _hoisted_2$l = ["checked", "onChange"];
   const _hoisted_3$i = {
@@ -10179,8 +10243,8 @@
   const _hoisted_23$1 = { class: "lodestone-manager-list__actions" };
   const _hoisted_24$1 = ["onClick"];
   const _hoisted_25$1 = ["onClick"];
-  const _hoisted_26 = { class: "lodestone-quick-button-manager__link" };
-  const _hoisted_27 = ["disabled"];
+  const _hoisted_26$1 = { class: "lodestone-quick-button-manager__link" };
+  const _hoisted_27$1 = ["disabled"];
   const DETAILS_STEP = 2;
   const _sfc_main$g = /* @__PURE__ */ defineComponent({
     __name: "QuickButtonManager",
@@ -10575,10 +10639,10 @@
                 class: "lodestone-primary",
                 disabled: !linkGalleryId.value,
                 onClick: saveLink
-              }, "Save link", 8, _hoisted_27)
+              }, "Save link", 8, _hoisted_27$1)
             ]),
             default: withCtx(() => [
-              createBaseVNode("div", _hoisted_26, [
+              createBaseVNode("div", _hoisted_26$1, [
                 createVNode(_sfc_main$j, {
                   modelValue: linkGalleryId.value,
                   "onUpdate:modelValue": _cache[18] || (_cache[18] = ($event) => linkGalleryId.value = $event),
@@ -10884,6 +10948,1602 @@
       };
     }
   });
+  var an = Object.defineProperty;
+  var Pe = Object.getOwnPropertySymbols;
+  var yt = Object.prototype.hasOwnProperty, wt = Object.prototype.propertyIsEnumerable;
+  var bt = (t, e, n) => e in t ? an(t, e, { enumerable: true, configurable: true, writable: true, value: n }) : t[e] = n, fe = (t, e) => {
+    for (var n in e || (e = {}))
+      yt.call(e, n) && bt(t, n, e[n]);
+    if (Pe)
+      for (var n of Pe(e))
+        wt.call(e, n) && bt(t, n, e[n]);
+    return t;
+  };
+  var $e = (t, e) => {
+    var n = {};
+    for (var o in t)
+      yt.call(t, o) && e.indexOf(o) < 0 && (n[o] = t[o]);
+    if (t != null && Pe)
+      for (var o of Pe(t))
+        e.indexOf(o) < 0 && wt.call(t, o) && (n[o] = t[o]);
+    return n;
+  };
+  const Ht = "[vue-draggable-plus]: ";
+  function mn(t) {
+    console.warn(Ht + t);
+  }
+  function vn(t) {
+    console.error(Ht + t);
+  }
+  function St(t, e, n) {
+    return n >= 0 && n < t.length && t.splice(n, 0, t.splice(e, 1)[0]), t;
+  }
+  function bn(t) {
+    return t.replace(/-(\w)/g, (e, n) => n ? n.toUpperCase() : "");
+  }
+  function yn(t) {
+    return Object.keys(t).reduce((e, n) => (typeof t[n] != "undefined" && (e[bn(n)] = t[n]), e), {});
+  }
+  function Dt(t, e) {
+    return Array.isArray(t) && t.splice(e, 1), t;
+  }
+  function _t(t, e, n) {
+    return Array.isArray(t) && t.splice(e, 0, n), t;
+  }
+  function wn(t) {
+    return typeof t == "undefined";
+  }
+  function En(t) {
+    return typeof t == "string";
+  }
+  function Tt(t, e, n) {
+    const o = t.children[n];
+    t.insertBefore(e, o);
+  }
+  function Ke(t) {
+    t.parentNode && t.parentNode.removeChild(t);
+  }
+  function Sn(t, e = document) {
+    var o;
+    let n = null;
+    return typeof (e == null ? void 0 : e.querySelector) == "function" ? n = (o = e == null ? void 0 : e.querySelector) == null ? void 0 : o.call(e, t) : n = document.querySelector(t), n || mn(`Element not found: ${t}`), n;
+  }
+  function Dn(t, e, n = null) {
+    return function(...o) {
+      return t.apply(n, o), e.apply(n, o);
+    };
+  }
+  function _n(t, e) {
+    const n = fe({}, t);
+    return Object.keys(e).forEach((o) => {
+      n[o] ? n[o] = Dn(t[o], e[o]) : n[o] = e[o];
+    }), n;
+  }
+  function Tn(t) {
+    return t instanceof HTMLElement;
+  }
+  function Ct(t, e) {
+    Object.keys(t).forEach((n) => {
+      e(n, t[n]);
+    });
+  }
+  function Cn(t) {
+    return t.charCodeAt(0) === 111 && t.charCodeAt(1) === 110 && (t.charCodeAt(2) > 122 || t.charCodeAt(2) < 97);
+  }
+  const On = Object.assign;
+  /**!
+   * Sortable 1.15.2
+   * @author	RubaXa   <trash@rubaxa.org>
+   * @author	owenm    <owen23355@gmail.com>
+   * @license MIT
+   */
+  function Ot(t, e) {
+    var n = Object.keys(t);
+    if (Object.getOwnPropertySymbols) {
+      var o = Object.getOwnPropertySymbols(t);
+      e && (o = o.filter(function(r) {
+        return Object.getOwnPropertyDescriptor(t, r).enumerable;
+      })), n.push.apply(n, o);
+    }
+    return n;
+  }
+  function ne(t) {
+    for (var e = 1; e < arguments.length; e++) {
+      var n = arguments[e] != null ? arguments[e] : {};
+      e % 2 ? Ot(Object(n), true).forEach(function(o) {
+        In(t, o, n[o]);
+      }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(t, Object.getOwnPropertyDescriptors(n)) : Ot(Object(n)).forEach(function(o) {
+        Object.defineProperty(t, o, Object.getOwnPropertyDescriptor(n, o));
+      });
+    }
+    return t;
+  }
+  function Ye(t) {
+    "@babel/helpers - typeof";
+    return typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? Ye = function(e) {
+      return typeof e;
+    } : Ye = function(e) {
+      return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
+    }, Ye(t);
+  }
+  function In(t, e, n) {
+    return e in t ? Object.defineProperty(t, e, {
+      value: n,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    }) : t[e] = n, t;
+  }
+  function ie() {
+    return ie = Object.assign || function(t) {
+      for (var e = 1; e < arguments.length; e++) {
+        var n = arguments[e];
+        for (var o in n)
+          Object.prototype.hasOwnProperty.call(n, o) && (t[o] = n[o]);
+      }
+      return t;
+    }, ie.apply(this, arguments);
+  }
+  function An(t, e) {
+    if (t == null)
+      return {};
+    var n = {}, o = Object.keys(t), r, i;
+    for (i = 0; i < o.length; i++)
+      r = o[i], !(e.indexOf(r) >= 0) && (n[r] = t[r]);
+    return n;
+  }
+  function xn(t, e) {
+    if (t == null)
+      return {};
+    var n = An(t, e), o, r;
+    if (Object.getOwnPropertySymbols) {
+      var i = Object.getOwnPropertySymbols(t);
+      for (r = 0; r < i.length; r++)
+        o = i[r], !(e.indexOf(o) >= 0) && Object.prototype.propertyIsEnumerable.call(t, o) && (n[o] = t[o]);
+    }
+    return n;
+  }
+  var Nn = "1.15.2";
+  function re(t) {
+    if (typeof window != "undefined" && window.navigator)
+      return !!/* @__PURE__ */ navigator.userAgent.match(t);
+  }
+  var ae = re(/(?:Trident.*rv[ :]?11\.|msie|iemobile|Windows Phone)/i), xe = re(/Edge/i), It = re(/firefox/i), Te = re(/safari/i) && !re(/chrome/i) && !re(/android/i), Lt = re(/iP(ad|od|hone)/i), Wt = re(/chrome/i) && re(/android/i), Gt = {
+    capture: false,
+    passive: false
+  };
+  function S(t, e, n) {
+    t.addEventListener(e, n, !ae && Gt);
+  }
+  function E(t, e, n) {
+    t.removeEventListener(e, n, !ae && Gt);
+  }
+  function We(t, e) {
+    if (e) {
+      if (e[0] === ">" && (e = e.substring(1)), t)
+        try {
+          if (t.matches)
+            return t.matches(e);
+          if (t.msMatchesSelector)
+            return t.msMatchesSelector(e);
+          if (t.webkitMatchesSelector)
+            return t.webkitMatchesSelector(e);
+        } catch (n) {
+          return false;
+        }
+      return false;
+    }
+  }
+  function Pn(t) {
+    return t.host && t !== document && t.host.nodeType ? t.host : t.parentNode;
+  }
+  function Q(t, e, n, o) {
+    if (t) {
+      n = n || document;
+      do {
+        if (e != null && (e[0] === ">" ? t.parentNode === n && We(t, e) : We(t, e)) || o && t === n)
+          return t;
+        if (t === n)
+          break;
+      } while (t = Pn(t));
+    }
+    return null;
+  }
+  var At = /\s+/g;
+  function V(t, e, n) {
+    if (t && e)
+      if (t.classList)
+        t.classList[n ? "add" : "remove"](e);
+      else {
+        var o = (" " + t.className + " ").replace(At, " ").replace(" " + e + " ", " ");
+        t.className = (o + (n ? " " + e : "")).replace(At, " ");
+      }
+  }
+  function h(t, e, n) {
+    var o = t && t.style;
+    if (o) {
+      if (n === void 0)
+        return document.defaultView && document.defaultView.getComputedStyle ? n = document.defaultView.getComputedStyle(t, "") : t.currentStyle && (n = t.currentStyle), e === void 0 ? n : n[e];
+      !(e in o) && e.indexOf("webkit") === -1 && (e = "-webkit-" + e), o[e] = n + (typeof n == "string" ? "" : "px");
+    }
+  }
+  function ye(t, e) {
+    var n = "";
+    if (typeof t == "string")
+      n = t;
+    else
+      do {
+        var o = h(t, "transform");
+        o && o !== "none" && (n = o + " " + n);
+      } while (!e && (t = t.parentNode));
+    var r = window.DOMMatrix || window.WebKitCSSMatrix || window.CSSMatrix || window.MSCSSMatrix;
+    return r && new r(n);
+  }
+  function jt(t, e, n) {
+    if (t) {
+      var o = t.getElementsByTagName(e), r = 0, i = o.length;
+      if (n)
+        for (; r < i; r++)
+          n(o[r], r);
+      return o;
+    }
+    return [];
+  }
+  function te() {
+    var t = document.scrollingElement;
+    return t || document.documentElement;
+  }
+  function P(t, e, n, o, r) {
+    if (!(!t.getBoundingClientRect && t !== window)) {
+      var i, a, l, s, u, d, f;
+      if (t !== window && t.parentNode && t !== te() ? (i = t.getBoundingClientRect(), a = i.top, l = i.left, s = i.bottom, u = i.right, d = i.height, f = i.width) : (a = 0, l = 0, s = window.innerHeight, u = window.innerWidth, d = window.innerHeight, f = window.innerWidth), (e || n) && t !== window && (r = r || t.parentNode, !ae))
+        do
+          if (r && r.getBoundingClientRect && (h(r, "transform") !== "none" || n && h(r, "position") !== "static")) {
+            var m = r.getBoundingClientRect();
+            a -= m.top + parseInt(h(r, "border-top-width")), l -= m.left + parseInt(h(r, "border-left-width")), s = a + i.height, u = l + i.width;
+            break;
+          }
+        while (r = r.parentNode);
+      if (o && t !== window) {
+        var y = ye(r || t), b = y && y.a, w = y && y.d;
+        y && (a /= w, l /= b, f /= b, d /= w, s = a + d, u = l + f);
+      }
+      return {
+        top: a,
+        left: l,
+        bottom: s,
+        right: u,
+        width: f,
+        height: d
+      };
+    }
+  }
+  function xt(t, e, n) {
+    for (var o = ce(t, true), r = P(t)[e]; o; ) {
+      var i = P(o)[n], a = void 0;
+      if (a = r >= i, !a)
+        return o;
+      if (o === te())
+        break;
+      o = ce(o, false);
+    }
+    return false;
+  }
+  function we(t, e, n, o) {
+    for (var r = 0, i = 0, a = t.children; i < a.length; ) {
+      if (a[i].style.display !== "none" && a[i] !== p.ghost && (o || a[i] !== p.dragged) && Q(a[i], n.draggable, t, false)) {
+        if (r === e)
+          return a[i];
+        r++;
+      }
+      i++;
+    }
+    return null;
+  }
+  function ht(t, e) {
+    for (var n = t.lastElementChild; n && (n === p.ghost || h(n, "display") === "none" || e && !We(n, e)); )
+      n = n.previousElementSibling;
+    return n || null;
+  }
+  function J(t, e) {
+    var n = 0;
+    if (!t || !t.parentNode)
+      return -1;
+    for (; t = t.previousElementSibling; )
+      t.nodeName.toUpperCase() !== "TEMPLATE" && t !== p.clone && (!e || We(t, e)) && n++;
+    return n;
+  }
+  function Nt(t) {
+    var e = 0, n = 0, o = te();
+    if (t)
+      do {
+        var r = ye(t), i = r.a, a = r.d;
+        e += t.scrollLeft * i, n += t.scrollTop * a;
+      } while (t !== o && (t = t.parentNode));
+    return [e, n];
+  }
+  function Mn(t, e) {
+    for (var n in t)
+      if (t.hasOwnProperty(n)) {
+        for (var o in e)
+          if (e.hasOwnProperty(o) && e[o] === t[n][o])
+            return Number(n);
+      }
+    return -1;
+  }
+  function ce(t, e) {
+    if (!t || !t.getBoundingClientRect)
+      return te();
+    var n = t, o = false;
+    do
+      if (n.clientWidth < n.scrollWidth || n.clientHeight < n.scrollHeight) {
+        var r = h(n);
+        if (n.clientWidth < n.scrollWidth && (r.overflowX == "auto" || r.overflowX == "scroll") || n.clientHeight < n.scrollHeight && (r.overflowY == "auto" || r.overflowY == "scroll")) {
+          if (!n.getBoundingClientRect || n === document.body)
+            return te();
+          if (o || e)
+            return n;
+          o = true;
+        }
+      }
+    while (n = n.parentNode);
+    return te();
+  }
+  function Fn(t, e) {
+    if (t && e)
+      for (var n in e)
+        e.hasOwnProperty(n) && (t[n] = e[n]);
+    return t;
+  }
+  function Je(t, e) {
+    return Math.round(t.top) === Math.round(e.top) && Math.round(t.left) === Math.round(e.left) && Math.round(t.height) === Math.round(e.height) && Math.round(t.width) === Math.round(e.width);
+  }
+  var Ce;
+  function zt(t, e) {
+    return function() {
+      if (!Ce) {
+        var n = arguments, o = this;
+        n.length === 1 ? t.call(o, n[0]) : t.apply(o, n), Ce = setTimeout(function() {
+          Ce = void 0;
+        }, e);
+      }
+    };
+  }
+  function Rn() {
+    clearTimeout(Ce), Ce = void 0;
+  }
+  function Ut(t, e, n) {
+    t.scrollLeft += e, t.scrollTop += n;
+  }
+  function Vt(t) {
+    var e = window.Polymer, n = window.jQuery || window.Zepto;
+    return e && e.dom ? e.dom(t).cloneNode(true) : n ? n(t).clone(true)[0] : t.cloneNode(true);
+  }
+  function $t(t, e, n) {
+    var o = {};
+    return Array.from(t.children).forEach(function(r) {
+      var i, a, l, s;
+      if (!(!Q(r, e.draggable, t, false) || r.animated || r === n)) {
+        var u = P(r);
+        o.left = Math.min((i = o.left) !== null && i !== void 0 ? i : 1 / 0, u.left), o.top = Math.min((a = o.top) !== null && a !== void 0 ? a : 1 / 0, u.top), o.right = Math.max((l = o.right) !== null && l !== void 0 ? l : -1 / 0, u.right), o.bottom = Math.max((s = o.bottom) !== null && s !== void 0 ? s : -1 / 0, u.bottom);
+      }
+    }), o.width = o.right - o.left, o.height = o.bottom - o.top, o.x = o.left, o.y = o.top, o;
+  }
+  var q = "Sortable" + (/* @__PURE__ */ new Date()).getTime();
+  function Xn() {
+    var t = [], e;
+    return {
+      captureAnimationState: function() {
+        if (t = [], !!this.options.animation) {
+          var o = [].slice.call(this.el.children);
+          o.forEach(function(r) {
+            if (!(h(r, "display") === "none" || r === p.ghost)) {
+              t.push({
+                target: r,
+                rect: P(r)
+              });
+              var i = ne({}, t[t.length - 1].rect);
+              if (r.thisAnimationDuration) {
+                var a = ye(r, true);
+                a && (i.top -= a.f, i.left -= a.e);
+              }
+              r.fromRect = i;
+            }
+          });
+        }
+      },
+      addAnimationState: function(o) {
+        t.push(o);
+      },
+      removeAnimationState: function(o) {
+        t.splice(Mn(t, {
+          target: o
+        }), 1);
+      },
+      animateAll: function(o) {
+        var r = this;
+        if (!this.options.animation) {
+          clearTimeout(e), typeof o == "function" && o();
+          return;
+        }
+        var i = false, a = 0;
+        t.forEach(function(l) {
+          var s = 0, u = l.target, d = u.fromRect, f = P(u), m = u.prevFromRect, y = u.prevToRect, b = l.rect, w = ye(u, true);
+          w && (f.top -= w.f, f.left -= w.e), u.toRect = f, u.thisAnimationDuration && Je(m, f) && !Je(d, f) && // Make sure animatingRect is on line between toRect & fromRect
+          (b.top - f.top) / (b.left - f.left) === (d.top - f.top) / (d.left - f.left) && (s = Bn(b, m, y, r.options)), Je(f, d) || (u.prevFromRect = d, u.prevToRect = f, s || (s = r.options.animation), r.animate(u, b, f, s)), s && (i = true, a = Math.max(a, s), clearTimeout(u.animationResetTimer), u.animationResetTimer = setTimeout(function() {
+            u.animationTime = 0, u.prevFromRect = null, u.fromRect = null, u.prevToRect = null, u.thisAnimationDuration = null;
+          }, s), u.thisAnimationDuration = s);
+        }), clearTimeout(e), i ? e = setTimeout(function() {
+          typeof o == "function" && o();
+        }, a) : typeof o == "function" && o(), t = [];
+      },
+      animate: function(o, r, i, a) {
+        if (a) {
+          h(o, "transition", ""), h(o, "transform", "");
+          var l = ye(this.el), s = l && l.a, u = l && l.d, d = (r.left - i.left) / (s || 1), f = (r.top - i.top) / (u || 1);
+          o.animatingX = !!d, o.animatingY = !!f, h(o, "transform", "translate3d(" + d + "px," + f + "px,0)"), this.forRepaintDummy = Yn(o), h(o, "transition", "transform " + a + "ms" + (this.options.easing ? " " + this.options.easing : "")), h(o, "transform", "translate3d(0,0,0)"), typeof o.animated == "number" && clearTimeout(o.animated), o.animated = setTimeout(function() {
+            h(o, "transition", ""), h(o, "transform", ""), o.animated = false, o.animatingX = false, o.animatingY = false;
+          }, a);
+        }
+      }
+    };
+  }
+  function Yn(t) {
+    return t.offsetWidth;
+  }
+  function Bn(t, e, n, o) {
+    return Math.sqrt(Math.pow(e.top - t.top, 2) + Math.pow(e.left - t.left, 2)) / Math.sqrt(Math.pow(e.top - n.top, 2) + Math.pow(e.left - n.left, 2)) * o.animation;
+  }
+  var ge = [], Ze = {
+    initializeByDefault: true
+  }, Ne = {
+    mount: function(e) {
+      for (var n in Ze)
+        Ze.hasOwnProperty(n) && !(n in e) && (e[n] = Ze[n]);
+      ge.forEach(function(o) {
+        if (o.pluginName === e.pluginName)
+          throw "Sortable: Cannot mount plugin ".concat(e.pluginName, " more than once");
+      }), ge.push(e);
+    },
+    pluginEvent: function(e, n, o) {
+      var r = this;
+      this.eventCanceled = false, o.cancel = function() {
+        r.eventCanceled = true;
+      };
+      var i = e + "Global";
+      ge.forEach(function(a) {
+        n[a.pluginName] && (n[a.pluginName][i] && n[a.pluginName][i](ne({
+          sortable: n
+        }, o)), n.options[a.pluginName] && n[a.pluginName][e] && n[a.pluginName][e](ne({
+          sortable: n
+        }, o)));
+      });
+    },
+    initializePlugins: function(e, n, o, r) {
+      ge.forEach(function(l) {
+        var s = l.pluginName;
+        if (!(!e.options[s] && !l.initializeByDefault)) {
+          var u = new l(e, n, e.options);
+          u.sortable = e, u.options = e.options, e[s] = u, ie(o, u.defaults);
+        }
+      });
+      for (var i in e.options)
+        if (e.options.hasOwnProperty(i)) {
+          var a = this.modifyOption(e, i, e.options[i]);
+          typeof a != "undefined" && (e.options[i] = a);
+        }
+    },
+    getEventProperties: function(e, n) {
+      var o = {};
+      return ge.forEach(function(r) {
+        typeof r.eventProperties == "function" && ie(o, r.eventProperties.call(n[r.pluginName], e));
+      }), o;
+    },
+    modifyOption: function(e, n, o) {
+      var r;
+      return ge.forEach(function(i) {
+        e[i.pluginName] && i.optionListeners && typeof i.optionListeners[n] == "function" && (r = i.optionListeners[n].call(e[i.pluginName], o));
+      }), r;
+    }
+  };
+  function kn(t) {
+    var e = t.sortable, n = t.rootEl, o = t.name, r = t.targetEl, i = t.cloneEl, a = t.toEl, l = t.fromEl, s = t.oldIndex, u = t.newIndex, d = t.oldDraggableIndex, f = t.newDraggableIndex, m = t.originalEvent, y = t.putSortable, b = t.extraEventProperties;
+    if (e = e || n && n[q], !!e) {
+      var w, L = e.options, G = "on" + o.charAt(0).toUpperCase() + o.substr(1);
+      window.CustomEvent && !ae && !xe ? w = new CustomEvent(o, {
+        bubbles: true,
+        cancelable: true
+      }) : (w = document.createEvent("Event"), w.initEvent(o, true, true)), w.to = a || n, w.from = l || n, w.item = r || n, w.clone = i, w.oldIndex = s, w.newIndex = u, w.oldDraggableIndex = d, w.newDraggableIndex = f, w.originalEvent = m, w.pullMode = y ? y.lastPutMode : void 0;
+      var R = ne(ne({}, b), Ne.getEventProperties(o, e));
+      for (var j in R)
+        w[j] = R[j];
+      n && n.dispatchEvent(w), L[G] && L[G].call(e, w);
+    }
+  }
+  var Hn = ["evt"], z = function(e, n) {
+    var o = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : {}, r = o.evt, i = xn(o, Hn);
+    Ne.pluginEvent.bind(p)(e, n, ne({
+      dragEl: c,
+      parentEl: O,
+      ghostEl: g,
+      rootEl: T,
+      nextEl: pe,
+      lastDownEl: Be,
+      cloneEl: C,
+      cloneHidden: ue,
+      dragStarted: Se,
+      putSortable: Y,
+      activeSortable: p.active,
+      originalEvent: r,
+      oldIndex: be,
+      oldDraggableIndex: Oe,
+      newIndex: $,
+      newDraggableIndex: se,
+      hideGhostForTarget: Zt,
+      unhideGhostForTarget: Qt,
+      cloneNowHidden: function() {
+        ue = true;
+      },
+      cloneNowShown: function() {
+        ue = false;
+      },
+      dispatchSortableEvent: function(l) {
+        W({
+          sortable: n,
+          name: l,
+          originalEvent: r
+        });
+      }
+    }, i));
+  };
+  function W(t) {
+    kn(ne({
+      putSortable: Y,
+      cloneEl: C,
+      targetEl: c,
+      rootEl: T,
+      oldIndex: be,
+      oldDraggableIndex: Oe,
+      newIndex: $,
+      newDraggableIndex: se
+    }, t));
+  }
+  var c, O, g, T, pe, Be, C, ue, be, $, Oe, se, Me, Y, ve = false, Ge = false, je = [], de, Z, Qe, et, Pt, Mt, Se, me, Ie, Ae = false, Fe = false, ke, H, tt = [], lt = false, ze = [], Ve = typeof document != "undefined", Re = Lt, Ft = xe || ae ? "cssFloat" : "float", Ln = Ve && !Wt && !Lt && "draggable" in document.createElement("div"), qt = (function() {
+    if (Ve) {
+      if (ae)
+        return false;
+      var t = document.createElement("x");
+      return t.style.cssText = "pointer-events:auto", t.style.pointerEvents === "auto";
+    }
+  })(), Kt = function(e, n) {
+    var o = h(e), r = parseInt(o.width) - parseInt(o.paddingLeft) - parseInt(o.paddingRight) - parseInt(o.borderLeftWidth) - parseInt(o.borderRightWidth), i = we(e, 0, n), a = we(e, 1, n), l = i && h(i), s = a && h(a), u = l && parseInt(l.marginLeft) + parseInt(l.marginRight) + P(i).width, d = s && parseInt(s.marginLeft) + parseInt(s.marginRight) + P(a).width;
+    if (o.display === "flex")
+      return o.flexDirection === "column" || o.flexDirection === "column-reverse" ? "vertical" : "horizontal";
+    if (o.display === "grid")
+      return o.gridTemplateColumns.split(" ").length <= 1 ? "vertical" : "horizontal";
+    if (i && l.float && l.float !== "none") {
+      var f = l.float === "left" ? "left" : "right";
+      return a && (s.clear === "both" || s.clear === f) ? "vertical" : "horizontal";
+    }
+    return i && (l.display === "block" || l.display === "flex" || l.display === "table" || l.display === "grid" || u >= r && o[Ft] === "none" || a && o[Ft] === "none" && u + d > r) ? "vertical" : "horizontal";
+  }, Wn = function(e, n, o) {
+    var r = o ? e.left : e.top, i = o ? e.right : e.bottom, a = o ? e.width : e.height, l = o ? n.left : n.top, s = o ? n.right : n.bottom, u = o ? n.width : n.height;
+    return r === l || i === s || r + a / 2 === l + u / 2;
+  }, Gn = function(e, n) {
+    var o;
+    return je.some(function(r) {
+      var i = r[q].options.emptyInsertThreshold;
+      if (!(!i || ht(r))) {
+        var a = P(r), l = e >= a.left - i && e <= a.right + i, s = n >= a.top - i && n <= a.bottom + i;
+        if (l && s)
+          return o = r;
+      }
+    }), o;
+  }, Jt = function(e) {
+    function n(i, a) {
+      return function(l, s, u, d) {
+        var f = l.options.group.name && s.options.group.name && l.options.group.name === s.options.group.name;
+        if (i == null && (a || f))
+          return true;
+        if (i == null || i === false)
+          return false;
+        if (a && i === "clone")
+          return i;
+        if (typeof i == "function")
+          return n(i(l, s, u, d), a)(l, s, u, d);
+        var m = (a ? l : s).options.group.name;
+        return i === true || typeof i == "string" && i === m || i.join && i.indexOf(m) > -1;
+      };
+    }
+    var o = {}, r = e.group;
+    (!r || Ye(r) != "object") && (r = {
+      name: r
+    }), o.name = r.name, o.checkPull = n(r.pull, true), o.checkPut = n(r.put), o.revertClone = r.revertClone, e.group = o;
+  }, Zt = function() {
+    !qt && g && h(g, "display", "none");
+  }, Qt = function() {
+    !qt && g && h(g, "display", "");
+  };
+  Ve && !Wt && document.addEventListener("click", function(t) {
+    if (Ge)
+      return t.preventDefault(), t.stopPropagation && t.stopPropagation(), t.stopImmediatePropagation && t.stopImmediatePropagation(), Ge = false, false;
+  }, true);
+  var he = function(e) {
+    if (c) {
+      e = e.touches ? e.touches[0] : e;
+      var n = Gn(e.clientX, e.clientY);
+      if (n) {
+        var o = {};
+        for (var r in e)
+          e.hasOwnProperty(r) && (o[r] = e[r]);
+        o.target = o.rootEl = n, o.preventDefault = void 0, o.stopPropagation = void 0, n[q]._onDragOver(o);
+      }
+    }
+  }, jn = function(e) {
+    c && c.parentNode[q]._isOutsideThisEl(e.target);
+  };
+  function p(t, e) {
+    if (!(t && t.nodeType && t.nodeType === 1))
+      throw "Sortable: `el` must be an HTMLElement, not ".concat({}.toString.call(t));
+    this.el = t, this.options = e = ie({}, e), t[q] = this;
+    var n = {
+      group: null,
+      sort: true,
+      disabled: false,
+      store: null,
+      handle: null,
+      draggable: /^[uo]l$/i.test(t.nodeName) ? ">li" : ">*",
+      swapThreshold: 1,
+      // percentage; 0 <= x <= 1
+      invertSwap: false,
+      // invert always
+      invertedSwapThreshold: null,
+      // will be set to same as swapThreshold if default
+      removeCloneOnHide: true,
+      direction: function() {
+        return Kt(t, this.options);
+      },
+      ghostClass: "sortable-ghost",
+      chosenClass: "sortable-chosen",
+      dragClass: "sortable-drag",
+      ignore: "a, img",
+      filter: null,
+      preventOnFilter: true,
+      animation: 0,
+      easing: null,
+      setData: function(a, l) {
+        a.setData("Text", l.textContent);
+      },
+      dropBubble: false,
+      dragoverBubble: false,
+      dataIdAttr: "data-id",
+      delay: 0,
+      delayOnTouchOnly: false,
+      touchStartThreshold: (Number.parseInt ? Number : window).parseInt(window.devicePixelRatio, 10) || 1,
+      forceFallback: false,
+      fallbackClass: "sortable-fallback",
+      fallbackOnBody: false,
+      fallbackTolerance: 0,
+      fallbackOffset: {
+        x: 0,
+        y: 0
+      },
+      supportPointer: p.supportPointer !== false && "PointerEvent" in window && !Te,
+      emptyInsertThreshold: 5
+    };
+    Ne.initializePlugins(this, t, n);
+    for (var o in n)
+      !(o in e) && (e[o] = n[o]);
+    Jt(e);
+    for (var r in this)
+      r.charAt(0) === "_" && typeof this[r] == "function" && (this[r] = this[r].bind(this));
+    this.nativeDraggable = e.forceFallback ? false : Ln, this.nativeDraggable && (this.options.touchStartThreshold = 1), e.supportPointer ? S(t, "pointerdown", this._onTapStart) : (S(t, "mousedown", this._onTapStart), S(t, "touchstart", this._onTapStart)), this.nativeDraggable && (S(t, "dragover", this), S(t, "dragenter", this)), je.push(this.el), e.store && e.store.get && this.sort(e.store.get(this) || []), ie(this, Xn());
+  }
+  p.prototype = /** @lends Sortable.prototype */
+  {
+    constructor: p,
+    _isOutsideThisEl: function(e) {
+      !this.el.contains(e) && e !== this.el && (me = null);
+    },
+    _getDirection: function(e, n) {
+      return typeof this.options.direction == "function" ? this.options.direction.call(this, e, n, c) : this.options.direction;
+    },
+    _onTapStart: function(e) {
+      if (e.cancelable) {
+        var n = this, o = this.el, r = this.options, i = r.preventOnFilter, a = e.type, l = e.touches && e.touches[0] || e.pointerType && e.pointerType === "touch" && e, s = (l || e).target, u = e.target.shadowRoot && (e.path && e.path[0] || e.composedPath && e.composedPath()[0]) || s, d = r.filter;
+        if (Zn(o), !c && !(/mousedown|pointerdown/.test(a) && e.button !== 0 || r.disabled) && !u.isContentEditable && !(!this.nativeDraggable && Te && s && s.tagName.toUpperCase() === "SELECT") && (s = Q(s, r.draggable, o, false), !(s && s.animated) && Be !== s)) {
+          if (be = J(s), Oe = J(s, r.draggable), typeof d == "function") {
+            if (d.call(this, e, s, this)) {
+              W({
+                sortable: n,
+                rootEl: u,
+                name: "filter",
+                targetEl: s,
+                toEl: o,
+                fromEl: o
+              }), z("filter", n, {
+                evt: e
+              }), i && e.cancelable && e.preventDefault();
+              return;
+            }
+          } else if (d && (d = d.split(",").some(function(f) {
+            if (f = Q(u, f.trim(), o, false), f)
+              return W({
+                sortable: n,
+                rootEl: f,
+                name: "filter",
+                targetEl: s,
+                fromEl: o,
+                toEl: o
+              }), z("filter", n, {
+                evt: e
+              }), true;
+          }), d)) {
+            i && e.cancelable && e.preventDefault();
+            return;
+          }
+          r.handle && !Q(u, r.handle, o, false) || this._prepareDragStart(e, l, s);
+        }
+      }
+    },
+    _prepareDragStart: function(e, n, o) {
+      var r = this, i = r.el, a = r.options, l = i.ownerDocument, s;
+      if (o && !c && o.parentNode === i) {
+        var u = P(o);
+        if (T = i, c = o, O = c.parentNode, pe = c.nextSibling, Be = o, Me = a.group, p.dragged = c, de = {
+          target: c,
+          clientX: (n || e).clientX,
+          clientY: (n || e).clientY
+        }, Pt = de.clientX - u.left, Mt = de.clientY - u.top, this._lastX = (n || e).clientX, this._lastY = (n || e).clientY, c.style["will-change"] = "all", s = function() {
+          if (z("delayEnded", r, {
+            evt: e
+          }), p.eventCanceled) {
+            r._onDrop();
+            return;
+          }
+          r._disableDelayedDragEvents(), !It && r.nativeDraggable && (c.draggable = true), r._triggerDragStart(e, n), W({
+            sortable: r,
+            name: "choose",
+            originalEvent: e
+          }), V(c, a.chosenClass, true);
+        }, a.ignore.split(",").forEach(function(d) {
+          jt(c, d.trim(), nt);
+        }), S(l, "dragover", he), S(l, "mousemove", he), S(l, "touchmove", he), S(l, "mouseup", r._onDrop), S(l, "touchend", r._onDrop), S(l, "touchcancel", r._onDrop), It && this.nativeDraggable && (this.options.touchStartThreshold = 4, c.draggable = true), z("delayStart", this, {
+          evt: e
+        }), a.delay && (!a.delayOnTouchOnly || n) && (!this.nativeDraggable || !(xe || ae))) {
+          if (p.eventCanceled) {
+            this._onDrop();
+            return;
+          }
+          S(l, "mouseup", r._disableDelayedDrag), S(l, "touchend", r._disableDelayedDrag), S(l, "touchcancel", r._disableDelayedDrag), S(l, "mousemove", r._delayedDragTouchMoveHandler), S(l, "touchmove", r._delayedDragTouchMoveHandler), a.supportPointer && S(l, "pointermove", r._delayedDragTouchMoveHandler), r._dragStartTimer = setTimeout(s, a.delay);
+        } else
+          s();
+      }
+    },
+    _delayedDragTouchMoveHandler: function(e) {
+      var n = e.touches ? e.touches[0] : e;
+      Math.max(Math.abs(n.clientX - this._lastX), Math.abs(n.clientY - this._lastY)) >= Math.floor(this.options.touchStartThreshold / (this.nativeDraggable && window.devicePixelRatio || 1)) && this._disableDelayedDrag();
+    },
+    _disableDelayedDrag: function() {
+      c && nt(c), clearTimeout(this._dragStartTimer), this._disableDelayedDragEvents();
+    },
+    _disableDelayedDragEvents: function() {
+      var e = this.el.ownerDocument;
+      E(e, "mouseup", this._disableDelayedDrag), E(e, "touchend", this._disableDelayedDrag), E(e, "touchcancel", this._disableDelayedDrag), E(e, "mousemove", this._delayedDragTouchMoveHandler), E(e, "touchmove", this._delayedDragTouchMoveHandler), E(e, "pointermove", this._delayedDragTouchMoveHandler);
+    },
+    _triggerDragStart: function(e, n) {
+      n = n || e.pointerType == "touch" && e, !this.nativeDraggable || n ? this.options.supportPointer ? S(document, "pointermove", this._onTouchMove) : n ? S(document, "touchmove", this._onTouchMove) : S(document, "mousemove", this._onTouchMove) : (S(c, "dragend", this), S(T, "dragstart", this._onDragStart));
+      try {
+        document.selection ? He(function() {
+          document.selection.empty();
+        }) : window.getSelection().removeAllRanges();
+      } catch (o) {
+      }
+    },
+    _dragStarted: function(e, n) {
+      if (ve = false, T && c) {
+        z("dragStarted", this, {
+          evt: n
+        }), this.nativeDraggable && S(document, "dragover", jn);
+        var o = this.options;
+        !e && V(c, o.dragClass, false), V(c, o.ghostClass, true), p.active = this, e && this._appendGhost(), W({
+          sortable: this,
+          name: "start",
+          originalEvent: n
+        });
+      } else
+        this._nulling();
+    },
+    _emulateDragOver: function() {
+      if (Z) {
+        this._lastX = Z.clientX, this._lastY = Z.clientY, Zt();
+        for (var e = document.elementFromPoint(Z.clientX, Z.clientY), n = e; e && e.shadowRoot && (e = e.shadowRoot.elementFromPoint(Z.clientX, Z.clientY), e !== n); )
+          n = e;
+        if (c.parentNode[q]._isOutsideThisEl(e), n)
+          do {
+            if (n[q]) {
+              var o = void 0;
+              if (o = n[q]._onDragOver({
+                clientX: Z.clientX,
+                clientY: Z.clientY,
+                target: e,
+                rootEl: n
+              }), o && !this.options.dragoverBubble)
+                break;
+            }
+            e = n;
+          } while (n = n.parentNode);
+        Qt();
+      }
+    },
+    _onTouchMove: function(e) {
+      if (de) {
+        var n = this.options, o = n.fallbackTolerance, r = n.fallbackOffset, i = e.touches ? e.touches[0] : e, a = g && ye(g, true), l = g && a && a.a, s = g && a && a.d, u = Re && H && Nt(H), d = (i.clientX - de.clientX + r.x) / (l || 1) + (u ? u[0] - tt[0] : 0) / (l || 1), f = (i.clientY - de.clientY + r.y) / (s || 1) + (u ? u[1] - tt[1] : 0) / (s || 1);
+        if (!p.active && !ve) {
+          if (o && Math.max(Math.abs(i.clientX - this._lastX), Math.abs(i.clientY - this._lastY)) < o)
+            return;
+          this._onDragStart(e, true);
+        }
+        if (g) {
+          a ? (a.e += d - (Qe || 0), a.f += f - (et || 0)) : a = {
+            a: 1,
+            b: 0,
+            c: 0,
+            d: 1,
+            e: d,
+            f
+          };
+          var m = "matrix(".concat(a.a, ",").concat(a.b, ",").concat(a.c, ",").concat(a.d, ",").concat(a.e, ",").concat(a.f, ")");
+          h(g, "webkitTransform", m), h(g, "mozTransform", m), h(g, "msTransform", m), h(g, "transform", m), Qe = d, et = f, Z = i;
+        }
+        e.cancelable && e.preventDefault();
+      }
+    },
+    _appendGhost: function() {
+      if (!g) {
+        var e = this.options.fallbackOnBody ? document.body : T, n = P(c, true, Re, true, e), o = this.options;
+        if (Re) {
+          for (H = e; h(H, "position") === "static" && h(H, "transform") === "none" && H !== document; )
+            H = H.parentNode;
+          H !== document.body && H !== document.documentElement ? (H === document && (H = te()), n.top += H.scrollTop, n.left += H.scrollLeft) : H = te(), tt = Nt(H);
+        }
+        g = c.cloneNode(true), V(g, o.ghostClass, false), V(g, o.fallbackClass, true), V(g, o.dragClass, true), h(g, "transition", ""), h(g, "transform", ""), h(g, "box-sizing", "border-box"), h(g, "margin", 0), h(g, "top", n.top), h(g, "left", n.left), h(g, "width", n.width), h(g, "height", n.height), h(g, "opacity", "0.8"), h(g, "position", Re ? "absolute" : "fixed"), h(g, "zIndex", "100000"), h(g, "pointerEvents", "none"), p.ghost = g, e.appendChild(g), h(g, "transform-origin", Pt / parseInt(g.style.width) * 100 + "% " + Mt / parseInt(g.style.height) * 100 + "%");
+      }
+    },
+    _onDragStart: function(e, n) {
+      var o = this, r = e.dataTransfer, i = o.options;
+      if (z("dragStart", this, {
+        evt: e
+      }), p.eventCanceled) {
+        this._onDrop();
+        return;
+      }
+      z("setupClone", this), p.eventCanceled || (C = Vt(c), C.removeAttribute("id"), C.draggable = false, C.style["will-change"] = "", this._hideClone(), V(C, this.options.chosenClass, false), p.clone = C), o.cloneId = He(function() {
+        z("clone", o), !p.eventCanceled && (o.options.removeCloneOnHide || T.insertBefore(C, c), o._hideClone(), W({
+          sortable: o,
+          name: "clone"
+        }));
+      }), !n && V(c, i.dragClass, true), n ? (Ge = true, o._loopId = setInterval(o._emulateDragOver, 50)) : (E(document, "mouseup", o._onDrop), E(document, "touchend", o._onDrop), E(document, "touchcancel", o._onDrop), r && (r.effectAllowed = "move", i.setData && i.setData.call(o, r, c)), S(document, "drop", o), h(c, "transform", "translateZ(0)")), ve = true, o._dragStartId = He(o._dragStarted.bind(o, n, e)), S(document, "selectstart", o), Se = true, Te && h(document.body, "user-select", "none");
+    },
+    // Returns true - if no further action is needed (either inserted or another condition)
+    _onDragOver: function(e) {
+      var n = this.el, o = e.target, r, i, a, l = this.options, s = l.group, u = p.active, d = Me === s, f = l.sort, m = Y || u, y, b = this, w = false;
+      if (lt)
+        return;
+      function L(ee, Ee) {
+        z(ee, b, ne({
+          evt: e,
+          isOwner: d,
+          axis: y ? "vertical" : "horizontal",
+          revert: a,
+          dragRect: r,
+          targetRect: i,
+          canSort: f,
+          fromSortable: m,
+          target: o,
+          completed: R,
+          onMove: function(vt, rn) {
+            return Xe(T, n, c, r, vt, P(vt), e, rn);
+          },
+          changed: j
+        }, Ee));
+      }
+      function G() {
+        L("dragOverAnimationCapture"), b.captureAnimationState(), b !== m && m.captureAnimationState();
+      }
+      function R(ee) {
+        return L("dragOverCompleted", {
+          insertion: ee
+        }), ee && (d ? u._hideClone() : u._showClone(b), b !== m && (V(c, Y ? Y.options.ghostClass : u.options.ghostClass, false), V(c, l.ghostClass, true)), Y !== b && b !== p.active ? Y = b : b === p.active && Y && (Y = null), m === b && (b._ignoreWhileAnimating = o), b.animateAll(function() {
+          L("dragOverAnimationComplete"), b._ignoreWhileAnimating = null;
+        }), b !== m && (m.animateAll(), m._ignoreWhileAnimating = null)), (o === c && !c.animated || o === n && !o.animated) && (me = null), !l.dragoverBubble && !e.rootEl && o !== document && (c.parentNode[q]._isOutsideThisEl(e.target), !ee && he(e)), !l.dragoverBubble && e.stopPropagation && e.stopPropagation(), w = true;
+      }
+      function j() {
+        $ = J(c), se = J(c, l.draggable), W({
+          sortable: b,
+          name: "change",
+          toEl: n,
+          newIndex: $,
+          newDraggableIndex: se,
+          originalEvent: e
+        });
+      }
+      if (e.preventDefault !== void 0 && e.cancelable && e.preventDefault(), o = Q(o, l.draggable, n, true), L("dragOver"), p.eventCanceled)
+        return w;
+      if (c.contains(e.target) || o.animated && o.animatingX && o.animatingY || b._ignoreWhileAnimating === o)
+        return R(false);
+      if (Ge = false, u && !l.disabled && (d ? f || (a = O !== T) : Y === this || (this.lastPutMode = Me.checkPull(this, u, c, e)) && s.checkPut(this, u, c, e))) {
+        if (y = this._getDirection(e, o) === "vertical", r = P(c), L("dragOverValid"), p.eventCanceled)
+          return w;
+        if (a)
+          return O = T, G(), this._hideClone(), L("revert"), p.eventCanceled || (pe ? T.insertBefore(c, pe) : T.appendChild(c)), R(true);
+        var B = ht(n, l.draggable);
+        if (!B || $n(e, y, this) && !B.animated) {
+          if (B === c)
+            return R(false);
+          if (B && n === e.target && (o = B), o && (i = P(o)), Xe(T, n, c, r, o, i, e, !!o) !== false)
+            return G(), B && B.nextSibling ? n.insertBefore(c, B.nextSibling) : n.appendChild(c), O = n, j(), R(true);
+        } else if (B && Vn(e, y, this)) {
+          var X = we(n, 0, l, true);
+          if (X === c)
+            return R(false);
+          if (o = X, i = P(o), Xe(T, n, c, r, o, i, e, false) !== false)
+            return G(), n.insertBefore(c, X), O = n, j(), R(true);
+        } else if (o.parentNode === n) {
+          i = P(o);
+          var K = 0, oe, le = c.parentNode !== n, k = !Wn(c.animated && c.toRect || r, o.animated && o.toRect || i, y), v = y ? "top" : "left", D = xt(o, "top", "top") || xt(c, "top", "top"), A = D ? D.scrollTop : void 0;
+          me !== o && (oe = i[v], Ae = false, Fe = !k && l.invertSwap || le), K = qn(e, o, i, y, k ? 1 : l.swapThreshold, l.invertedSwapThreshold == null ? l.swapThreshold : l.invertedSwapThreshold, Fe, me === o);
+          var I;
+          if (K !== 0) {
+            var _ = J(c);
+            do
+              _ -= K, I = O.children[_];
+            while (I && (h(I, "display") === "none" || I === g));
+          }
+          if (K === 0 || I === o)
+            return R(false);
+          me = o, Ie = K;
+          var x = o.nextElementSibling, M = false;
+          M = K === 1;
+          var F = Xe(T, n, c, r, o, i, e, M);
+          if (F !== false)
+            return (F === 1 || F === -1) && (M = F === 1), lt = true, setTimeout(Un, 30), G(), M && !x ? n.appendChild(c) : o.parentNode.insertBefore(c, M ? x : o), D && Ut(D, 0, A - D.scrollTop), O = c.parentNode, oe !== void 0 && !Fe && (ke = Math.abs(oe - P(o)[v])), j(), R(true);
+        }
+        if (n.contains(c))
+          return R(false);
+      }
+      return false;
+    },
+    _ignoreWhileAnimating: null,
+    _offMoveEvents: function() {
+      E(document, "mousemove", this._onTouchMove), E(document, "touchmove", this._onTouchMove), E(document, "pointermove", this._onTouchMove), E(document, "dragover", he), E(document, "mousemove", he), E(document, "touchmove", he);
+    },
+    _offUpEvents: function() {
+      var e = this.el.ownerDocument;
+      E(e, "mouseup", this._onDrop), E(e, "touchend", this._onDrop), E(e, "pointerup", this._onDrop), E(e, "touchcancel", this._onDrop), E(document, "selectstart", this);
+    },
+    _onDrop: function(e) {
+      var n = this.el, o = this.options;
+      if ($ = J(c), se = J(c, o.draggable), z("drop", this, {
+        evt: e
+      }), O = c && c.parentNode, $ = J(c), se = J(c, o.draggable), p.eventCanceled) {
+        this._nulling();
+        return;
+      }
+      ve = false, Fe = false, Ae = false, clearInterval(this._loopId), clearTimeout(this._dragStartTimer), st(this.cloneId), st(this._dragStartId), this.nativeDraggable && (E(document, "drop", this), E(n, "dragstart", this._onDragStart)), this._offMoveEvents(), this._offUpEvents(), Te && h(document.body, "user-select", ""), h(c, "transform", ""), e && (Se && (e.cancelable && e.preventDefault(), !o.dropBubble && e.stopPropagation()), g && g.parentNode && g.parentNode.removeChild(g), (T === O || Y && Y.lastPutMode !== "clone") && C && C.parentNode && C.parentNode.removeChild(C), c && (this.nativeDraggable && E(c, "dragend", this), nt(c), c.style["will-change"] = "", Se && !ve && V(c, Y ? Y.options.ghostClass : this.options.ghostClass, false), V(c, this.options.chosenClass, false), W({
+        sortable: this,
+        name: "unchoose",
+        toEl: O,
+        newIndex: null,
+        newDraggableIndex: null,
+        originalEvent: e
+      }), T !== O ? ($ >= 0 && (W({
+        rootEl: O,
+        name: "add",
+        toEl: O,
+        fromEl: T,
+        originalEvent: e
+      }), W({
+        sortable: this,
+        name: "remove",
+        toEl: O,
+        originalEvent: e
+      }), W({
+        rootEl: O,
+        name: "sort",
+        toEl: O,
+        fromEl: T,
+        originalEvent: e
+      }), W({
+        sortable: this,
+        name: "sort",
+        toEl: O,
+        originalEvent: e
+      })), Y && Y.save()) : $ !== be && $ >= 0 && (W({
+        sortable: this,
+        name: "update",
+        toEl: O,
+        originalEvent: e
+      }), W({
+        sortable: this,
+        name: "sort",
+        toEl: O,
+        originalEvent: e
+      })), p.active && (($ == null || $ === -1) && ($ = be, se = Oe), W({
+        sortable: this,
+        name: "end",
+        toEl: O,
+        originalEvent: e
+      }), this.save()))), this._nulling();
+    },
+    _nulling: function() {
+      z("nulling", this), T = c = O = g = pe = C = Be = ue = de = Z = Se = $ = se = be = Oe = me = Ie = Y = Me = p.dragged = p.ghost = p.clone = p.active = null, ze.forEach(function(e) {
+        e.checked = true;
+      }), ze.length = Qe = et = 0;
+    },
+    handleEvent: function(e) {
+      switch (e.type) {
+        case "drop":
+        case "dragend":
+          this._onDrop(e);
+          break;
+        case "dragenter":
+        case "dragover":
+          c && (this._onDragOver(e), zn(e));
+          break;
+        case "selectstart":
+          e.preventDefault();
+          break;
+      }
+    },
+    /**
+     * Serializes the item into an array of string.
+     * @returns {String[]}
+     */
+    toArray: function() {
+      for (var e = [], n, o = this.el.children, r = 0, i = o.length, a = this.options; r < i; r++)
+        n = o[r], Q(n, a.draggable, this.el, false) && e.push(n.getAttribute(a.dataIdAttr) || Jn(n));
+      return e;
+    },
+    /**
+     * Sorts the elements according to the array.
+     * @param  {String[]}  order  order of the items
+     */
+    sort: function(e, n) {
+      var o = {}, r = this.el;
+      this.toArray().forEach(function(i, a) {
+        var l = r.children[a];
+        Q(l, this.options.draggable, r, false) && (o[i] = l);
+      }, this), n && this.captureAnimationState(), e.forEach(function(i) {
+        o[i] && (r.removeChild(o[i]), r.appendChild(o[i]));
+      }), n && this.animateAll();
+    },
+    /**
+     * Save the current sorting
+     */
+    save: function() {
+      var e = this.options.store;
+      e && e.set && e.set(this);
+    },
+    /**
+     * For each element in the set, get the first element that matches the selector by testing the element itself and traversing up through its ancestors in the DOM tree.
+     * @param   {HTMLElement}  el
+     * @param   {String}       [selector]  default: `options.draggable`
+     * @returns {HTMLElement|null}
+     */
+    closest: function(e, n) {
+      return Q(e, n || this.options.draggable, this.el, false);
+    },
+    /**
+     * Set/get option
+     * @param   {string} name
+     * @param   {*}      [value]
+     * @returns {*}
+     */
+    option: function(e, n) {
+      var o = this.options;
+      if (n === void 0)
+        return o[e];
+      var r = Ne.modifyOption(this, e, n);
+      typeof r != "undefined" ? o[e] = r : o[e] = n, e === "group" && Jt(o);
+    },
+    /**
+     * Destroy
+     */
+    destroy: function() {
+      z("destroy", this);
+      var e = this.el;
+      e[q] = null, E(e, "mousedown", this._onTapStart), E(e, "touchstart", this._onTapStart), E(e, "pointerdown", this._onTapStart), this.nativeDraggable && (E(e, "dragover", this), E(e, "dragenter", this)), Array.prototype.forEach.call(e.querySelectorAll("[draggable]"), function(n) {
+        n.removeAttribute("draggable");
+      }), this._onDrop(), this._disableDelayedDragEvents(), je.splice(je.indexOf(this.el), 1), this.el = e = null;
+    },
+    _hideClone: function() {
+      if (!ue) {
+        if (z("hideClone", this), p.eventCanceled)
+          return;
+        h(C, "display", "none"), this.options.removeCloneOnHide && C.parentNode && C.parentNode.removeChild(C), ue = true;
+      }
+    },
+    _showClone: function(e) {
+      if (e.lastPutMode !== "clone") {
+        this._hideClone();
+        return;
+      }
+      if (ue) {
+        if (z("showClone", this), p.eventCanceled)
+          return;
+        c.parentNode == T && !this.options.group.revertClone ? T.insertBefore(C, c) : pe ? T.insertBefore(C, pe) : T.appendChild(C), this.options.group.revertClone && this.animate(c, C), h(C, "display", ""), ue = false;
+      }
+    }
+  };
+  function zn(t) {
+    t.dataTransfer && (t.dataTransfer.dropEffect = "move"), t.cancelable && t.preventDefault();
+  }
+  function Xe(t, e, n, o, r, i, a, l) {
+    var s, u = t[q], d = u.options.onMove, f;
+    return window.CustomEvent && !ae && !xe ? s = new CustomEvent("move", {
+      bubbles: true,
+      cancelable: true
+    }) : (s = document.createEvent("Event"), s.initEvent("move", true, true)), s.to = e, s.from = t, s.dragged = n, s.draggedRect = o, s.related = r || e, s.relatedRect = i || P(e), s.willInsertAfter = l, s.originalEvent = a, t.dispatchEvent(s), d && (f = d.call(u, s, a)), f;
+  }
+  function nt(t) {
+    t.draggable = false;
+  }
+  function Un() {
+    lt = false;
+  }
+  function Vn(t, e, n) {
+    var o = P(we(n.el, 0, n.options, true)), r = $t(n.el, n.options, g), i = 10;
+    return e ? t.clientX < r.left - i || t.clientY < o.top && t.clientX < o.right : t.clientY < r.top - i || t.clientY < o.bottom && t.clientX < o.left;
+  }
+  function $n(t, e, n) {
+    var o = P(ht(n.el, n.options.draggable)), r = $t(n.el, n.options, g), i = 10;
+    return e ? t.clientX > r.right + i || t.clientY > o.bottom && t.clientX > o.left : t.clientY > r.bottom + i || t.clientX > o.right && t.clientY > o.top;
+  }
+  function qn(t, e, n, o, r, i, a, l) {
+    var s = o ? t.clientY : t.clientX, u = o ? n.height : n.width, d = o ? n.top : n.left, f = o ? n.bottom : n.right, m = false;
+    if (!a) {
+      if (l && ke < u * r) {
+        if (!Ae && (Ie === 1 ? s > d + u * i / 2 : s < f - u * i / 2) && (Ae = true), Ae)
+          m = true;
+        else if (Ie === 1 ? s < d + ke : s > f - ke)
+          return -Ie;
+      } else if (s > d + u * (1 - r) / 2 && s < f - u * (1 - r) / 2)
+        return Kn(e);
+    }
+    return m = m || a, m && (s < d + u * i / 2 || s > f - u * i / 2) ? s > d + u / 2 ? 1 : -1 : 0;
+  }
+  function Kn(t) {
+    return J(c) < J(t) ? 1 : -1;
+  }
+  function Jn(t) {
+    for (var e = t.tagName + t.className + t.src + t.href + t.textContent, n = e.length, o = 0; n--; )
+      o += e.charCodeAt(n);
+    return o.toString(36);
+  }
+  function Zn(t) {
+    ze.length = 0;
+    for (var e = t.getElementsByTagName("input"), n = e.length; n--; ) {
+      var o = e[n];
+      o.checked && ze.push(o);
+    }
+  }
+  function He(t) {
+    return setTimeout(t, 0);
+  }
+  function st(t) {
+    return clearTimeout(t);
+  }
+  Ve && S(document, "touchmove", function(t) {
+    (p.active || ve) && t.cancelable && t.preventDefault();
+  });
+  p.utils = {
+    on: S,
+    off: E,
+    css: h,
+    find: jt,
+    is: function(e, n) {
+      return !!Q(e, n, e, false);
+    },
+    extend: Fn,
+    throttle: zt,
+    closest: Q,
+    toggleClass: V,
+    clone: Vt,
+    index: J,
+    nextTick: He,
+    cancelNextTick: st,
+    detectDirection: Kt,
+    getChild: we
+  };
+  p.get = function(t) {
+    return t[q];
+  };
+  p.mount = function() {
+    for (var t = arguments.length, e = new Array(t), n = 0; n < t; n++)
+      e[n] = arguments[n];
+    e[0].constructor === Array && (e = e[0]), e.forEach(function(o) {
+      if (!o.prototype || !o.prototype.constructor)
+        throw "Sortable: Mounted plugin must be a constructor function, not ".concat({}.toString.call(o));
+      o.utils && (p.utils = ne(ne({}, p.utils), o.utils)), Ne.mount(o);
+    });
+  };
+  p.create = function(t, e) {
+    return new p(t, e);
+  };
+  p.version = Nn;
+  var N = [], De, ut, ct = false, ot, rt, Ue, _e;
+  function Qn() {
+    function t() {
+      this.defaults = {
+        scroll: true,
+        forceAutoScrollFallback: false,
+        scrollSensitivity: 30,
+        scrollSpeed: 10,
+        bubbleScroll: true
+      };
+      for (var e in this)
+        e.charAt(0) === "_" && typeof this[e] == "function" && (this[e] = this[e].bind(this));
+    }
+    return t.prototype = {
+      dragStarted: function(n) {
+        var o = n.originalEvent;
+        this.sortable.nativeDraggable ? S(document, "dragover", this._handleAutoScroll) : this.options.supportPointer ? S(document, "pointermove", this._handleFallbackAutoScroll) : o.touches ? S(document, "touchmove", this._handleFallbackAutoScroll) : S(document, "mousemove", this._handleFallbackAutoScroll);
+      },
+      dragOverCompleted: function(n) {
+        var o = n.originalEvent;
+        !this.options.dragOverBubble && !o.rootEl && this._handleAutoScroll(o);
+      },
+      drop: function() {
+        this.sortable.nativeDraggable ? E(document, "dragover", this._handleAutoScroll) : (E(document, "pointermove", this._handleFallbackAutoScroll), E(document, "touchmove", this._handleFallbackAutoScroll), E(document, "mousemove", this._handleFallbackAutoScroll)), Rt(), Le(), Rn();
+      },
+      nulling: function() {
+        Ue = ut = De = ct = _e = ot = rt = null, N.length = 0;
+      },
+      _handleFallbackAutoScroll: function(n) {
+        this._handleAutoScroll(n, true);
+      },
+      _handleAutoScroll: function(n, o) {
+        var r = this, i = (n.touches ? n.touches[0] : n).clientX, a = (n.touches ? n.touches[0] : n).clientY, l = document.elementFromPoint(i, a);
+        if (Ue = n, o || this.options.forceAutoScrollFallback || xe || ae || Te) {
+          it(n, this.options, l, o);
+          var s = ce(l, true);
+          ct && (!_e || i !== ot || a !== rt) && (_e && Rt(), _e = setInterval(function() {
+            var u = ce(document.elementFromPoint(i, a), true);
+            u !== s && (s = u, Le()), it(n, r.options, u, o);
+          }, 10), ot = i, rt = a);
+        } else {
+          if (!this.options.bubbleScroll || ce(l, true) === te()) {
+            Le();
+            return;
+          }
+          it(n, this.options, ce(l, false), false);
+        }
+      }
+    }, ie(t, {
+      pluginName: "scroll",
+      initializeByDefault: true
+    });
+  }
+  function Le() {
+    N.forEach(function(t) {
+      clearInterval(t.pid);
+    }), N = [];
+  }
+  function Rt() {
+    clearInterval(_e);
+  }
+  var it = zt(function(t, e, n, o) {
+    if (e.scroll) {
+      var r = (t.touches ? t.touches[0] : t).clientX, i = (t.touches ? t.touches[0] : t).clientY, a = e.scrollSensitivity, l = e.scrollSpeed, s = te(), u = false, d;
+      ut !== n && (ut = n, Le(), De = e.scroll, d = e.scrollFn, De === true && (De = ce(n, true)));
+      var f = 0, m = De;
+      do {
+        var y = m, b = P(y), w = b.top, L = b.bottom, G = b.left, R = b.right, j = b.width, B = b.height, X = void 0, K = void 0, oe = y.scrollWidth, le = y.scrollHeight, k = h(y), v = y.scrollLeft, D = y.scrollTop;
+        y === s ? (X = j < oe && (k.overflowX === "auto" || k.overflowX === "scroll" || k.overflowX === "visible"), K = B < le && (k.overflowY === "auto" || k.overflowY === "scroll" || k.overflowY === "visible")) : (X = j < oe && (k.overflowX === "auto" || k.overflowX === "scroll"), K = B < le && (k.overflowY === "auto" || k.overflowY === "scroll"));
+        var A = X && (Math.abs(R - r) <= a && v + j < oe) - (Math.abs(G - r) <= a && !!v), I = K && (Math.abs(L - i) <= a && D + B < le) - (Math.abs(w - i) <= a && !!D);
+        if (!N[f])
+          for (var _ = 0; _ <= f; _++)
+            N[_] || (N[_] = {});
+        (N[f].vx != A || N[f].vy != I || N[f].el !== y) && (N[f].el = y, N[f].vx = A, N[f].vy = I, clearInterval(N[f].pid), (A != 0 || I != 0) && (u = true, N[f].pid = setInterval((function() {
+          o && this.layer === 0 && p.active._onTouchMove(Ue);
+          var x = N[this.layer].vy ? N[this.layer].vy * l : 0, M = N[this.layer].vx ? N[this.layer].vx * l : 0;
+          typeof d == "function" && d.call(p.dragged.parentNode[q], M, x, t, Ue, N[this.layer].el) !== "continue" || Ut(N[this.layer].el, M, x);
+        }).bind({
+          layer: f
+        }), 24))), f++;
+      } while (e.bubbleScroll && m !== s && (m = ce(m, false)));
+      ct = u;
+    }
+  }, 30), en = function(e) {
+    var n = e.originalEvent, o = e.putSortable, r = e.dragEl, i = e.activeSortable, a = e.dispatchSortableEvent, l = e.hideGhostForTarget, s = e.unhideGhostForTarget;
+    if (n) {
+      var u = o || i;
+      l();
+      var d = n.changedTouches && n.changedTouches.length ? n.changedTouches[0] : n, f = document.elementFromPoint(d.clientX, d.clientY);
+      s(), u && !u.el.contains(f) && (a("spill"), this.onSpill({
+        dragEl: r,
+        putSortable: o
+      }));
+    }
+  };
+  function pt() {
+  }
+  pt.prototype = {
+    startIndex: null,
+    dragStart: function(e) {
+      var n = e.oldDraggableIndex;
+      this.startIndex = n;
+    },
+    onSpill: function(e) {
+      var n = e.dragEl, o = e.putSortable;
+      this.sortable.captureAnimationState(), o && o.captureAnimationState();
+      var r = we(this.sortable.el, this.startIndex, this.options);
+      r ? this.sortable.el.insertBefore(n, r) : this.sortable.el.appendChild(n), this.sortable.animateAll(), o && o.animateAll();
+    },
+    drop: en
+  };
+  ie(pt, {
+    pluginName: "revertOnSpill"
+  });
+  function gt() {
+  }
+  gt.prototype = {
+    onSpill: function(e) {
+      var n = e.dragEl, o = e.putSortable, r = o || this.sortable;
+      r.captureAnimationState(), n.parentNode && n.parentNode.removeChild(n), r.animateAll();
+    },
+    drop: en
+  };
+  ie(gt, {
+    pluginName: "removeOnSpill"
+  });
+  p.mount(new Qn());
+  p.mount(gt, pt);
+  function eo(t) {
+    return t == null ? t : JSON.parse(JSON.stringify(t));
+  }
+  function to(t) {
+    getCurrentInstance() && onUnmounted(t);
+  }
+  function no(t) {
+    getCurrentInstance() ? onMounted(t) : nextTick(t);
+  }
+  let tn = null, nn = null;
+  function Xt(t = null, e = null) {
+    tn = t, nn = e;
+  }
+  function oo() {
+    return {
+      data: tn,
+      clonedData: nn
+    };
+  }
+  const Yt = Symbol("cloneElement");
+  function on(...t) {
+    var le, k;
+    const e = (le = getCurrentInstance()) == null ? void 0 : le.proxy;
+    let n = null;
+    const o = t[0];
+    let [, r, i] = t;
+    Array.isArray(unref(r)) || (i = r, r = null);
+    let a = null;
+    const {
+      immediate: l = true,
+      clone: s = eo,
+      forceFallback: u,
+      fallbackOnBody: d,
+      customUpdate: f
+    } = (k = unref(i)) != null ? k : {};
+    function m(v) {
+      var F;
+      const { from: D, oldIndex: A, item: I } = v, _ = Array.from(D.childNodes);
+      n = u && !d ? _.slice(0, -1) : _;
+      const x = unref((F = unref(r)) == null ? void 0 : F[A]), M = s(x);
+      Xt(x, M), I[Yt] = M;
+    }
+    function y(v) {
+      const D = v.item[Yt];
+      if (!wn(D)) {
+        if (Ke(v.item), /* @__PURE__ */ isRef(r)) {
+          const A = [...unref(r)];
+          r.value = _t(A, v.newDraggableIndex, D);
+          return;
+        }
+        _t(unref(r), v.newDraggableIndex, D);
+      }
+    }
+    function b(v) {
+      const { from: D, item: A, oldIndex: I, oldDraggableIndex: _, pullMode: x, clone: M } = v;
+      if (Tt(D, A, I), x === "clone") {
+        Ke(M);
+        return;
+      }
+      if (/* @__PURE__ */ isRef(r)) {
+        const F = [...unref(r)];
+        r.value = Dt(F, _);
+        return;
+      }
+      Dt(unref(r), _);
+    }
+    function w(v) {
+      if (f) {
+        f(v);
+        return;
+      }
+      const { from: D, item: A, oldIndex: I, oldDraggableIndex: _, newDraggableIndex: x } = v;
+      if (Ke(A), Tt(D, A, I), /* @__PURE__ */ isRef(r)) {
+        const M = [...unref(r)];
+        r.value = St(
+          M,
+          _,
+          x
+        );
+        return;
+      }
+      St(unref(r), _, x);
+    }
+    function L(v) {
+      const { newIndex: D, oldIndex: A, from: I, to: _ } = v;
+      let x = null;
+      const M = D === A && I === _;
+      try {
+        if (M) {
+          let F = null;
+          n == null || n.some((ee, Ee) => {
+            if (F && (n == null ? void 0 : n.length) !== _.childNodes.length)
+              return I.insertBefore(F, ee.nextSibling), true;
+            const mt = _.childNodes[Ee];
+            F = _ == null ? void 0 : _.replaceChild(ee, mt);
+          });
+        }
+      } catch (F) {
+        x = F;
+      } finally {
+        n = null;
+      }
+      nextTick(() => {
+        if (Xt(), x)
+          throw x;
+      });
+    }
+    const G = {
+      onUpdate: w,
+      onStart: m,
+      onAdd: y,
+      onRemove: b,
+      onEnd: L
+    };
+    function R(v) {
+      const D = unref(o);
+      return v || (v = En(D) ? Sn(D, e == null ? void 0 : e.$el) : D), v && !Tn(v) && (v = v.$el), v || vn("Root element not found"), v;
+    }
+    function j() {
+      var I;
+      const _ = (I = unref(i)) != null ? I : {}, { immediate: v, clone: D } = _, A = $e(_, ["immediate", "clone"]);
+      return Ct(A, (x, M) => {
+        Cn(x) && (A[x] = (F, ...ee) => {
+          const Ee = oo();
+          return On(F, Ee), M(F, ...ee);
+        });
+      }), _n(
+        r === null ? {} : G,
+        A
+      );
+    }
+    const B = (v) => {
+      v = R(v), a && X.destroy(), a = new p(v, j());
+    };
+    watch(
+      () => i,
+      () => {
+        a && Ct(j(), (v, D) => {
+          a == null || a.option(v, D);
+        });
+      },
+      { deep: true }
+    );
+    const X = {
+      option: (v, D) => a == null ? void 0 : a.option(v, D),
+      destroy: () => {
+        a == null || a.destroy(), a = null;
+      },
+      save: () => a == null ? void 0 : a.save(),
+      toArray: () => a == null ? void 0 : a.toArray(),
+      closest: (...v) => a == null ? void 0 : a.closest(...v)
+    }, K = () => X == null ? void 0 : X.option("disabled", true), oe = () => X == null ? void 0 : X.option("disabled", false);
+    return no(() => {
+      l && B();
+    }), to(X.destroy), fe({ start: B, pause: K, resume: oe }, X);
+  }
+  const ft = [
+    "update",
+    "start",
+    "add",
+    "remove",
+    "choose",
+    "unchoose",
+    "end",
+    "sort",
+    "filter",
+    "clone",
+    "move",
+    "change"
+  ], ro = [
+    "clone",
+    "animation",
+    "ghostClass",
+    "group",
+    "sort",
+    "disabled",
+    "store",
+    "handle",
+    "draggable",
+    "swapThreshold",
+    "invertSwap",
+    "invertedSwapThreshold",
+    "removeCloneOnHide",
+    "direction",
+    "chosenClass",
+    "dragClass",
+    "ignore",
+    "filter",
+    "preventOnFilter",
+    "easing",
+    "setData",
+    "dropBubble",
+    "dragoverBubble",
+    "dataIdAttr",
+    "delay",
+    "delayOnTouchOnly",
+    "touchStartThreshold",
+    "forceFallback",
+    "fallbackClass",
+    "fallbackOnBody",
+    "fallbackTolerance",
+    "fallbackOffset",
+    "supportPointer",
+    "emptyInsertThreshold",
+    "scroll",
+    "forceAutoScrollFallback",
+    "scrollSensitivity",
+    "scrollSpeed",
+    "bubbleScroll",
+    "modelValue",
+    "tag",
+    "target",
+    "customUpdate",
+    ...ft.map((t) => `on${t.replace(/^\S/, (e) => e.toUpperCase())}`)
+  ], lo = /* @__PURE__ */ defineComponent({
+    name: "VueDraggable",
+    model: {
+      prop: "modelValue",
+      event: "update:modelValue"
+    },
+    props: ro,
+    emits: ["update:modelValue", ...ft],
+    setup(t, { slots: e, emit: n, expose: o, attrs: r }) {
+      const i = ft.reduce((d, f) => {
+        const m = `on${f.replace(/^\S/, (y) => y.toUpperCase())}`;
+        return d[m] = (...y) => n(f, ...y), d;
+      }, {}), a = computed(() => {
+        const y = /* @__PURE__ */ toRefs(t), { modelValue: d } = y, f = $e(y, ["modelValue"]), m = Object.entries(f).reduce((b, [w, L]) => {
+          const G = unref(L);
+          return G !== void 0 && (b[w] = G), b;
+        }, {});
+        return fe(fe({}, i), yn(fe(fe({}, r), m)));
+      }), l = computed({
+        get: () => t.modelValue,
+        set: (d) => n("update:modelValue", d)
+      }), s = /* @__PURE__ */ ref(), u = /* @__PURE__ */ reactive(
+        on(t.target || s, l, a)
+      );
+      return o(u), () => {
+        var d;
+        return h$1(t.tag || "div", { ref: s }, (d = e == null ? void 0 : e.default) == null ? void 0 : d.call(e, u));
+      };
+    }
+  });
   function whenOn(targetId) {
     return { type: "leaf", targetKind: "id", targetId, state: "on", trigger: true };
   }
@@ -10891,35 +12551,27 @@
     {
       id: "builtin-upvote-clears-downvote",
       label: "Upvote turns Downvote off",
-      condition: whenOn("image-upvote"),
-      actions: [{ targetId: "image-downvote", verb: "turn-off" }]
+      condition: whenOn("upvote"),
+      actions: [{ targetId: "downvote", verb: "turn-off", reverse: "nothing" }]
     },
     {
       id: "builtin-downvote-clears-upvote",
       label: "Downvote turns Upvote off",
-      condition: whenOn("image-downvote"),
-      actions: [{ targetId: "image-upvote", verb: "turn-off" }]
+      condition: whenOn("downvote"),
+      actions: [{ targetId: "upvote", verb: "turn-off", reverse: "nothing" }]
     },
     {
       id: "builtin-fave-upvotes",
       label: "Favorite turns Upvote on",
       note: "Removing the upvote again keeps the favorite.",
-      condition: whenOn("image-fave"),
-      actions: [{ targetId: "image-upvote", verb: "turn-on" }]
+      condition: whenOn("fave"),
+      actions: [{ targetId: "upvote", verb: "turn-on", reverse: "nothing" }]
     }
   ];
-  const VARIANT_SUFFIX = { image: " (image page)", list: " (lists)", both: " (both)" };
-  function pickerLabel(entry) {
-    return displayLabel(entry) + (entry.variant ? VARIANT_SUFFIX[entry.variant] : "");
-  }
   function displayLabel(entry) {
     return entry.label.trim() || entry.icon;
   }
-  function twinSuffixesOf(defs) {
-    const ids = new Set(defs.map((def2) => def2.id));
-    return new Set(defs.filter((def2) => def2.id.startsWith("image-") && ids.has(def2.id.replace(/^image-/, "list-"))).map((def2) => def2.id.replace(/^image-/, "")));
-  }
-  function bothEntries(defs, twinSuffixes) {
+  function mergedEntries(defs, twinSuffixes) {
     return [...twinSuffixes].map((suffix) => {
       const image = defs.find((def2) => def2.id === `image-${suffix}`);
       const list = defs.find((def2) => def2.id === `list-${suffix}`);
@@ -10932,14 +12584,13 @@
         icon: image.icon,
         color: image.color,
         source: "native",
-        scope: "image",
-        variant: "both"
+        scope: "image"
       };
     });
   }
   function buildButtonCatalog(options = {}) {
     const twinSuffixes = twinSuffixesOf(allButtonDefs);
-    const native = allButtonDefs.filter((def2) => options.includeNav || def2.category !== "nav").map((def2) => ({
+    const native = allButtonDefs.filter((def2) => (options.includeNav || def2.category !== "nav") && !(options.mergeTwins && twinSuffixes.has(def2.id.replace(/^(image|list)-/, "")))).map((def2) => ({
       id: def2.id,
       label: def2.label,
       category: def2.category,
@@ -10948,10 +12599,9 @@
       icon: def2.icon,
       color: def2.color,
       source: "native",
-      scope: def2.scope,
-      variant: twinSuffixes.has(def2.id.replace(/^(image|list)-/, "")) ? def2.scope : void 0
+      scope: def2.scope
     }));
-    const both = options.includeBoth ? bothEntries(allButtonDefs, twinSuffixes) : [];
+    const merged = options.mergeTwins ? mergedEntries(allButtonDefs, twinSuffixes) : [];
     const galleryQuick = useGalleryQuickButtonsStore().buttons.map((config) => ({
       id: `gallery-quick-${config.id}`,
       label: config.label,
@@ -10974,7 +12624,7 @@
       source: "telegram",
       scope: "image"
     }));
-    return [...native, ...both, ...galleryQuick, ...telegram];
+    return [...native, ...merged, ...galleryQuick, ...telegram];
   }
   function resolveCatalogElement(entry) {
     return document.querySelector(entry.selector);
@@ -11112,7 +12762,7 @@
                 return openBlock(), createElementBlock("option", {
                   key: entry.id,
                   value: entry.id
-                }, toDisplayString(unref(pickerLabel)(entry)), 9, _hoisted_6$5);
+                }, toDisplayString(unref(displayLabel)(entry)), 9, _hoisted_6$5);
               }), 128))
             ], 40, _hoisted_5$5)) : (openBlock(), createElementBlock("select", {
               key: 1,
@@ -11160,7 +12810,7 @@
                     "model-value": child,
                     catalog: __props.catalog,
                     categories: __props.categories,
-                    "onUpdate:modelValue": (c) => updateChildAt(index, c)
+                    "onUpdate:modelValue": (c2) => updateChildAt(index, c2)
                   }, null, 8, ["model-value", "catalog", "categories", "onUpdate:modelValue"]),
                   createBaseVNode("button", {
                     type: "button",
@@ -11178,40 +12828,102 @@
       };
     }
   });
+  function matchesState(actual, expected) {
+    if (expected === "either") {
+      return actual !== void 0;
+    }
+    if (actual === void 0) {
+      return false;
+    }
+    return expected === "on" ? actual : !actual;
+  }
+  function evaluateCondition(node, catalog, readState, triggerEntry, readTriggerState = readState) {
+    switch (node.type) {
+      case "and":
+        return node.children.every((child) => evaluateCondition(child, catalog, readState, triggerEntry, readTriggerState));
+      case "or":
+        return node.children.some((child) => evaluateCondition(child, catalog, readState, triggerEntry, readTriggerState));
+      case "not":
+        return !evaluateCondition(node.child, catalog, readState, triggerEntry, readTriggerState);
+      case "leaf": {
+        const entries = node.targetKind === "category" ? catalog.filter((entry) => entry.category === node.targetId) : catalog.filter((entry) => entry.id === node.targetId);
+        if (entries.length === 0) {
+          return false;
+        }
+        if (node.trigger && !(triggerEntry && entries.includes(triggerEntry))) {
+          return false;
+        }
+        const read = node.trigger ? readTriggerState : readState;
+        return entries.some((entry) => matchesState(read(entry), node.state));
+      }
+    }
+  }
+  function conditionReferencesEntry(node, entry) {
+    switch (node.type) {
+      case "and":
+      case "or":
+        return node.children.some((child) => conditionReferencesEntry(child, entry));
+      case "not":
+        return conditionReferencesEntry(node.child, entry);
+      case "leaf":
+        return node.targetKind === "category" ? node.targetId === entry.category : node.targetId === entry.id;
+    }
+  }
+  function hasDirectedTrigger(node) {
+    switch (node.type) {
+      case "and":
+      case "or":
+        return node.children.some(hasDirectedTrigger);
+      case "not":
+        return hasDirectedTrigger(node.child);
+      case "leaf":
+        return node.trigger === true && node.state !== "either";
+    }
+  }
   const _hoisted_1$9 = { class: "lodestone-button-effects-manager" };
   const _hoisted_2$7 = { key: 1 };
   const _hoisted_3$4 = ["value", "onChange"];
   const _hoisted_4$4 = ["value"];
   const _hoisted_5$4 = ["onUpdate:modelValue"];
   const _hoisted_6$4 = ["value"];
-  const _hoisted_7$3 = ["onClick"];
-  const _hoisted_8$3 = { key: 2 };
-  const _hoisted_9$3 = ["checked"];
-  const _hoisted_10$3 = ["checked"];
-  const _hoisted_11$3 = ["checked", "onChange"];
-  const _hoisted_12$3 = { key: 3 };
-  const _hoisted_13$2 = {
+  const _hoisted_7$3 = ["onUpdate:modelValue", "disabled"];
+  const _hoisted_8$3 = ["value"];
+  const _hoisted_9$3 = {
     key: 0,
     class: "lodestone-hint"
   };
-  const _hoisted_14$1 = { class: "lodestone-manager-list" };
-  const _hoisted_15$1 = ["title"];
-  const _hoisted_16$1 = ["checked", "onChange"];
-  const _hoisted_17 = {
+  const _hoisted_10$3 = ["disabled", "onClick"];
+  const _hoisted_11$3 = ["disabled", "onClick"];
+  const _hoisted_12$3 = ["onClick"];
+  const _hoisted_13$2 = { key: 0 };
+  const _hoisted_14$1 = { key: 2 };
+  const _hoisted_15$1 = ["checked"];
+  const _hoisted_16$1 = ["checked"];
+  const _hoisted_17 = ["checked", "onChange"];
+  const _hoisted_18 = { key: 3 };
+  const _hoisted_19 = {
     key: 0,
     class: "lodestone-hint"
   };
-  const _hoisted_18 = { class: "lodestone-manager-list__target" };
-  const _hoisted_19 = { class: "lodestone-manager-list__actions" };
-  const _hoisted_20 = ["onClick"];
-  const _hoisted_21 = ["onClick"];
-  const _hoisted_22 = ["onClick"];
-  const _hoisted_23 = { class: "lodestone-manager-list lodestone-built-in-effects" };
-  const _hoisted_24 = {
+  const _hoisted_20 = ["title"];
+  const _hoisted_21 = ["checked", "onChange"];
+  const _hoisted_22 = {
     key: 0,
     class: "lodestone-hint"
   };
-  const _hoisted_25 = { class: "lodestone-manager-list__target" };
+  const _hoisted_23 = { class: "lodestone-manager-list__target" };
+  const _hoisted_24 = { class: "lodestone-manager-list__actions" };
+  const _hoisted_25 = ["disabled", "onClick"];
+  const _hoisted_26 = ["disabled", "onClick"];
+  const _hoisted_27 = ["onClick"];
+  const _hoisted_28 = ["onClick"];
+  const _hoisted_29 = ["onClick"];
+  const _hoisted_30 = { class: "lodestone-manager-list lodestone-built-in-effects" };
+  const _hoisted_31 = {
+    key: 0,
+    class: "lodestone-hint"
+  };
+  const _hoisted_32 = { class: "lodestone-manager-list__target" };
   const _sfc_main$b = /* @__PURE__ */ defineComponent({
     __name: "ButtonEffectsManager",
     setup(__props) {
@@ -11226,7 +12938,7 @@
         { id: "where", title: "Where", valid: draft.boorus === null || draft.boorus.length > 0 },
         { id: "name", title: "Name", valid: draft.label.trim() !== "" }
       ]);
-      const catalog = computed(() => buildButtonCatalog({ includeBoth: true }));
+      const catalog = computed(() => buildButtonCatalog({ mergeTwins: true }));
       const categories = computed(() => [...new Set(catalog.value.map((entry) => entry.category))]);
       function verbOptionsFor(action) {
         var _a;
@@ -11236,9 +12948,28 @@
           { value: "turn-off", label: "Turn off" }
         ];
       }
+      const REVERSE_OPTIONS = [
+        { value: "nothing", label: "Do nothing" },
+        { value: "revert", label: "Revert" },
+        { value: "toggle", label: "Toggle" },
+        { value: "turn-on", label: "Turn on" },
+        { value: "turn-off", label: "Turn off" }
+      ];
+      function reverseDisabledReason(action) {
+        var _a;
+        if (((_a = entryFor(action.targetId)) == null ? void 0 : _a.stateKind) === "stateless") {
+          return "Sending has no state to reverse.";
+        }
+        if (!hasDirectedTrigger(draft.condition)) {
+          return "The start condition already fires in both directions.";
+        }
+        return void 0;
+      }
+      const anyReverse = computed(() => draft.actions.some((action) => action.reverse !== "nothing"));
       function onActionTargetChange(action, id) {
         var _a;
         action.targetId = id;
+        action.reverse = "nothing";
         action.verb = ((_a = entryFor(id)) == null ? void 0 : _a.stateKind) === "stateless" ? "trigger" : "toggle";
       }
       const currentBooru = resolveInstanceId(location.hostname);
@@ -11263,6 +12994,37 @@
       }
       function removeAction(index) {
         draft.actions.splice(index, 1);
+      }
+      const actionKeys = /* @__PURE__ */ new WeakMap();
+      function actionKey(action) {
+        let key = actionKeys.get(action);
+        if (!key) {
+          key = crypto.randomUUID();
+          actionKeys.set(action, key);
+        }
+        return key;
+      }
+      function moveItem(list, from, to2) {
+        if (to2 < 0 || to2 >= list.length || from === to2) {
+          return;
+        }
+        list.splice(to2, 0, ...list.splice(from, 1));
+      }
+      function moveAction(from, to2) {
+        moveItem(draft.actions, from, to2);
+      }
+      const ruleListCopy = computed(() => [...store.allRules]);
+      const actionListCopy = computed(() => [...draft.actions]);
+      function onRuleDrop(event) {
+        const rule = event.oldIndex === void 0 ? void 0 : store.allRules[event.oldIndex];
+        if (rule && event.newIndex !== void 0) {
+          store.move(rule.id, event.newIndex);
+        }
+      }
+      function onActionDrop(event) {
+        if (event.oldIndex !== void 0 && event.newIndex !== void 0) {
+          moveAction(event.oldIndex, event.newIndex);
+        }
       }
       function save() {
         if (editingId.value) {
@@ -11309,7 +13071,7 @@
             default: withCtx(() => [
               createVNode(_sfc_main$r, {
                 modelValue: step.value,
-                "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => step.value = $event),
+                "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => step.value = $event),
                 steps: steps.value,
                 "save-label": editingId.value ? "Save changes" : "Add effect",
                 onSave: save,
@@ -11318,7 +13080,7 @@
                 default: withCtx(({ step: stepId }) => [
                   stepId === "when" ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
                     createBaseVNode("fieldset", null, [
-                      _cache[6] || (_cache[6] = createBaseVNode("legend", null, "When", -1)),
+                      _cache[7] || (_cache[7] = createBaseVNode("legend", null, "When", -1)),
                       createVNode(_sfc_main$c, {
                         modelValue: draft.condition,
                         "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => draft.condition = $event),
@@ -11327,10 +13089,10 @@
                       }, null, 8, ["modelValue", "catalog", "categories"])
                     ]),
                     createBaseVNode("label", null, [
-                      _cache[8] || (_cache[8] = createTextVNode(" Evaluate ", -1)),
+                      _cache[9] || (_cache[9] = createTextVNode(" Evaluate ", -1)),
                       withDirectives(createBaseVNode("select", {
                         "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => draft.timing = $event)
-                      }, [..._cache[7] || (_cache[7] = [
+                      }, [..._cache[8] || (_cache[8] = [
                         createBaseVNode("option", { value: "on-click" }, "Right when clicked", -1),
                         createBaseVNode("option", { value: "after-settle" }, "After it finishes loading", -1)
                       ])], 512), [
@@ -11338,73 +13100,130 @@
                       ])
                     ])
                   ], 64)) : stepId === "then" ? (openBlock(), createElementBlock("fieldset", _hoisted_2$7, [
-                    _cache[12] || (_cache[12] = createBaseVNode("legend", null, "Then", -1)),
-                    (openBlock(true), createElementBlock(Fragment, null, renderList(draft.actions, (action, index) => {
-                      return openBlock(), createElementBlock("div", {
-                        key: index,
-                        class: "lodestone-inline-group"
-                      }, [
-                        createBaseVNode("label", null, [
-                          _cache[10] || (_cache[10] = createTextVNode(" Button ", -1)),
-                          createBaseVNode("select", {
-                            value: action.targetId,
-                            onChange: ($event) => onActionTargetChange(action, $event.target.value)
+                    _cache[17] || (_cache[17] = createBaseVNode("legend", null, "Then", -1)),
+                    createVNode(unref(lo), {
+                      "model-value": actionListCopy.value,
+                      handle: ".lodestone-drag-handle",
+                      animation: 150,
+                      onUpdate: onActionDrop
+                    }, {
+                      default: withCtx(() => [
+                        (openBlock(true), createElementBlock(Fragment, null, renderList(draft.actions, (action, index) => {
+                          return openBlock(), createElementBlock("div", {
+                            key: actionKey(action),
+                            class: "lodestone-inline-group"
                           }, [
-                            _cache[9] || (_cache[9] = createBaseVNode("option", {
-                              value: "",
-                              disabled: ""
-                            }, "Select a button", -1)),
-                            (openBlock(true), createElementBlock(Fragment, null, renderList(catalog.value, (entry) => {
-                              return openBlock(), createElementBlock("option", {
-                                key: entry.id,
-                                value: entry.id
-                              }, toDisplayString(unref(pickerLabel)(entry)), 9, _hoisted_4$4);
-                            }), 128))
-                          ], 40, _hoisted_3$4)
-                        ]),
-                        createBaseVNode("label", null, [
-                          _cache[11] || (_cache[11] = createTextVNode(" Action ", -1)),
-                          withDirectives(createBaseVNode("select", {
-                            "onUpdate:modelValue": ($event) => action.verb = $event
-                          }, [
-                            (openBlock(true), createElementBlock(Fragment, null, renderList(verbOptionsFor(action), (option) => {
-                              return openBlock(), createElementBlock("option", {
-                                key: option.value,
-                                value: option.value
-                              }, toDisplayString(option.label), 9, _hoisted_6$4);
-                            }), 128))
-                          ], 8, _hoisted_5$4), [
-                            [vModelSelect, action.verb]
-                          ])
-                        ]),
-                        draft.actions.length > 1 ? (openBlock(), createElementBlock("button", {
-                          key: 0,
-                          type: "button",
-                          onClick: ($event) => removeAction(index)
-                        }, "Remove", 8, _hoisted_7$3)) : createCommentVNode("", true)
-                      ]);
-                    }), 128)),
+                            _cache[14] || (_cache[14] = createBaseVNode("span", {
+                              class: "lodestone-drag-handle",
+                              role: "img",
+                              "aria-label": "Drag to reorder",
+                              title: "Drag to reorder"
+                            }, "☰", -1)),
+                            createBaseVNode("label", null, [
+                              _cache[11] || (_cache[11] = createTextVNode(" Button ", -1)),
+                              createBaseVNode("select", {
+                                value: action.targetId,
+                                onChange: ($event) => onActionTargetChange(action, $event.target.value)
+                              }, [
+                                _cache[10] || (_cache[10] = createBaseVNode("option", {
+                                  value: "",
+                                  disabled: ""
+                                }, "Select a button", -1)),
+                                (openBlock(true), createElementBlock(Fragment, null, renderList(catalog.value, (entry) => {
+                                  return openBlock(), createElementBlock("option", {
+                                    key: entry.id,
+                                    value: entry.id
+                                  }, toDisplayString(unref(displayLabel)(entry)), 9, _hoisted_4$4);
+                                }), 128))
+                              ], 40, _hoisted_3$4)
+                            ]),
+                            createBaseVNode("label", null, [
+                              _cache[12] || (_cache[12] = createTextVNode(" Action ", -1)),
+                              withDirectives(createBaseVNode("select", {
+                                "onUpdate:modelValue": ($event) => action.verb = $event
+                              }, [
+                                (openBlock(true), createElementBlock(Fragment, null, renderList(verbOptionsFor(action), (option) => {
+                                  return openBlock(), createElementBlock("option", {
+                                    key: option.value,
+                                    value: option.value
+                                  }, toDisplayString(option.label), 9, _hoisted_6$4);
+                                }), 128))
+                              ], 8, _hoisted_5$4), [
+                                [vModelSelect, action.verb]
+                              ])
+                            ]),
+                            createBaseVNode("label", null, [
+                              _cache[13] || (_cache[13] = createTextVNode(" When reversed ", -1)),
+                              withDirectives(createBaseVNode("select", {
+                                "onUpdate:modelValue": ($event) => action.reverse = $event,
+                                disabled: reverseDisabledReason(action) !== void 0
+                              }, [
+                                (openBlock(), createElementBlock(Fragment, null, renderList(REVERSE_OPTIONS, (option) => {
+                                  return createBaseVNode("option", {
+                                    key: option.value,
+                                    value: option.value
+                                  }, toDisplayString(option.label), 9, _hoisted_8$3);
+                                }), 64))
+                              ], 8, _hoisted_7$3), [
+                                [vModelSelect, action.reverse]
+                              ])
+                            ]),
+                            reverseDisabledReason(action) ? (openBlock(), createElementBlock("small", _hoisted_9$3, toDisplayString(reverseDisabledReason(action)), 1)) : createCommentVNode("", true),
+                            draft.actions.length > 1 ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
+                              createBaseVNode("button", {
+                                type: "button",
+                                disabled: index === 0,
+                                "aria-label": "Move action up",
+                                onClick: ($event) => moveAction(index, index - 1)
+                              }, "↑", 8, _hoisted_10$3),
+                              createBaseVNode("button", {
+                                type: "button",
+                                disabled: index === draft.actions.length - 1,
+                                "aria-label": "Move action down",
+                                onClick: ($event) => moveAction(index, index + 1)
+                              }, "↓", 8, _hoisted_11$3),
+                              createBaseVNode("button", {
+                                type: "button",
+                                onClick: ($event) => removeAction(index)
+                              }, "Remove", 8, _hoisted_12$3)
+                            ], 64)) : createCommentVNode("", true)
+                          ]);
+                        }), 128))
+                      ]),
+                      _: 1
+                    }, 8, ["model-value"]),
                     createBaseVNode("button", {
                       type: "button",
                       onClick: addAction
-                    }, "Add another action")
-                  ])) : stepId === "where" ? (openBlock(), createElementBlock("fieldset", _hoisted_8$3, [
-                    _cache[15] || (_cache[15] = createBaseVNode("legend", null, "Where", -1)),
+                    }, "Add another action"),
+                    anyReverse.value ? (openBlock(), createElementBlock("label", _hoisted_13$2, [
+                      _cache[16] || (_cache[16] = createTextVNode(" Run the reverse actions ", -1)),
+                      withDirectives(createBaseVNode("select", {
+                        "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => draft.reverseOrder = $event)
+                      }, [..._cache[15] || (_cache[15] = [
+                        createBaseVNode("option", { value: "inverted" }, "last to first", -1),
+                        createBaseVNode("option", { value: "listed" }, "in the listed order", -1)
+                      ])], 512), [
+                        [vModelSelect, draft.reverseOrder]
+                      ])
+                    ])) : createCommentVNode("", true)
+                  ])) : stepId === "where" ? (openBlock(), createElementBlock("fieldset", _hoisted_14$1, [
+                    _cache[20] || (_cache[20] = createBaseVNode("legend", null, "Where", -1)),
                     createBaseVNode("label", null, [
                       createBaseVNode("input", {
                         type: "radio",
                         checked: !scopedToBoorus.value,
-                        onChange: _cache[2] || (_cache[2] = ($event) => setScoped(false))
-                      }, null, 40, _hoisted_9$3),
-                      _cache[13] || (_cache[13] = createTextVNode(" On every booru", -1))
+                        onChange: _cache[3] || (_cache[3] = ($event) => setScoped(false))
+                      }, null, 40, _hoisted_15$1),
+                      _cache[18] || (_cache[18] = createTextVNode(" On every booru", -1))
                     ]),
                     createBaseVNode("label", null, [
                       createBaseVNode("input", {
                         type: "radio",
                         checked: scopedToBoorus.value,
-                        onChange: _cache[3] || (_cache[3] = ($event) => setScoped(true))
-                      }, null, 40, _hoisted_10$3),
-                      _cache[14] || (_cache[14] = createTextVNode(" Only on these boorus", -1))
+                        onChange: _cache[4] || (_cache[4] = ($event) => setScoped(true))
+                      }, null, 40, _hoisted_16$1),
+                      _cache[19] || (_cache[19] = createTextVNode(" Only on these boorus", -1))
                     ]),
                     scopedToBoorus.value ? (openBlock(true), createElementBlock(Fragment, { key: 0 }, renderList(unref(KNOWN_INSTANCE_IDS), (booru) => {
                       var _a;
@@ -11416,14 +13235,14 @@
                           type: "checkbox",
                           checked: (_a = draft.boorus) == null ? void 0 : _a.includes(booru),
                           onChange: ($event) => toggleBooru(booru, $event.target.checked)
-                        }, null, 40, _hoisted_11$3),
+                        }, null, 40, _hoisted_17),
                         createTextVNode(" " + toDisplayString(booru), 1)
                       ]);
                     }), 128)) : createCommentVNode("", true)
-                  ])) : (openBlock(), createElementBlock("label", _hoisted_12$3, [
-                    _cache[16] || (_cache[16] = createTextVNode("Label ", -1)),
+                  ])) : (openBlock(), createElementBlock("label", _hoisted_18, [
+                    _cache[21] || (_cache[21] = createTextVNode("Label ", -1)),
                     withDirectives(createBaseVNode("input", {
-                      "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => draft.label = $event),
+                      "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => draft.label = $event),
                       type: "text"
                     }, null, 512), [
                       [vModelText, draft.label]
@@ -11435,60 +13254,88 @@
             ]),
             _: 1
           }, 8, ["open", "title"]),
-          _cache[20] || (_cache[20] = createBaseVNode("h4", null, "Configured button effects", -1)),
-          unref(store).allRules.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_13$2, "No button effects yet.")) : createCommentVNode("", true),
-          createBaseVNode("ul", _hoisted_14$1, [
-            (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).allRules, (rule) => {
-              return openBlock(), createElementBlock("li", {
-                key: rule.id,
-                class: "lodestone-manager-list__item",
-                title: unref(ruleAppliesOn)(rule, unref(currentBooru)) ? void 0 : "Not active on this booru",
-                style: normalizeStyle(unref(ruleAppliesOn)(rule, unref(currentBooru)) ? void 0 : { opacity: 0.6 })
-              }, [
-                createBaseVNode("label", null, [
-                  createBaseVNode("input", {
-                    type: "checkbox",
-                    checked: rule.enabled,
-                    onChange: ($event) => unref(store).update(rule.id, { enabled: $event.target.checked })
-                  }, null, 40, _hoisted_16$1),
-                  createTextVNode(" " + toDisplayString(rule.label), 1)
-                ]),
-                rule.boorus ? (openBlock(), createElementBlock("small", _hoisted_17, toDisplayString(scopeNote(rule)), 1)) : createCommentVNode("", true),
-                createBaseVNode("span", _hoisted_18, [
-                  _cache[17] || (_cache[17] = createTextVNode(" → ", -1)),
-                  (openBlock(true), createElementBlock(Fragment, null, renderList(rule.actions, (action, index) => {
-                    return openBlock(), createElementBlock(Fragment, { key: index }, [
-                      entryFor(action.targetId) ? (openBlock(), createBlock(_sfc_main$q, {
-                        key: 0,
-                        icon: entryFor(action.targetId).icon,
-                        label: unref(pickerLabel)(entryFor(action.targetId)),
-                        color: entryFor(action.targetId).color
-                      }, null, 8, ["icon", "label", "color"])) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-                        createTextVNode(toDisplayString(action.targetId), 1)
-                      ], 64))
-                    ], 64);
-                  }), 128))
-                ]),
-                createBaseVNode("span", _hoisted_19, [
-                  createBaseVNode("button", {
-                    type: "button",
-                    onClick: ($event) => edit(rule)
-                  }, "Edit", 8, _hoisted_20),
-                  createBaseVNode("button", {
-                    type: "button",
-                    onClick: ($event) => unref(store).duplicate(rule.id)
-                  }, "Duplicate", 8, _hoisted_21),
-                  createBaseVNode("button", {
-                    type: "button",
-                    onClick: ($event) => unref(store).remove(rule.id)
-                  }, "Delete", 8, _hoisted_22)
-                ])
-              ], 12, _hoisted_15$1);
-            }), 128))
-          ]),
-          _cache[21] || (_cache[21] = createBaseVNode("h4", null, "Built into the site", -1)),
-          _cache[22] || (_cache[22] = createBaseVNode("p", { class: "lodestone-hint" }, "The booru does these itself, so they are shown for reference and cannot be changed.", -1)),
-          createBaseVNode("ul", _hoisted_23, [
+          _cache[26] || (_cache[26] = createBaseVNode("h4", null, "Configured button effects", -1)),
+          unref(store).allRules.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_19, "No button effects yet.")) : createCommentVNode("", true),
+          createVNode(unref(lo), {
+            tag: "ul",
+            class: "lodestone-manager-list",
+            "model-value": ruleListCopy.value,
+            handle: ".lodestone-drag-handle",
+            animation: 150,
+            onUpdate: onRuleDrop
+          }, {
+            default: withCtx(() => [
+              (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).allRules, (rule, ruleIndex) => {
+                return openBlock(), createElementBlock("li", {
+                  key: rule.id,
+                  class: "lodestone-manager-list__item",
+                  title: unref(ruleAppliesOn)(rule, unref(currentBooru)) ? void 0 : "Not active on this booru",
+                  style: normalizeStyle(unref(ruleAppliesOn)(rule, unref(currentBooru)) ? void 0 : { opacity: 0.6 })
+                }, [
+                  _cache[23] || (_cache[23] = createBaseVNode("span", {
+                    class: "lodestone-drag-handle",
+                    role: "img",
+                    "aria-label": "Drag to reorder",
+                    title: "Drag to reorder"
+                  }, "☰", -1)),
+                  createBaseVNode("label", null, [
+                    createBaseVNode("input", {
+                      type: "checkbox",
+                      checked: rule.enabled,
+                      onChange: ($event) => unref(store).update(rule.id, { enabled: $event.target.checked })
+                    }, null, 40, _hoisted_21),
+                    createTextVNode(" " + toDisplayString(rule.label), 1)
+                  ]),
+                  rule.boorus ? (openBlock(), createElementBlock("small", _hoisted_22, toDisplayString(scopeNote(rule)), 1)) : createCommentVNode("", true),
+                  createBaseVNode("span", _hoisted_23, [
+                    _cache[22] || (_cache[22] = createTextVNode(" → ", -1)),
+                    (openBlock(true), createElementBlock(Fragment, null, renderList(rule.actions, (action, index) => {
+                      return openBlock(), createElementBlock(Fragment, { key: index }, [
+                        entryFor(action.targetId) ? (openBlock(), createBlock(_sfc_main$q, {
+                          key: 0,
+                          icon: entryFor(action.targetId).icon,
+                          label: unref(displayLabel)(entryFor(action.targetId)),
+                          color: entryFor(action.targetId).color
+                        }, null, 8, ["icon", "label", "color"])) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
+                          createTextVNode(toDisplayString(action.targetId), 1)
+                        ], 64))
+                      ], 64);
+                    }), 128))
+                  ]),
+                  createBaseVNode("span", _hoisted_24, [
+                    createBaseVNode("button", {
+                      type: "button",
+                      disabled: ruleIndex === 0,
+                      "aria-label": "Move up",
+                      onClick: ($event) => unref(store).move(rule.id, ruleIndex - 1)
+                    }, "↑", 8, _hoisted_25),
+                    createBaseVNode("button", {
+                      type: "button",
+                      disabled: ruleIndex === unref(store).allRules.length - 1,
+                      "aria-label": "Move down",
+                      onClick: ($event) => unref(store).move(rule.id, ruleIndex + 1)
+                    }, "↓", 8, _hoisted_26),
+                    createBaseVNode("button", {
+                      type: "button",
+                      onClick: ($event) => edit(rule)
+                    }, "Edit", 8, _hoisted_27),
+                    createBaseVNode("button", {
+                      type: "button",
+                      onClick: ($event) => unref(store).duplicate(rule.id)
+                    }, "Duplicate", 8, _hoisted_28),
+                    createBaseVNode("button", {
+                      type: "button",
+                      onClick: ($event) => unref(store).remove(rule.id)
+                    }, "Delete", 8, _hoisted_29)
+                  ])
+                ], 12, _hoisted_20);
+              }), 128))
+            ]),
+            _: 1
+          }, 8, ["model-value"]),
+          _cache[27] || (_cache[27] = createBaseVNode("h4", null, "Built into the site", -1)),
+          _cache[28] || (_cache[28] = createBaseVNode("p", { class: "lodestone-hint" }, "The booru does these itself, so they are shown for reference and cannot be changed.", -1)),
+          createBaseVNode("ul", _hoisted_30, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(unref(BUILT_IN_BUTTON_EFFECTS), (rule) => {
               return openBlock(), createElementBlock("li", {
                 key: rule.id,
@@ -11496,22 +13343,22 @@
                 style: { "opacity": "0.6" }
               }, [
                 createBaseVNode("label", null, [
-                  _cache[18] || (_cache[18] = createBaseVNode("input", {
+                  _cache[24] || (_cache[24] = createBaseVNode("input", {
                     type: "checkbox",
                     checked: "",
                     disabled: ""
                   }, null, -1)),
                   createTextVNode(" " + toDisplayString(rule.label), 1)
                 ]),
-                rule.note ? (openBlock(), createElementBlock("small", _hoisted_24, toDisplayString(rule.note), 1)) : createCommentVNode("", true),
-                createBaseVNode("span", _hoisted_25, [
-                  _cache[19] || (_cache[19] = createTextVNode(" → ", -1)),
+                rule.note ? (openBlock(), createElementBlock("small", _hoisted_31, toDisplayString(rule.note), 1)) : createCommentVNode("", true),
+                createBaseVNode("span", _hoisted_32, [
+                  _cache[25] || (_cache[25] = createTextVNode(" → ", -1)),
                   (openBlock(true), createElementBlock(Fragment, null, renderList(rule.actions, (action, index) => {
                     return openBlock(), createElementBlock(Fragment, { key: index }, [
                       entryFor(action.targetId) ? (openBlock(), createBlock(_sfc_main$q, {
                         key: 0,
                         icon: entryFor(action.targetId).icon,
-                        label: unref(pickerLabel)(entryFor(action.targetId)),
+                        label: unref(displayLabel)(entryFor(action.targetId)),
                         color: entryFor(action.targetId).color
                       }, null, 8, ["icon", "label", "color"])) : createCommentVNode("", true)
                     ], 64);
@@ -11591,11 +13438,13 @@
   }
   const GROUP_CLASS = "lodestone-button-group";
   function gridRule(groupId, columns) {
-    return `.${GROUP_CLASS}[data-lodestone-group-id="${groupId}"] { grid-template-columns: repeat(${clampColumns(columns)}, minmax(0, auto)); }`;
+    return `.${GROUP_CLASS}[data-lodestone-group-id="${groupId}"] { grid-template-columns: repeat(${clampColumns(columns)}, minmax(0, 1fr)); }`;
   }
   function buildButtonGroupsCss(groups) {
     const rules = [
-      `.${GROUP_CLASS} { display: grid; justify-content: start; align-items: center; gap: 4px; }`
+      // Full width (also inside a flex parent) with equal-width columns, each button filling its cell.
+      `.${GROUP_CLASS} { display: grid; box-sizing: border-box; width: 100%; flex: 1 1 100%; justify-content: stretch; align-items: center; gap: 4px; }`,
+      `.${GROUP_CLASS} > * { box-sizing: border-box; width: 100%; min-width: 0; margin: 0; }`
     ];
     for (const group of groups) {
       const base2 = group.breakpoints.find((breakpoint) => breakpoint.maxWidthPx === null);
@@ -13123,6 +14972,9 @@ ${event}
     }
     .lodestone-manager-list__item:first-child { border-top: none; }
     .lodestone-manager-list__item:hover { background: var(--lodestone-hover); }
+    .lodestone-drag-handle { cursor: grab; touch-action: none; user-select: none; padding: 0 var(--lodestone-space-2); opacity: 0.6; }
+    .lodestone-drag-handle:hover { opacity: 1; }
+    .sortable-chosen .lodestone-drag-handle { cursor: grabbing; }
     .lodestone-manager-list__actions { display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
 
     /* Shared "here's what this will actually send" preview treatment. */
@@ -13424,7 +15276,7 @@ ${event}
     return () => eventListeners.delete(listener);
   }
   function notifyNativeButtonEvent(el, phase) {
-    for (const entry of findCatalogEntriesForElement(buildButtonCatalog({ includeBoth: true }), el)) {
+    for (const entry of findCatalogEntriesForElement(buildButtonCatalog({ mergeTwins: true }), el)) {
       notifyButtonEvent({ buttonId: entry.id, phase });
     }
   }
@@ -13508,12 +15360,12 @@ ${event}
     if (!hex) {
       return "#fff";
     }
-    const full = hex.length === 3 ? [...hex].map((c) => c + c).join("") : hex;
-    const [r, g, b] = [0, 2, 4].map((i) => {
+    const full = hex.length === 3 ? [...hex].map((c2) => c2 + c2).join("") : hex;
+    const [r, g2, b] = [0, 2, 4].map((i) => {
       const channel = parseInt(full.slice(i, i + 2), 16) / 255;
       return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
     });
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b > WHITE_TEXT_MAX_LUMINANCE ? "#000" : "#fff";
+    return 0.2126 * r + 0.7152 * g2 + 0.0722 * b > WHITE_TEXT_MAX_LUMINANCE ? "#000" : "#fff";
   }
   const STATES = ["", ":hover", ":focus", ":active"];
   const BUTTON = ".interaction--hide.interaction--hide.interaction--hide";
@@ -14337,47 +16189,6 @@ ${icons} { font-size: ${iconSize} !important; }`;
       });
     }
   }
-  function matchesState(actual, expected) {
-    if (expected === "either") {
-      return actual !== void 0;
-    }
-    if (actual === void 0) {
-      return false;
-    }
-    return expected === "on" ? actual : !actual;
-  }
-  function evaluateCondition(node, catalog, readState, triggerEntry, readTriggerState = readState) {
-    switch (node.type) {
-      case "and":
-        return node.children.every((child) => evaluateCondition(child, catalog, readState, triggerEntry, readTriggerState));
-      case "or":
-        return node.children.some((child) => evaluateCondition(child, catalog, readState, triggerEntry, readTriggerState));
-      case "not":
-        return !evaluateCondition(node.child, catalog, readState, triggerEntry, readTriggerState);
-      case "leaf": {
-        const entries = node.targetKind === "category" ? catalog.filter((entry) => entry.category === node.targetId) : catalog.filter((entry) => entry.id === node.targetId);
-        if (entries.length === 0) {
-          return false;
-        }
-        if (node.trigger && !(triggerEntry && entries.includes(triggerEntry))) {
-          return false;
-        }
-        const read = node.trigger ? readTriggerState : readState;
-        return entries.some((entry) => matchesState(read(entry), node.state));
-      }
-    }
-  }
-  function conditionReferencesEntry(node, entry) {
-    switch (node.type) {
-      case "and":
-      case "or":
-        return node.children.some((child) => conditionReferencesEntry(child, entry));
-      case "not":
-        return conditionReferencesEntry(node.child, entry);
-      case "leaf":
-        return node.targetKind === "category" ? node.targetId === entry.category : node.targetId === entry.id;
-    }
-  }
   const NOTICE_ID = "lodestone-error-notice";
   const STYLE_ID = "lodestone-error-notice-style";
   const CSS = `
@@ -14432,7 +16243,8 @@ ${icons} { font-size: ${iconSize} !important; }`;
   }
   function belongsToOtherPageType(entry) {
     const page2 = detectPage(location.pathname);
-    return entry.variant !== "both" && (page2 === "image" || page2 === "list") && entry.scope !== page2;
+    const mergedTwin = entry.source === "native" && !/^(image|list)-/.test(entry.id);
+    return !mergedTwin && (page2 === "image" || page2 === "list") && entry.scope !== page2;
   }
   function desiredOnFor(verb) {
     return verb === "turn-on" ? true : verb === "turn-off" ? false : void 0;
@@ -14455,7 +16267,7 @@ ${icons} { font-size: ${iconSize} !important; }`;
   async function performNativeAction(entry, verb) {
     const el = resolveCatalogElement(entry);
     if (!el) {
-      throw new ButtonEffectError(`the button "${pickerLabel(entry)}" is not on this page`, belongsToOtherPageType(entry));
+      throw new ButtonEffectError(`the button "${displayLabel(entry)}" is not on this page`, belongsToOtherPageType(entry));
     }
     const desiredOn = desiredOnFor(verb);
     const wasActive = readCatalogState(entry) ?? false;
@@ -14480,21 +16292,53 @@ ${icons} { font-size: ${iconSize} !important; }`;
     }
     await settled;
   }
-  async function runAction(action, catalog) {
-    const target = catalog.find((entry) => entry.id === action.targetId);
-    if (!target) {
-      throw new ButtonEffectError(`the button "${action.targetId}" does not exist (any more)`, false);
+  const statesBeforeRun = /* @__PURE__ */ new Map();
+  function verbFor(action, direction, before) {
+    if (direction === "forward") {
+      return action.verb;
     }
-    if (getButtonAction(target.id)) {
-      await performRegisteredAction(target, action.verb);
-    } else {
-      await performNativeAction(target, action.verb);
+    switch (action.reverse) {
+      case "nothing":
+        return void 0;
+      case "revert":
+        return before === void 0 ? void 0 : before ? "turn-on" : "turn-off";
+      default:
+        return action.reverse;
     }
   }
-  async function runActions(rule, catalog) {
+  async function runAction(action, catalog, direction, recorded, index) {
+    const target = catalog.find((entry) => entry.id === action.targetId);
+    if (!target) {
+      if (direction === "reverse" && action.reverse === "nothing") {
+        return;
+      }
+      throw new ButtonEffectError(`the button "${action.targetId}" does not exist (any more)`, false);
+    }
+    if (direction === "forward") {
+      recorded[index] = target.stateKind === "stateless" ? void 0 : readCatalogState(target);
+    }
+    const verb = verbFor(action, direction, recorded[index]);
+    if (verb === void 0 || direction === "reverse" && target.stateKind === "stateless") {
+      return;
+    }
+    if (getButtonAction(target.id)) {
+      await performRegisteredAction(target, verb);
+    } else {
+      await performNativeAction(target, verb);
+    }
+  }
+  async function runActions(rule, catalog, direction = "forward") {
+    const recorded = statesBeforeRun.get(rule.id) ?? [];
+    if (direction === "forward") {
+      statesBeforeRun.set(rule.id, recorded);
+    }
+    const indexes = rule.actions.map((_, index) => index);
+    if (direction === "reverse" && rule.reverseOrder === "inverted") {
+      indexes.reverse();
+    }
     try {
-      for (const action of rule.actions) {
-        await runAction(action, catalog);
+      for (const index of indexes) {
+        await runAction(rule.actions[index], catalog, direction, recorded, index);
       }
     } catch (error) {
       if (!(error instanceof ButtonEffectError)) {
@@ -14508,7 +16352,7 @@ ${icons} { font-size: ${iconSize} !important; }`;
     }
   }
   function handleButtonEvent(store, event) {
-    const catalog = buildButtonCatalog({ includeBoth: true });
+    const catalog = buildButtonCatalog({ mergeTwins: true });
     const changedEntry = catalog.find((entry) => entry.id === event.buttonId);
     if (!changedEntry) {
       return;
@@ -14517,12 +16361,18 @@ ${icons} { font-size: ${iconSize} !important; }`;
       const state = readCatalogState(entry);
       return event.phase === "on-click" && state !== void 0 ? !state : state;
     };
+    const readReverseTriggerState = (entry) => {
+      const state = readTriggerState(entry);
+      return state === void 0 ? void 0 : !state;
+    };
     const matchingRules = store.rules.filter(
       (rule) => rule.enabled && rule.timing === event.phase && conditionReferencesEntry(rule.condition, changedEntry)
     );
     for (const rule of matchingRules) {
       if (evaluateCondition(rule.condition, catalog, readCatalogState, changedEntry, readTriggerState)) {
         void runActions(rule, catalog);
+      } else if (rule.actions.some((action) => action.reverse !== "nothing") && evaluateCondition(rule.condition, catalog, readCatalogState, changedEntry, readReverseTriggerState)) {
+        void runActions(rule, catalog, "reverse");
       }
     }
   }
