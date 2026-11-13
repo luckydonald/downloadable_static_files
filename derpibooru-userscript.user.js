@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.11.12.0000.08.51.02.0000.5dbf9
+// @version      2026.11.13.0000.01.48.36.0000.3fa39
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -7745,6 +7745,21 @@
     store.$subscribe(() => setValue(STORAGE_KEY$5, store.$state), { flush: "sync" });
     onValueChanged(STORAGE_KEY$5, (next) => store.$patch(next));
   }
+  function moveItem(list, from, to2) {
+    if (from < 0 || from >= list.length || to2 < 0 || to2 >= list.length || from === to2) {
+      return;
+    }
+    list.splice(to2, 0, ...list.splice(from, 1));
+  }
+  function movedById(list, idOf, id, toIndex) {
+    const next = [...list];
+    const from = next.findIndex((item) => idOf(item) === id);
+    if (from === -1) {
+      return next;
+    }
+    moveItem(next, from, Math.min(Math.max(toIndex, 0), next.length - 1));
+    return next;
+  }
   const STORAGE_KEY$4 = "lodestone-userscript-gallery-quick-buttons";
   function createGalleryQuickButtonConfig(overrides2 = {}) {
     return {
@@ -7902,6 +7917,18 @@
           return;
         }
         this.shared = this.shared.map((candidate) => candidate.id === id ? { ...candidate, galleryIds: remaining } : candidate);
+      },
+      /**
+       * Moves a button to `toIndex` of the list shown on this booru (`buttons`). The buttons that are active here
+       * are written back into the slots they already occupied in `shared`, so those of other boorus stay where they are.
+       */
+      move(id, toIndex) {
+        const instanceId = resolveInstanceId(location.hostname);
+        const isHere = (button) => instanceId in button.galleryIds;
+        const visible = this.shared.filter(isHere);
+        const reordered = movedById(visible, (button) => button.id, id, toIndex);
+        let next = 0;
+        this.shared = this.shared.map((button) => isHere(button) ? reordered[next++] : button);
       },
       removeEverywhere(id) {
         this.shared = this.shared.filter((button) => button.id !== id);
@@ -8345,6 +8372,14 @@
       remove(id) {
         const instanceId = resolveInstanceId(location.hostname);
         this.perInstance[instanceId] = (this.perInstance[instanceId] ?? []).filter((group) => group.id !== id);
+      },
+      /** Moves a group of the current booru to `toIndex` (clamped). */
+      move(id, toIndex) {
+        const instanceId = resolveInstanceId(location.hostname);
+        const groups = this.perInstance[instanceId];
+        if (groups) {
+          this.perInstance[instanceId] = movedById(groups, (group) => group.id, id, toIndex);
+        }
       }
     }
   });
@@ -8646,7 +8681,7 @@
     store.$subscribe(() => setValue(STORAGE_KEY, store.$state), { flush: "sync" });
     onValueChanged(STORAGE_KEY, (value) => store.$patch((state) => Object.assign(state, normalizeWatchListBackupState(value))));
   }
-  const APP_VERSION = "2026.11.12.0000.08.51.02.0000.5dbf9";
+  const APP_VERSION = "2026.11.13.0000.01.48.36.0000.3fa39";
   function numericSegments(version2) {
     const segments = [];
     for (const part of version2.split(".")) {
@@ -9929,8 +9964,8 @@
   const _hoisted_10$8 = { class: "lodestone-manager-list" };
   const _hoisted_11$7 = { class: "lodestone-manager-list__actions" };
   const _hoisted_12$7 = ["onClick"];
-  const _hoisted_13$6 = ["onClick"];
-  const _hoisted_14$4 = ["onClick"];
+  const _hoisted_13$7 = ["onClick"];
+  const _hoisted_14$5 = ["onClick"];
   const _sfc_main$p = /* @__PURE__ */ defineComponent({
     __name: "TelegramButtonManager",
     setup(__props) {
@@ -10189,11 +10224,11 @@
                   createBaseVNode("button", {
                     type: "button",
                     onClick: ($event) => unref(store).duplicate(button.id)
-                  }, "Duplicate", 8, _hoisted_13$6),
+                  }, "Duplicate", 8, _hoisted_13$7),
                   createBaseVNode("button", {
                     type: "button",
                     onClick: ($event) => unref(store).remove(button.id)
-                  }, "Delete", 8, _hoisted_14$4)
+                  }, "Delete", 8, _hoisted_14$5)
                 ])
               ]);
             }), 128))
@@ -10212,1025 +10247,6 @@
         }, {
           default: withCtx(() => [
             createVNode(_sfc_main$p)
-          ]),
-          _: 1
-        });
-      };
-    }
-  });
-  const base = {
-    csrfTokenMeta: 'meta[name="csrf-token"]',
-    csrfParamMeta: 'meta[name="csrf-param"]',
-    csrfFieldNameFallback: "_csrf_token",
-    imageNavPrev: ".js-prev",
-    imageNavUp: ".js-up",
-    imageNavNext: ".js-next",
-    interactionFave: ".interaction--fave",
-    interactionUpvote: ".interaction--upvote",
-    interactionDownvote: ".interaction--downvote",
-    interactionComments: ".interaction--comments",
-    interactionHide: ".interaction--hide",
-    scoreDisplay: ".score.block__header__title",
-    galleryDropdownRoot: ".block__header__dropdown-tab",
-    galleryDropdownContent: ".dropdown__content",
-    galleryListContainer: ".js-gallery-list",
-    galleriesNavLink: 'header nav a.header__link[href*="gallery[creator]="]',
-    relatedLink: 'a[href$="/related"]',
-    settingsTabHeader: "#js-setting-table .block__header--js-tabbed",
-    settingsTabLink: "[data-click-tab]",
-    settingsTabPanel: "[data-tab]",
-    listThumbnailBox: ".media-box"
-  };
-  const overrides = {
-    "twibooru.org": {
-      csrfFieldNameFallback: "authenticity_token"
-    }
-  };
-  function resolveSelectors(hostname) {
-    var _a;
-    const override = (_a = Object.entries(overrides).find(([host]) => hostname.endsWith(host))) == null ? void 0 : _a[1];
-    return override ? { ...base, ...override } : base;
-  }
-  function getCurrentUsername(hostname = location.hostname) {
-    const selectors = resolveSelectors(hostname);
-    const link = document.querySelector(selectors.galleriesNavLink);
-    if (!link) {
-      return null;
-    }
-    const href = link.getAttribute("href");
-    if (!href) {
-      return null;
-    }
-    const query = href.split("?")[1] ?? "";
-    return new URLSearchParams(query).get("gallery[creator]");
-  }
-  async function searchUserGalleries(username) {
-    const query = `q=${encodeURIComponent(`user:${username}`)}&per_page=50`;
-    const response = await fetch(`/api/v1/json/search/galleries?${query}`, { credentials: "same-origin" });
-    if (!response.ok) {
-      throw new Error(`Failed to search galleries for ${username}: HTTP ${response.status}`);
-    }
-    const body = await readJson(response, `Gallery search for ${username}`);
-    return body.galleries.map(({ id, title, thumbnail }) => ({
-      id,
-      title,
-      thumbnailUrl: (thumbnail == null ? void 0 : thumbnail.thumb_url) ?? (thumbnail == null ? void 0 : thumbnail.small_url) ?? void 0
-    }));
-  }
-  function getCsrfToken(hostname = location.hostname) {
-    const selectors = resolveSelectors(hostname);
-    const meta = document.querySelector(selectors.csrfTokenMeta);
-    return (meta == null ? void 0 : meta.content) ?? null;
-  }
-  function getCsrfFieldName(hostname = location.hostname) {
-    const selectors = resolveSelectors(hostname);
-    const paramMeta = selectors.csrfParamMeta ? document.querySelector(selectors.csrfParamMeta) : null;
-    return (paramMeta == null ? void 0 : paramMeta.content) ?? selectors.csrfFieldNameFallback;
-  }
-  async function fetchGalleryDetails(galleryId) {
-    var _a;
-    const query = `q=${encodeURIComponent(`id:${galleryId}`)}`;
-    const response = await fetch(`/api/v1/json/search/galleries?${query}`, { credentials: "same-origin" });
-    if (!response.ok) {
-      throw new Error(`Failed to load gallery ${galleryId}: HTTP ${response.status}`);
-    }
-    const body = await readJson(response, `Gallery ${galleryId}`);
-    const gallery = (_a = body.galleries) == null ? void 0 : _a.find((candidate) => String(candidate.id) === String(galleryId));
-    if (!gallery) {
-      throw new Error(`Gallery ${galleryId} was not found on this booru.`);
-    }
-    return {
-      title: gallery.title ?? "",
-      spoiler: gallery.spoiler_warning ?? "",
-      description: gallery.description ?? "",
-      coverImageId: typeof gallery.thumbnail_id === "number" ? gallery.thumbnail_id : null
-    };
-  }
-  async function updateGalleryDetails(galleryId, change) {
-    const token = getCsrfToken();
-    if (!token) {
-      throw new Error("No CSRF token on this page; reload the page and try again.");
-    }
-    const fresh = await fetchGalleryDetails(galleryId);
-    const next = { ...fresh, ...change };
-    const body = new URLSearchParams({
-      [getCsrfFieldName()]: token,
-      _method: "patch",
-      "gallery[title]": next.title,
-      "gallery[spoiler_warning]": next.spoiler,
-      "gallery[description]": next.description,
-      "gallery[thumbnail_id]": next.coverImageId === null ? "" : String(next.coverImageId)
-    });
-    const response = await fetch(`/galleries/${galleryId}`, {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" },
-      body
-    });
-    if (!response.ok) {
-      throw new Error(`The booru rejected the update: HTTP ${response.status}`);
-    }
-    const saved = await fetchGalleryDetails(galleryId);
-    const notSaved = Object.keys(change).filter((field) => saved[field] !== next[field]);
-    if (notSaved.length > 0) {
-      throw new Error(`The booru did not accept the new ${notSaved.join(", ")}.`);
-    }
-    return saved;
-  }
-  const DEFAULT_COVER_IMAGE_IDS = {
-    "derpibooru.org": 0
-  };
-  const SPOILER_MAX_LENGTH_BY_INSTANCE = {};
-  const DEFAULT_SPOILER_MAX_LENGTH = 20;
-  function spoilerMaxLength(instanceId) {
-    return SPOILER_MAX_LENGTH_BY_INSTANCE[instanceId] ?? DEFAULT_SPOILER_MAX_LENGTH;
-  }
-  function defaultCoverImageId(instanceId) {
-    return DEFAULT_COVER_IMAGE_IDS[instanceId] ?? null;
-  }
-  const _hoisted_1$j = { class: "lodestone-gallery-chooser" };
-  const _hoisted_2$g = { key: 0 };
-  const _hoisted_3$d = ["value"];
-  const _hoisted_4$c = {
-    value: "",
-    disabled: ""
-  };
-  const _hoisted_5$b = ["value"];
-  const _hoisted_6$b = { key: 1 };
-  const _hoisted_7$a = ["value"];
-  const _hoisted_8$8 = {
-    key: 2,
-    class: "lodestone-quick-button-manager__note"
-  };
-  const _sfc_main$n = /* @__PURE__ */ defineComponent({
-    __name: "GalleryChooser",
-    props: {
-      modelValue: {},
-      options: {},
-      lookupState: {}
-    },
-    emits: ["update:modelValue"],
-    setup(__props, { emit: __emit }) {
-      const props = __props;
-      const emit2 = __emit;
-      const manualOverride = /* @__PURE__ */ ref(null);
-      const manualEntry = computed(
-        () => manualOverride.value ?? (props.lookupState === "error" || props.lookupState === "ready" && props.options.length === 0)
-      );
-      function onInput(event) {
-        emit2("update:modelValue", event.target.value);
-      }
-      return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$j, [
-          !manualEntry.value ? (openBlock(), createElementBlock("label", _hoisted_2$g, [
-            _cache[1] || (_cache[1] = createTextVNode(" Gallery ", -1)),
-            createBaseVNode("select", {
-              value: __props.modelValue,
-              onChange: onInput
-            }, [
-              createBaseVNode("option", _hoisted_4$c, toDisplayString(__props.lookupState === "loading" ? "Loading your galleries…" : "Select a gallery"), 1),
-              (openBlock(true), createElementBlock(Fragment, null, renderList(__props.options, (gallery) => {
-                return openBlock(), createElementBlock("option", {
-                  key: gallery.id,
-                  value: String(gallery.id)
-                }, toDisplayString(gallery.title) + " (#" + toDisplayString(gallery.id) + ") ", 9, _hoisted_5$b);
-              }), 128))
-            ], 40, _hoisted_3$d)
-          ])) : (openBlock(), createElementBlock("label", _hoisted_6$b, [
-            _cache[2] || (_cache[2] = createTextVNode(" Gallery id or slug ", -1)),
-            createBaseVNode("input", {
-              value: __props.modelValue,
-              type: "text",
-              onInput
-            }, null, 40, _hoisted_7$a)
-          ])),
-          __props.lookupState === "error" ? (openBlock(), createElementBlock("p", _hoisted_8$8, " Couldn't look up your galleries automatically -- enter the id manually. ")) : createCommentVNode("", true),
-          createBaseVNode("button", {
-            type: "button",
-            class: "lodestone-quick-button-manager__toggle-entry",
-            onClick: _cache[0] || (_cache[0] = ($event) => manualOverride.value = !manualEntry.value)
-          }, toDisplayString(manualEntry.value ? "Pick from a dropdown instead" : "Enter manually instead"), 1)
-        ]);
-      };
-    }
-  });
-  const _hoisted_1$i = { class: "lodestone-gallery-field-diff" };
-  const _hoisted_2$f = {
-    key: 0,
-    class: "lodestone-hint"
-  };
-  const _hoisted_3$c = {
-    key: 1,
-    class: "lodestone-hint"
-  };
-  const _hoisted_4$b = { class: "lodestone-hint" };
-  const _hoisted_5$a = { class: "lodestone-actions" };
-  const _hoisted_6$a = ["disabled"];
-  const _hoisted_7$9 = {
-    key: 1,
-    class: "lodestone-import-export__error",
-    role: "alert"
-  };
-  const _sfc_main$m = /* @__PURE__ */ defineComponent({
-    __name: "GalleryFieldDiff",
-    props: {
-      remoteText: {},
-      differs: { type: Boolean },
-      ignored: { type: Boolean },
-      updating: { type: Boolean },
-      error: {}
-    },
-    emits: ["useRemote", "ignore", "update"],
-    setup(__props) {
-      return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$i, [
-          __props.remoteText !== null ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
-            !__props.differs ? (openBlock(), createElementBlock("p", _hoisted_2$f, "Matches the booru.")) : __props.ignored ? (openBlock(), createElementBlock("p", _hoisted_3$c, "Differs from the booru (ignored).")) : (openBlock(), createElementBlock(Fragment, { key: 2 }, [
-              createBaseVNode("p", _hoisted_4$b, [
-                _cache[3] || (_cache[3] = createTextVNode("On the booru: ", -1)),
-                createBaseVNode("code", null, toDisplayString(__props.remoteText === "" ? "(empty)" : __props.remoteText), 1)
-              ]),
-              createBaseVNode("div", _hoisted_5$a, [
-                createBaseVNode("button", {
-                  type: "button",
-                  onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("useRemote"))
-                }, "Use booru value"),
-                createBaseVNode("button", {
-                  type: "button",
-                  onClick: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("ignore"))
-                }, "Ignore"),
-                createBaseVNode("button", {
-                  type: "button",
-                  disabled: __props.updating,
-                  onClick: _cache[2] || (_cache[2] = ($event) => _ctx.$emit("update"))
-                }, toDisplayString(__props.updating ? "Updating…" : "Update gallery"), 9, _hoisted_6$a)
-              ])
-            ], 64))
-          ], 64)) : createCommentVNode("", true),
-          __props.error ? (openBlock(), createElementBlock("p", _hoisted_7$9, toDisplayString(__props.error), 1)) : createCommentVNode("", true)
-        ]);
-      };
-    }
-  });
-  const _sfc_main$l = /* @__PURE__ */ defineComponent({
-    __name: "QuickButtonPreview",
-    props: {
-      config: {}
-    },
-    setup(__props) {
-      return (_ctx, _cache) => {
-        return openBlock(), createBlock(_sfc_main$u, {
-          class: "lodestone-quick-button-preview",
-          icon: __props.config.icon,
-          label: __props.config.label,
-          color: __props.config.color
-        }, null, 8, ["icon", "label", "color"]);
-      };
-    }
-  });
-  const _hoisted_1$h = { class: "lodestone-quick-button-manager" };
-  const _hoisted_2$e = {
-    key: 0,
-    class: "lodestone-settings-subfield"
-  };
-  const _hoisted_3$b = { class: "lodestone-quick-button-manager__preview" };
-  const _hoisted_4$a = { class: "lodestone-actions" };
-  const _hoisted_5$9 = ["disabled"];
-  const _hoisted_6$9 = {
-    key: 0,
-    class: "lodestone-hint"
-  };
-  const _hoisted_7$8 = {
-    key: 1,
-    class: "lodestone-import-export__error",
-    role: "alert"
-  };
-  const _hoisted_8$7 = ["maxlength"];
-  const _hoisted_9$7 = { class: "lodestone-hint" };
-  const _hoisted_10$7 = { class: "lodestone-field--stacked" };
-  const _hoisted_11$6 = ["value", "placeholder"];
-  const _hoisted_12$6 = {
-    key: 2,
-    class: "lodestone-hint"
-  };
-  const _hoisted_13$5 = {
-    key: 0,
-    class: "lodestone-hint"
-  };
-  const _hoisted_14$3 = { class: "lodestone-manager-list" };
-  const _hoisted_15$3 = ["href"];
-  const _hoisted_16$3 = {
-    key: 0,
-    class: "lodestone-hint"
-  };
-  const _hoisted_17$2 = { class: "lodestone-manager-list__actions" };
-  const _hoisted_18$2 = ["onClick"];
-  const _hoisted_19$2 = ["onClick"];
-  const _hoisted_20$2 = ["onClick"];
-  const _hoisted_21$2 = { class: "lodestone-quick-button-manager__note" };
-  const _hoisted_22$2 = { class: "lodestone-manager-list" };
-  const _hoisted_23$1 = { class: "lodestone-manager-list__actions" };
-  const _hoisted_24$1 = ["onClick"];
-  const _hoisted_25$1 = ["onClick"];
-  const _hoisted_26$1 = { class: "lodestone-quick-button-manager__link" };
-  const _hoisted_27$1 = ["disabled"];
-  const DETAILS_STEP = 2;
-  const _sfc_main$k = /* @__PURE__ */ defineComponent({
-    __name: "QuickButtonManager",
-    setup(__props) {
-      const store = useGalleryQuickButtonsStore();
-      const instanceId = resolveInstanceId(location.hostname);
-      const draft = /* @__PURE__ */ reactive(createGalleryQuickButtonConfig());
-      const editingId = /* @__PURE__ */ ref(null);
-      const dialogOpen = /* @__PURE__ */ ref(false);
-      const step = /* @__PURE__ */ ref(0);
-      const steps = computed(() => [
-        { id: "gallery", title: "Gallery", valid: draft.galleryId.trim() !== "" },
-        { id: "appearance", title: "Appearance" },
-        { id: "details", title: "Details" }
-      ]);
-      const maxSpoilerLength = spoilerMaxLength(instanceId);
-      const defaultCover = defaultCoverImageId(instanceId);
-      const remote = /* @__PURE__ */ ref(null);
-      const remoteState = /* @__PURE__ */ ref("idle");
-      const remoteError = /* @__PURE__ */ ref("");
-      const ignored = /* @__PURE__ */ reactive({ spoiler: false, description: false, coverImageId: false });
-      const updating = /* @__PURE__ */ ref(null);
-      const updateErrors = /* @__PURE__ */ reactive({ spoiler: "", description: "", coverImageId: "" });
-      const numericGalleryId = computed(() => /^\d+$/.test(draft.galleryId.trim()) ? Number(draft.galleryId.trim()) : null);
-      function differs(field) {
-        return remote.value !== null && remote.value[field] !== draft[field];
-      }
-      function remoteText(field) {
-        if (remote.value === null) {
-          return null;
-        }
-        const value = remote.value[field];
-        return value === null ? "" : String(value);
-      }
-      async function loadRemote() {
-        if (numericGalleryId.value === null) {
-          return;
-        }
-        remoteState.value = "loading";
-        remoteError.value = "";
-        try {
-          const details = await fetchGalleryDetails(numericGalleryId.value);
-          remote.value = details;
-          if (draft.spoiler === "") draft.spoiler = details.spoiler;
-          if (draft.description === "") draft.description = details.description;
-          if (draft.coverImageId === null) draft.coverImageId = details.coverImageId;
-          for (const field of ["spoiler", "description", "coverImageId"]) {
-            ignored[field] = false;
-            updateErrors[field] = "";
-          }
-          remoteState.value = "ready";
-        } catch (error) {
-          remote.value = null;
-          remoteError.value = error instanceof Error ? error.message : "Could not load the gallery.";
-          remoteState.value = "error";
-        }
-      }
-      function useRemote(field) {
-        if (remote.value === null) {
-          return;
-        }
-        Object.assign(draft, { [field]: remote.value[field] });
-      }
-      async function updateRemote(field) {
-        if (numericGalleryId.value === null) {
-          return;
-        }
-        if (!window.confirm(`Update the ${field === "coverImageId" ? "cover image" : field} of gallery #${numericGalleryId.value} on ${instanceId}?`)) {
-          return;
-        }
-        updating.value = field;
-        updateErrors[field] = "";
-        try {
-          remote.value = await updateGalleryDetails(numericGalleryId.value, { [field]: draft[field] });
-          ignored[field] = false;
-        } catch (error) {
-          updateErrors[field] = error instanceof Error ? error.message : "The update failed.";
-        } finally {
-          updating.value = null;
-        }
-      }
-      function setCoverImageId(event) {
-        const value = event.target.value;
-        draft.coverImageId = value === "" ? null : Math.max(0, Math.trunc(Number(value)));
-      }
-      function resetRemote() {
-        remote.value = null;
-        remoteState.value = "idle";
-        remoteError.value = "";
-      }
-      watch(
-        () => [dialogOpen.value, step.value, draft.galleryId],
-        ([open, currentStep]) => {
-          if (!open) {
-            resetRemote();
-          } else if (currentStep === DETAILS_STEP && remoteState.value === "idle") {
-            void loadRemote();
-          }
-        }
-      );
-      watch(
-        () => draft.galleryId,
-        () => resetRemote()
-      );
-      function detailsSummary(button) {
-        return [
-          button.coverImageId !== null ? `cover image #${button.coverImageId}` : "",
-          button.spoiler ? `spoiler: ${button.spoiler}` : "",
-          button.description ? `description: ${button.description}` : ""
-        ].filter(Boolean).join(" · ");
-      }
-      const galleryOptions = /* @__PURE__ */ ref([]);
-      const galleryLookupState = /* @__PURE__ */ ref("loading");
-      const linkingId = /* @__PURE__ */ ref(null);
-      const linkGalleryId = /* @__PURE__ */ ref("");
-      onMounted(async () => {
-        const username = getCurrentUsername();
-        if (!username) {
-          galleryLookupState.value = "error";
-          return;
-        }
-        try {
-          galleryOptions.value = await searchUserGalleries(username);
-          galleryLookupState.value = "ready";
-        } catch {
-          galleryLookupState.value = "error";
-        }
-      });
-      function save() {
-        if (editingId.value) {
-          store.update(editingId.value, { ...draft });
-          editingId.value = null;
-        } else {
-          store.add({ ...draft });
-        }
-        closeDialog();
-      }
-      function openAdd() {
-        Object.assign(draft, createGalleryQuickButtonConfig());
-        editingId.value = null;
-        step.value = 0;
-        dialogOpen.value = true;
-      }
-      function closeDialog() {
-        Object.assign(draft, createGalleryQuickButtonConfig());
-        editingId.value = null;
-        step.value = 0;
-        dialogOpen.value = false;
-      }
-      function edit(button) {
-        Object.assign(draft, button);
-        editingId.value = button.id;
-        step.value = 0;
-        dialogOpen.value = true;
-      }
-      function startLinking(id) {
-        linkingId.value = id;
-        linkGalleryId.value = "";
-      }
-      function saveLink() {
-        if (linkingId.value && linkGalleryId.value) {
-          store.linkHere(linkingId.value, linkGalleryId.value);
-        }
-        linkingId.value = null;
-      }
-      return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$h, [
-          createBaseVNode("button", {
-            type: "button",
-            class: "lodestone-primary",
-            onClick: openAdd
-          }, "Add a gallery quick button"),
-          createVNode(_sfc_main$w, {
-            open: dialogOpen.value,
-            title: editingId.value ? "Edit gallery quick button" : "Add a gallery quick button",
-            onClose: closeDialog
-          }, {
-            default: withCtx(() => [
-              createVNode(_sfc_main$v, {
-                modelValue: step.value,
-                "onUpdate:modelValue": _cache[17] || (_cache[17] = ($event) => step.value = $event),
-                steps: steps.value,
-                "save-label": editingId.value ? "Save changes" : "Add button",
-                onSave: save,
-                onCancel: closeDialog
-              }, {
-                default: withCtx(({ step: stepId }) => [
-                  stepId === "gallery" ? (openBlock(), createBlock(_sfc_main$n, {
-                    key: 0,
-                    modelValue: draft.galleryId,
-                    "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => draft.galleryId = $event),
-                    options: galleryOptions.value,
-                    "lookup-state": galleryLookupState.value
-                  }, null, 8, ["modelValue", "options", "lookup-state"])) : stepId === "appearance" ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-                    createBaseVNode("label", null, [
-                      _cache[21] || (_cache[21] = createTextVNode("Label ", -1)),
-                      withDirectives(createBaseVNode("input", {
-                        "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => draft.label = $event),
-                        type: "text"
-                      }, null, 512), [
-                        [vModelText, draft.label]
-                      ])
-                    ]),
-                    createBaseVNode("label", null, [
-                      _cache[22] || (_cache[22] = createTextVNode("Icon ", -1)),
-                      createVNode(_sfc_main$x, {
-                        modelValue: draft.icon,
-                        "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => draft.icon = $event)
-                      }, null, 8, ["modelValue"])
-                    ]),
-                    createBaseVNode("label", null, [
-                      _cache[23] || (_cache[23] = createTextVNode("Color ", -1)),
-                      withDirectives(createBaseVNode("input", {
-                        "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => draft.color = $event),
-                        type: "color"
-                      }, null, 512), [
-                        [vModelText, draft.color]
-                      ])
-                    ]),
-                    createBaseVNode("label", null, [
-                      withDirectives(createBaseVNode("input", {
-                        "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => draft.syncColors = $event),
-                        type: "checkbox"
-                      }, null, 512), [
-                        [vModelCheckbox, draft.syncColors]
-                      ]),
-                      _cache[24] || (_cache[24] = createTextVNode(" Sync colors (use the same color in dark mode) ", -1))
-                    ]),
-                    !draft.syncColors ? (openBlock(), createElementBlock("label", _hoisted_2$e, [
-                      _cache[25] || (_cache[25] = createTextVNode(" Dark mode color ", -1)),
-                      withDirectives(createBaseVNode("input", {
-                        "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => draft.darkColor = $event),
-                        type: "color"
-                      }, null, 512), [
-                        [vModelText, draft.darkColor]
-                      ])
-                    ])) : createCommentVNode("", true),
-                    createBaseVNode("div", _hoisted_3$b, [
-                      createVNode(_sfc_main$l, { config: draft }, null, 8, ["config"])
-                    ])
-                  ], 64)) : (openBlock(), createElementBlock(Fragment, { key: 2 }, [
-                    createBaseVNode("div", _hoisted_4$a, [
-                      createBaseVNode("button", {
-                        type: "button",
-                        disabled: numericGalleryId.value === null || remoteState.value === "loading",
-                        onClick: loadRemote
-                      }, toDisplayString(remoteState.value === "loading" ? "Loading…" : remote.value ? "Reload from gallery" : "Load from gallery"), 9, _hoisted_5$9)
-                    ]),
-                    numericGalleryId.value === null ? (openBlock(), createElementBlock("p", _hoisted_6$9, "Only galleries with a numeric id can be compared with the booru.")) : createCommentVNode("", true),
-                    remoteError.value ? (openBlock(), createElementBlock("p", _hoisted_7$8, toDisplayString(remoteError.value), 1)) : createCommentVNode("", true),
-                    createBaseVNode("label", null, [
-                      _cache[26] || (_cache[26] = createTextVNode(" Spoiler ", -1)),
-                      withDirectives(createBaseVNode("input", {
-                        "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => draft.spoiler = $event),
-                        type: "text",
-                        maxlength: unref(maxSpoilerLength)
-                      }, null, 8, _hoisted_8$7), [
-                        [vModelText, draft.spoiler]
-                      ]),
-                      createBaseVNode("small", _hoisted_9$7, toDisplayString(draft.spoiler.length) + " / " + toDisplayString(unref(maxSpoilerLength)), 1)
-                    ]),
-                    createVNode(_sfc_main$m, {
-                      "remote-text": remoteText("spoiler"),
-                      differs: differs("spoiler"),
-                      ignored: ignored.spoiler,
-                      updating: updating.value === "spoiler",
-                      error: updateErrors.spoiler,
-                      onUseRemote: _cache[7] || (_cache[7] = ($event) => useRemote("spoiler")),
-                      onIgnore: _cache[8] || (_cache[8] = ($event) => ignored.spoiler = true),
-                      onUpdate: _cache[9] || (_cache[9] = ($event) => updateRemote("spoiler"))
-                    }, null, 8, ["remote-text", "differs", "ignored", "updating", "error"]),
-                    createBaseVNode("label", _hoisted_10$7, [
-                      _cache[27] || (_cache[27] = createTextVNode(" Description ", -1)),
-                      withDirectives(createBaseVNode("textarea", {
-                        "onUpdate:modelValue": _cache[10] || (_cache[10] = ($event) => draft.description = $event),
-                        rows: "4"
-                      }, null, 512), [
-                        [vModelText, draft.description]
-                      ])
-                    ]),
-                    createVNode(_sfc_main$m, {
-                      "remote-text": remoteText("description"),
-                      differs: differs("description"),
-                      ignored: ignored.description,
-                      updating: updating.value === "description",
-                      error: updateErrors.description,
-                      onUseRemote: _cache[11] || (_cache[11] = ($event) => useRemote("description")),
-                      onIgnore: _cache[12] || (_cache[12] = ($event) => ignored.description = true),
-                      onUpdate: _cache[13] || (_cache[13] = ($event) => updateRemote("description"))
-                    }, null, 8, ["remote-text", "differs", "ignored", "updating", "error"]),
-                    createBaseVNode("label", null, [
-                      _cache[28] || (_cache[28] = createTextVNode(" Cover image id ", -1)),
-                      createBaseVNode("input", {
-                        value: draft.coverImageId ?? "",
-                        type: "number",
-                        min: "0",
-                        step: "1",
-                        placeholder: unref(defaultCover) === null ? "" : `default ${unref(defaultCover)}`,
-                        onInput: setCoverImageId
-                      }, null, 40, _hoisted_11$6)
-                    ]),
-                    unref(defaultCover) !== null ? (openBlock(), createElementBlock("p", _hoisted_12$6, "Default cover image on " + toDisplayString(unref(instanceId)) + " when a gallery is created later: #" + toDisplayString(unref(defaultCover)) + ".", 1)) : createCommentVNode("", true),
-                    createVNode(_sfc_main$m, {
-                      "remote-text": remoteText("coverImageId"),
-                      differs: differs("coverImageId"),
-                      ignored: ignored.coverImageId,
-                      updating: updating.value === "coverImageId",
-                      error: updateErrors.coverImageId,
-                      onUseRemote: _cache[14] || (_cache[14] = ($event) => useRemote("coverImageId")),
-                      onIgnore: _cache[15] || (_cache[15] = ($event) => ignored.coverImageId = true),
-                      onUpdate: _cache[16] || (_cache[16] = ($event) => updateRemote("coverImageId"))
-                    }, null, 8, ["remote-text", "differs", "ignored", "updating", "error"])
-                  ], 64))
-                ]),
-                _: 1
-              }, 8, ["modelValue", "steps", "save-label"])
-            ]),
-            _: 1
-          }, 8, ["open", "title"]),
-          createBaseVNode("h4", null, "Active on " + toDisplayString(unref(instanceId)), 1),
-          unref(store).buttons.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_13$5, "No quick buttons on this booru yet.")) : createCommentVNode("", true),
-          createBaseVNode("ul", _hoisted_14$3, [
-            (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).buttons, (button) => {
-              return openBlock(), createElementBlock("li", {
-                key: button.id,
-                class: "lodestone-manager-list__item"
-              }, [
-                createVNode(_sfc_main$l, { config: button }, null, 8, ["config"]),
-                createBaseVNode("a", {
-                  href: `/galleries?gallery[include_image]=${button.galleryId}`,
-                  target: "_blank",
-                  rel: "noopener"
-                }, " gallery #" + toDisplayString(button.galleryId), 9, _hoisted_15$3),
-                detailsSummary(button) ? (openBlock(), createElementBlock("small", _hoisted_16$3, toDisplayString(detailsSummary(button)), 1)) : createCommentVNode("", true),
-                createBaseVNode("span", _hoisted_17$2, [
-                  createBaseVNode("button", {
-                    type: "button",
-                    onClick: ($event) => edit(button)
-                  }, "Edit", 8, _hoisted_18$2),
-                  createBaseVNode("button", {
-                    type: "button",
-                    onClick: ($event) => unref(store).duplicate(button.id)
-                  }, "Duplicate", 8, _hoisted_19$2),
-                  createBaseVNode("button", {
-                    type: "button",
-                    title: "Hides it on this booru; it moves to Other boorus unless no other booru uses it",
-                    onClick: ($event) => unref(store).remove(button.id)
-                  }, "Remove here", 8, _hoisted_20$2)
-                ])
-              ]);
-            }), 128))
-          ]),
-          unref(store).otherBoorusButtons.length > 0 ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-            _cache[29] || (_cache[29] = createBaseVNode("h4", null, "Other boorus", -1)),
-            createBaseVNode("p", _hoisted_21$2, " These buttons are not active on " + toDisplayString(unref(instanceId)) + " yet. Link them to this booru's equivalent gallery; look and settings stay shared. ", 1),
-            createBaseVNode("ul", _hoisted_22$2, [
-              (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).otherBoorusButtons, (button) => {
-                return openBlock(), createElementBlock("li", {
-                  key: button.id,
-                  class: "lodestone-manager-list__item"
-                }, [
-                  createVNode(_sfc_main$l, {
-                    config: { ...button, galleryId: "", coverImageId: null }
-                  }, null, 8, ["config"]),
-                  createBaseVNode("span", null, "on " + toDisplayString(Object.keys(button.galleryIds).join(", ")), 1),
-                  createBaseVNode("span", _hoisted_23$1, [
-                    createBaseVNode("button", {
-                      type: "button",
-                      onClick: ($event) => startLinking(button.id)
-                    }, "Find equivalent gallery here", 8, _hoisted_24$1),
-                    createBaseVNode("button", {
-                      type: "button",
-                      onClick: ($event) => unref(store).removeEverywhere(button.id)
-                    }, "Delete everywhere", 8, _hoisted_25$1)
-                  ])
-                ]);
-              }), 128))
-            ])
-          ], 64)) : createCommentVNode("", true),
-          createVNode(_sfc_main$w, {
-            open: linkingId.value !== null,
-            title: "Find equivalent gallery here",
-            onClose: _cache[20] || (_cache[20] = ($event) => linkingId.value = null)
-          }, {
-            footer: withCtx(() => [
-              createBaseVNode("button", {
-                type: "button",
-                onClick: _cache[19] || (_cache[19] = ($event) => linkingId.value = null)
-              }, "Cancel"),
-              createBaseVNode("button", {
-                type: "button",
-                class: "lodestone-primary",
-                disabled: !linkGalleryId.value,
-                onClick: saveLink
-              }, "Save link", 8, _hoisted_27$1)
-            ]),
-            default: withCtx(() => [
-              createBaseVNode("div", _hoisted_26$1, [
-                createVNode(_sfc_main$n, {
-                  modelValue: linkGalleryId.value,
-                  "onUpdate:modelValue": _cache[18] || (_cache[18] = ($event) => linkGalleryId.value = $event),
-                  options: galleryOptions.value,
-                  "lookup-state": galleryLookupState.value
-                }, null, 8, ["modelValue", "options", "lookup-state"])
-              ])
-            ]),
-            _: 1
-          }, 8, ["open"])
-        ]);
-      };
-    }
-  });
-  async function copyText(text, fallbackElement) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-    }
-    if (!fallbackElement) {
-      return false;
-    }
-    fallbackElement.select();
-    return document.execCommand("copy");
-  }
-  const COPY_FAILED_HINT = "Could not copy automatically. The text is selected, press Ctrl+C (Cmd+C) to copy it.";
-  function useExcludeQuery() {
-    const settings = useSettingsStore();
-    const quickButtons = useGalleryQuickButtonsStore();
-    return computed(
-      () => buildExcludeQuery(settings.excludeQuery, quickButtons.buttons)
-    );
-  }
-  const _hoisted_1$g = { class: "lodestone-exclude-query-field" };
-  const _hoisted_2$d = { class: "lodestone-inline-group" };
-  const _hoisted_3$a = ["value"];
-  const _hoisted_4$9 = {
-    key: 0,
-    class: "lodestone-import-export__error",
-    role: "alert"
-  };
-  const _sfc_main$j = /* @__PURE__ */ defineComponent({
-    __name: "ExcludeQueryField",
-    props: {
-      showSettingsButton: { type: Boolean }
-    },
-    emits: ["settings"],
-    setup(__props) {
-      const query = useExcludeQuery();
-      const inputRef = /* @__PURE__ */ ref(null);
-      const copied = /* @__PURE__ */ ref(false);
-      const copyError = /* @__PURE__ */ ref("");
-      async function copy() {
-        copied.value = false;
-        copyError.value = "";
-        if (await copyText(query.value, inputRef.value)) {
-          copied.value = true;
-        } else {
-          copyError.value = COPY_FAILED_HINT;
-        }
-      }
-      return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$g, [
-          createBaseVNode("div", _hoisted_2$d, [
-            createBaseVNode("input", {
-              ref_key: "inputRef",
-              ref: inputRef,
-              type: "text",
-              readonly: "",
-              value: unref(query),
-              "aria-label": "Exclude query"
-            }, null, 8, _hoisted_3$a),
-            createBaseVNode("button", {
-              type: "button",
-              onClick: copy
-            }, toDisplayString(copied.value ? "Copied" : "Copy to clipboard"), 1),
-            __props.showSettingsButton ? (openBlock(), createElementBlock("button", {
-              key: 0,
-              type: "button",
-              onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("settings"))
-            }, "Settings")) : createCommentVNode("", true)
-          ]),
-          copyError.value ? (openBlock(), createElementBlock("p", _hoisted_4$9, toDisplayString(copyError.value), 1)) : createCommentVNode("", true)
-        ]);
-      };
-    }
-  });
-  const _hoisted_1$f = {
-    id: "lodestone-exclude-query-settings",
-    class: "lodestone-exclude-query-settings"
-  };
-  const _hoisted_2$c = { class: "lodestone-settings-subfields" };
-  const _hoisted_3$9 = ["checked", "onChange"];
-  const _hoisted_4$8 = { class: "lodestone-hint" };
-  const _hoisted_5$8 = ["href"];
-  const _hoisted_6$8 = { class: "lodestone-exclude-query-galleries" };
-  const _hoisted_7$7 = {
-    key: 0,
-    class: "lodestone-settings-subfields"
-  };
-  const _hoisted_8$6 = {
-    key: 0,
-    class: "lodestone-hint"
-  };
-  const _hoisted_9$6 = ["checked", "onChange"];
-  const _hoisted_10$6 = { class: "lodestone-hint" };
-  const _sfc_main$i = /* @__PURE__ */ defineComponent({
-    __name: "ExcludeQuerySettings",
-    setup(__props) {
-      const store = useSettingsStore();
-      const settings = store;
-      const quickButtons = useGalleryQuickButtonsStore();
-      const query = computed(() => store.excludeQuery);
-      const specificOpen = /* @__PURE__ */ ref(query.value.galleries !== null && query.value.galleries.length > 0);
-      const galleryMode = computed({
-        get: () => specificOpen.value ? "specific" : query.value.galleries === null ? "all" : "none",
-        set: (mode) => {
-          var _a;
-          specificOpen.value = mode === "specific";
-          if (mode === "all") {
-            query.value.galleries = null;
-          } else if (mode === "none") {
-            query.value.galleries = [];
-          } else {
-            (_a = query.value).galleries ?? (_a.galleries = quickButtons.buttons.map((button) => button.id));
-          }
-        }
-      });
-      function toggleFilter(id, checked) {
-        const selected = new Set(query.value.filters);
-        if (checked) {
-          selected.add(id);
-        } else {
-          selected.delete(id);
-        }
-        query.value.filters = EXCLUDE_FILTERS.map((filter) => filter.id).filter((filterId) => selected.has(filterId));
-      }
-      function toggleGallery(buttonId, checked) {
-        const selected = new Set(query.value.galleries ?? []);
-        if (checked) {
-          selected.add(buttonId);
-        } else {
-          selected.delete(buttonId);
-        }
-        query.value.galleries = quickButtons.buttons.map((button) => button.id).filter((id) => selected.has(id));
-      }
-      return (_ctx, _cache) => {
-        return openBlock(), createElementBlock("div", _hoisted_1$f, [
-          _cache[19] || (_cache[19] = createBaseVNode("h4", null, "Exclude query", -1)),
-          _cache[20] || (_cache[20] = createBaseVNode("p", { class: "lodestone-hint" }, " Add this to a search to hide images you already voted on, hid, or saved in one of your quick-button galleries. The default excludes everything listed below except subscriptions. ", -1)),
-          createVNode(_sfc_main$E, {
-            modelValue: query.value.commaPrefix,
-            "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => query.value.commaPrefix = $event),
-            hint: "Starts with a comma so the text can be appended to an existing query."
-          }, {
-            default: withCtx(() => [..._cache[7] || (_cache[7] = [
-              createTextVNode(' Start with ", " ', -1)
-            ])]),
-            _: 1
-          }, 8, ["modelValue"]),
-          createBaseVNode("label", null, [
-            _cache[8] || (_cache[8] = createTextVNode("Your own prefix ", -1)),
-            withDirectives(createBaseVNode("input", {
-              "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => query.value.userPrefix = $event),
-              type: "text",
-              placeholder: "e.g. safe"
-            }, null, 512), [
-              [vModelText, query.value.userPrefix]
-            ])
-          ]),
-          createBaseVNode("div", _hoisted_2$c, [
-            (openBlock(true), createElementBlock(Fragment, null, renderList(unref(EXCLUDE_FILTERS), (filter) => {
-              return openBlock(), createElementBlock("label", {
-                key: filter.id
-              }, [
-                createBaseVNode("input", {
-                  type: "checkbox",
-                  checked: query.value.filters.includes(filter.id),
-                  onChange: ($event) => toggleFilter(filter.id, $event.target.checked)
-                }, null, 40, _hoisted_3$9),
-                createTextVNode(" " + toDisplayString(filter.label), 1)
-              ]);
-            }), 128))
-          ]),
-          createBaseVNode("p", _hoisted_4$8, [
-            _cache[9] || (_cache[9] = createTextVNode(" Untested on the live site, check each search once before relying on it: ", -1)),
-            (openBlock(true), createElementBlock(Fragment, null, renderList(unref(EXCLUDE_FILTERS).filter((entry) => entry.testUrl), (filter, index) => {
-              return openBlock(), createElementBlock(Fragment, {
-                key: filter.id
-              }, [
-                createBaseVNode("a", {
-                  href: filter.testUrl,
-                  target: "_blank",
-                  rel: "noopener"
-                }, toDisplayString(filter.token), 9, _hoisted_5$8),
-                index < unref(EXCLUDE_FILTERS).filter((entry) => entry.testUrl).length - 1 ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
-                  createTextVNode(", ")
-                ], 64)) : createCommentVNode("", true)
-              ], 64);
-            }), 128)),
-            _cache[10] || (_cache[10] = createTextVNode(" . Subscriptions are off by default because ", -1)),
-            _cache[11] || (_cache[11] = createBaseVNode("code", null, "my:subs", -1)),
-            _cache[12] || (_cache[12] = createTextVNode(" is not officially implemented yet. ", -1))
-          ]),
-          createBaseVNode("fieldset", _hoisted_6$8, [
-            _cache[16] || (_cache[16] = createBaseVNode("legend", null, "In your gallery quick buttons", -1)),
-            createBaseVNode("label", null, [
-              withDirectives(createBaseVNode("input", {
-                "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => galleryMode.value = $event),
-                type: "radio",
-                value: "all"
-              }, null, 512), [
-                [vModelRadio, galleryMode.value]
-              ]),
-              _cache[13] || (_cache[13] = createTextVNode(" All (including ones added later)", -1))
-            ]),
-            createBaseVNode("label", null, [
-              withDirectives(createBaseVNode("input", {
-                "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => galleryMode.value = $event),
-                type: "radio",
-                value: "none"
-              }, null, 512), [
-                [vModelRadio, galleryMode.value]
-              ]),
-              _cache[14] || (_cache[14] = createTextVNode(" None", -1))
-            ]),
-            createBaseVNode("label", null, [
-              withDirectives(createBaseVNode("input", {
-                "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => galleryMode.value = $event),
-                type: "radio",
-                value: "specific"
-              }, null, 512), [
-                [vModelRadio, galleryMode.value]
-              ]),
-              _cache[15] || (_cache[15] = createTextVNode(" Only specific galleries", -1))
-            ]),
-            galleryMode.value === "specific" ? (openBlock(), createElementBlock("div", _hoisted_7$7, [
-              unref(quickButtons).buttons.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_8$6, "No gallery quick buttons on this booru yet.")) : createCommentVNode("", true),
-              (openBlock(true), createElementBlock(Fragment, null, renderList(unref(quickButtons).buttons, (button) => {
-                var _a;
-                return openBlock(), createElementBlock("label", {
-                  key: button.id
-                }, [
-                  createBaseVNode("input", {
-                    type: "checkbox",
-                    checked: (_a = query.value.galleries) == null ? void 0 : _a.includes(button.id),
-                    onChange: ($event) => toggleGallery(button.id, $event.target.checked)
-                  }, null, 40, _hoisted_9$6),
-                  createTextVNode(" " + toDisplayString(button.label) + " ", 1),
-                  createBaseVNode("small", _hoisted_10$6, "gallery " + toDisplayString(button.galleryId || "not set"), 1)
-                ]);
-              }), 128))
-            ])) : createCommentVNode("", true)
-          ]),
-          createBaseVNode("label", null, [
-            _cache[17] || (_cache[17] = createTextVNode("Your own suffix ", -1)),
-            withDirectives(createBaseVNode("input", {
-              "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => query.value.userSuffix = $event),
-              type: "text"
-            }, null, 512), [
-              [vModelText, query.value.userSuffix]
-            ])
-          ]),
-          createVNode(_sfc_main$j),
-          createVNode(_sfc_main$E, {
-            modelValue: unref(settings).excludeQueryToggleEnabled,
-            "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => unref(settings).excludeQueryToggleEnabled = $event),
-            hint: "Takes effect on the next page load."
-          }, {
-            default: withCtx(() => [..._cache[18] || (_cache[18] = [
-              createTextVNode(" Show a button in the search boxes that adds or removes the exclude query ", -1)
-            ])]),
-            _: 1
-          }, 8, ["modelValue"])
-        ]);
-      };
-    }
-  });
-  const _sfc_main$h = /* @__PURE__ */ defineComponent({
-    __name: "QuickButtonsSection",
-    setup(__props) {
-      function scrollToSettings() {
-        var _a;
-        (_a = document.getElementById("lodestone-exclude-query-settings")) == null ? void 0 : _a.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-      return (_ctx, _cache) => {
-        return openBlock(), createBlock(_sfc_main$F, {
-          title: "Gallery quick buttons",
-          description: "One-click buttons that add or remove the current image from a gallery."
-        }, {
-          default: withCtx(() => [
-            createVNode(_sfc_main$k),
-            _cache[0] || (_cache[0] = createBaseVNode("h4", null, "Exclude query", -1)),
-            createVNode(_sfc_main$j, {
-              "show-settings-button": "",
-              onSettings: scrollToSettings
-            }),
-            createVNode(_sfc_main$i)
           ]),
           _: 1
         });
@@ -12833,6 +11849,1061 @@
       };
     }
   });
+  const base = {
+    csrfTokenMeta: 'meta[name="csrf-token"]',
+    csrfParamMeta: 'meta[name="csrf-param"]',
+    csrfFieldNameFallback: "_csrf_token",
+    imageNavPrev: ".js-prev",
+    imageNavUp: ".js-up",
+    imageNavNext: ".js-next",
+    interactionFave: ".interaction--fave",
+    interactionUpvote: ".interaction--upvote",
+    interactionDownvote: ".interaction--downvote",
+    interactionComments: ".interaction--comments",
+    interactionHide: ".interaction--hide",
+    scoreDisplay: ".score.block__header__title",
+    galleryDropdownRoot: ".block__header__dropdown-tab",
+    galleryDropdownContent: ".dropdown__content",
+    galleryListContainer: ".js-gallery-list",
+    galleriesNavLink: 'header nav a.header__link[href*="gallery[creator]="]',
+    relatedLink: 'a[href$="/related"]',
+    settingsTabHeader: "#js-setting-table .block__header--js-tabbed",
+    settingsTabLink: "[data-click-tab]",
+    settingsTabPanel: "[data-tab]",
+    listThumbnailBox: ".media-box"
+  };
+  const overrides = {
+    "twibooru.org": {
+      csrfFieldNameFallback: "authenticity_token"
+    }
+  };
+  function resolveSelectors(hostname) {
+    var _a;
+    const override = (_a = Object.entries(overrides).find(([host]) => hostname.endsWith(host))) == null ? void 0 : _a[1];
+    return override ? { ...base, ...override } : base;
+  }
+  function getCurrentUsername(hostname = location.hostname) {
+    const selectors = resolveSelectors(hostname);
+    const link = document.querySelector(selectors.galleriesNavLink);
+    if (!link) {
+      return null;
+    }
+    const href = link.getAttribute("href");
+    if (!href) {
+      return null;
+    }
+    const query = href.split("?")[1] ?? "";
+    return new URLSearchParams(query).get("gallery[creator]");
+  }
+  async function searchUserGalleries(username) {
+    const query = `q=${encodeURIComponent(`user:${username}`)}&per_page=50`;
+    const response = await fetch(`/api/v1/json/search/galleries?${query}`, { credentials: "same-origin" });
+    if (!response.ok) {
+      throw new Error(`Failed to search galleries for ${username}: HTTP ${response.status}`);
+    }
+    const body = await readJson(response, `Gallery search for ${username}`);
+    return body.galleries.map(({ id, title, thumbnail }) => ({
+      id,
+      title,
+      thumbnailUrl: (thumbnail == null ? void 0 : thumbnail.thumb_url) ?? (thumbnail == null ? void 0 : thumbnail.small_url) ?? void 0
+    }));
+  }
+  function getCsrfToken(hostname = location.hostname) {
+    const selectors = resolveSelectors(hostname);
+    const meta = document.querySelector(selectors.csrfTokenMeta);
+    return (meta == null ? void 0 : meta.content) ?? null;
+  }
+  function getCsrfFieldName(hostname = location.hostname) {
+    const selectors = resolveSelectors(hostname);
+    const paramMeta = selectors.csrfParamMeta ? document.querySelector(selectors.csrfParamMeta) : null;
+    return (paramMeta == null ? void 0 : paramMeta.content) ?? selectors.csrfFieldNameFallback;
+  }
+  async function fetchGalleryDetails(galleryId) {
+    var _a;
+    const query = `q=${encodeURIComponent(`id:${galleryId}`)}`;
+    const response = await fetch(`/api/v1/json/search/galleries?${query}`, { credentials: "same-origin" });
+    if (!response.ok) {
+      throw new Error(`Failed to load gallery ${galleryId}: HTTP ${response.status}`);
+    }
+    const body = await readJson(response, `Gallery ${galleryId}`);
+    const gallery = (_a = body.galleries) == null ? void 0 : _a.find((candidate) => String(candidate.id) === String(galleryId));
+    if (!gallery) {
+      throw new Error(`Gallery ${galleryId} was not found on this booru.`);
+    }
+    return {
+      title: gallery.title ?? "",
+      spoiler: gallery.spoiler_warning ?? "",
+      description: gallery.description ?? "",
+      coverImageId: typeof gallery.thumbnail_id === "number" ? gallery.thumbnail_id : null
+    };
+  }
+  async function updateGalleryDetails(galleryId, change) {
+    const token = getCsrfToken();
+    if (!token) {
+      throw new Error("No CSRF token on this page; reload the page and try again.");
+    }
+    const fresh = await fetchGalleryDetails(galleryId);
+    const next = { ...fresh, ...change };
+    const body = new URLSearchParams({
+      [getCsrfFieldName()]: token,
+      _method: "patch",
+      "gallery[title]": next.title,
+      "gallery[spoiler_warning]": next.spoiler,
+      "gallery[description]": next.description,
+      "gallery[thumbnail_id]": next.coverImageId === null ? "" : String(next.coverImageId)
+    });
+    const response = await fetch(`/galleries/${galleryId}`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" },
+      body
+    });
+    if (!response.ok) {
+      throw new Error(`The booru rejected the update: HTTP ${response.status}`);
+    }
+    const saved = await fetchGalleryDetails(galleryId);
+    const notSaved = Object.keys(change).filter((field) => saved[field] !== next[field]);
+    if (notSaved.length > 0) {
+      throw new Error(`The booru did not accept the new ${notSaved.join(", ")}.`);
+    }
+    return saved;
+  }
+  const DEFAULT_COVER_IMAGE_IDS = {
+    "derpibooru.org": 0
+  };
+  const SPOILER_MAX_LENGTH_BY_INSTANCE = {};
+  const DEFAULT_SPOILER_MAX_LENGTH = 20;
+  function spoilerMaxLength(instanceId) {
+    return SPOILER_MAX_LENGTH_BY_INSTANCE[instanceId] ?? DEFAULT_SPOILER_MAX_LENGTH;
+  }
+  function defaultCoverImageId(instanceId) {
+    return DEFAULT_COVER_IMAGE_IDS[instanceId] ?? null;
+  }
+  const _hoisted_1$j = { class: "lodestone-gallery-chooser" };
+  const _hoisted_2$g = { key: 0 };
+  const _hoisted_3$d = ["value"];
+  const _hoisted_4$c = {
+    value: "",
+    disabled: ""
+  };
+  const _hoisted_5$b = ["value"];
+  const _hoisted_6$b = { key: 1 };
+  const _hoisted_7$a = ["value"];
+  const _hoisted_8$8 = {
+    key: 2,
+    class: "lodestone-quick-button-manager__note"
+  };
+  const _sfc_main$n = /* @__PURE__ */ defineComponent({
+    __name: "GalleryChooser",
+    props: {
+      modelValue: {},
+      options: {},
+      lookupState: {}
+    },
+    emits: ["update:modelValue"],
+    setup(__props, { emit: __emit }) {
+      const props = __props;
+      const emit2 = __emit;
+      const manualOverride = /* @__PURE__ */ ref(null);
+      const manualEntry = computed(
+        () => manualOverride.value ?? (props.lookupState === "error" || props.lookupState === "ready" && props.options.length === 0)
+      );
+      function onInput(event) {
+        emit2("update:modelValue", event.target.value);
+      }
+      return (_ctx, _cache) => {
+        return openBlock(), createElementBlock("div", _hoisted_1$j, [
+          !manualEntry.value ? (openBlock(), createElementBlock("label", _hoisted_2$g, [
+            _cache[1] || (_cache[1] = createTextVNode(" Gallery ", -1)),
+            createBaseVNode("select", {
+              value: __props.modelValue,
+              onChange: onInput
+            }, [
+              createBaseVNode("option", _hoisted_4$c, toDisplayString(__props.lookupState === "loading" ? "Loading your galleries…" : "Select a gallery"), 1),
+              (openBlock(true), createElementBlock(Fragment, null, renderList(__props.options, (gallery) => {
+                return openBlock(), createElementBlock("option", {
+                  key: gallery.id,
+                  value: String(gallery.id)
+                }, toDisplayString(gallery.title) + " (#" + toDisplayString(gallery.id) + ") ", 9, _hoisted_5$b);
+              }), 128))
+            ], 40, _hoisted_3$d)
+          ])) : (openBlock(), createElementBlock("label", _hoisted_6$b, [
+            _cache[2] || (_cache[2] = createTextVNode(" Gallery id or slug ", -1)),
+            createBaseVNode("input", {
+              value: __props.modelValue,
+              type: "text",
+              onInput
+            }, null, 40, _hoisted_7$a)
+          ])),
+          __props.lookupState === "error" ? (openBlock(), createElementBlock("p", _hoisted_8$8, " Couldn't look up your galleries automatically -- enter the id manually. ")) : createCommentVNode("", true),
+          createBaseVNode("button", {
+            type: "button",
+            class: "lodestone-quick-button-manager__toggle-entry",
+            onClick: _cache[0] || (_cache[0] = ($event) => manualOverride.value = !manualEntry.value)
+          }, toDisplayString(manualEntry.value ? "Pick from a dropdown instead" : "Enter manually instead"), 1)
+        ]);
+      };
+    }
+  });
+  const _hoisted_1$i = { class: "lodestone-gallery-field-diff" };
+  const _hoisted_2$f = {
+    key: 0,
+    class: "lodestone-hint"
+  };
+  const _hoisted_3$c = {
+    key: 1,
+    class: "lodestone-hint"
+  };
+  const _hoisted_4$b = { class: "lodestone-hint" };
+  const _hoisted_5$a = { class: "lodestone-actions" };
+  const _hoisted_6$a = ["disabled"];
+  const _hoisted_7$9 = {
+    key: 1,
+    class: "lodestone-import-export__error",
+    role: "alert"
+  };
+  const _sfc_main$m = /* @__PURE__ */ defineComponent({
+    __name: "GalleryFieldDiff",
+    props: {
+      remoteText: {},
+      differs: { type: Boolean },
+      ignored: { type: Boolean },
+      updating: { type: Boolean },
+      error: {}
+    },
+    emits: ["useRemote", "ignore", "update"],
+    setup(__props) {
+      return (_ctx, _cache) => {
+        return openBlock(), createElementBlock("div", _hoisted_1$i, [
+          __props.remoteText !== null ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
+            !__props.differs ? (openBlock(), createElementBlock("p", _hoisted_2$f, "Matches the booru.")) : __props.ignored ? (openBlock(), createElementBlock("p", _hoisted_3$c, "Differs from the booru (ignored).")) : (openBlock(), createElementBlock(Fragment, { key: 2 }, [
+              createBaseVNode("p", _hoisted_4$b, [
+                _cache[3] || (_cache[3] = createTextVNode("On the booru: ", -1)),
+                createBaseVNode("code", null, toDisplayString(__props.remoteText === "" ? "(empty)" : __props.remoteText), 1)
+              ]),
+              createBaseVNode("div", _hoisted_5$a, [
+                createBaseVNode("button", {
+                  type: "button",
+                  onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("useRemote"))
+                }, "Use booru value"),
+                createBaseVNode("button", {
+                  type: "button",
+                  onClick: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("ignore"))
+                }, "Ignore"),
+                createBaseVNode("button", {
+                  type: "button",
+                  disabled: __props.updating,
+                  onClick: _cache[2] || (_cache[2] = ($event) => _ctx.$emit("update"))
+                }, toDisplayString(__props.updating ? "Updating…" : "Update gallery"), 9, _hoisted_6$a)
+              ])
+            ], 64))
+          ], 64)) : createCommentVNode("", true),
+          __props.error ? (openBlock(), createElementBlock("p", _hoisted_7$9, toDisplayString(__props.error), 1)) : createCommentVNode("", true)
+        ]);
+      };
+    }
+  });
+  const _sfc_main$l = /* @__PURE__ */ defineComponent({
+    __name: "QuickButtonPreview",
+    props: {
+      config: {}
+    },
+    setup(__props) {
+      return (_ctx, _cache) => {
+        return openBlock(), createBlock(_sfc_main$u, {
+          class: "lodestone-quick-button-preview",
+          icon: __props.config.icon,
+          label: __props.config.label,
+          color: __props.config.color
+        }, null, 8, ["icon", "label", "color"]);
+      };
+    }
+  });
+  const _hoisted_1$h = { class: "lodestone-quick-button-manager" };
+  const _hoisted_2$e = {
+    key: 0,
+    class: "lodestone-settings-subfield"
+  };
+  const _hoisted_3$b = { class: "lodestone-quick-button-manager__preview" };
+  const _hoisted_4$a = { class: "lodestone-actions" };
+  const _hoisted_5$9 = ["disabled"];
+  const _hoisted_6$9 = {
+    key: 0,
+    class: "lodestone-hint"
+  };
+  const _hoisted_7$8 = {
+    key: 1,
+    class: "lodestone-import-export__error",
+    role: "alert"
+  };
+  const _hoisted_8$7 = ["maxlength"];
+  const _hoisted_9$7 = { class: "lodestone-hint" };
+  const _hoisted_10$7 = { class: "lodestone-field--stacked" };
+  const _hoisted_11$6 = ["value", "placeholder"];
+  const _hoisted_12$6 = {
+    key: 2,
+    class: "lodestone-hint"
+  };
+  const _hoisted_13$6 = {
+    key: 0,
+    class: "lodestone-hint"
+  };
+  const _hoisted_14$4 = ["href"];
+  const _hoisted_15$4 = {
+    key: 0,
+    class: "lodestone-hint"
+  };
+  const _hoisted_16$4 = { class: "lodestone-manager-list__actions" };
+  const _hoisted_17$3 = ["disabled", "onClick"];
+  const _hoisted_18$2 = ["disabled", "onClick"];
+  const _hoisted_19$2 = ["onClick"];
+  const _hoisted_20$2 = ["onClick"];
+  const _hoisted_21$2 = ["onClick"];
+  const _hoisted_22$2 = { class: "lodestone-quick-button-manager__note" };
+  const _hoisted_23$1 = { class: "lodestone-manager-list" };
+  const _hoisted_24$1 = { class: "lodestone-manager-list__actions" };
+  const _hoisted_25$1 = ["onClick"];
+  const _hoisted_26$1 = ["onClick"];
+  const _hoisted_27$1 = { class: "lodestone-quick-button-manager__link" };
+  const _hoisted_28$1 = ["disabled"];
+  const DETAILS_STEP = 2;
+  const _sfc_main$k = /* @__PURE__ */ defineComponent({
+    __name: "QuickButtonManager",
+    setup(__props) {
+      const store = useGalleryQuickButtonsStore();
+      const instanceId = resolveInstanceId(location.hostname);
+      const draft = /* @__PURE__ */ reactive(createGalleryQuickButtonConfig());
+      const editingId = /* @__PURE__ */ ref(null);
+      const dialogOpen = /* @__PURE__ */ ref(false);
+      const step = /* @__PURE__ */ ref(0);
+      const steps = computed(() => [
+        { id: "gallery", title: "Gallery", valid: draft.galleryId.trim() !== "" },
+        { id: "appearance", title: "Appearance" },
+        { id: "details", title: "Details" }
+      ]);
+      const maxSpoilerLength = spoilerMaxLength(instanceId);
+      const defaultCover = defaultCoverImageId(instanceId);
+      const remote = /* @__PURE__ */ ref(null);
+      const remoteState = /* @__PURE__ */ ref("idle");
+      const remoteError = /* @__PURE__ */ ref("");
+      const ignored = /* @__PURE__ */ reactive({ spoiler: false, description: false, coverImageId: false });
+      const updating = /* @__PURE__ */ ref(null);
+      const updateErrors = /* @__PURE__ */ reactive({ spoiler: "", description: "", coverImageId: "" });
+      const numericGalleryId = computed(() => /^\d+$/.test(draft.galleryId.trim()) ? Number(draft.galleryId.trim()) : null);
+      function differs(field) {
+        return remote.value !== null && remote.value[field] !== draft[field];
+      }
+      function remoteText(field) {
+        if (remote.value === null) {
+          return null;
+        }
+        const value = remote.value[field];
+        return value === null ? "" : String(value);
+      }
+      async function loadRemote() {
+        if (numericGalleryId.value === null) {
+          return;
+        }
+        remoteState.value = "loading";
+        remoteError.value = "";
+        try {
+          const details = await fetchGalleryDetails(numericGalleryId.value);
+          remote.value = details;
+          if (draft.spoiler === "") draft.spoiler = details.spoiler;
+          if (draft.description === "") draft.description = details.description;
+          if (draft.coverImageId === null) draft.coverImageId = details.coverImageId;
+          for (const field of ["spoiler", "description", "coverImageId"]) {
+            ignored[field] = false;
+            updateErrors[field] = "";
+          }
+          remoteState.value = "ready";
+        } catch (error) {
+          remote.value = null;
+          remoteError.value = error instanceof Error ? error.message : "Could not load the gallery.";
+          remoteState.value = "error";
+        }
+      }
+      function useRemote(field) {
+        if (remote.value === null) {
+          return;
+        }
+        Object.assign(draft, { [field]: remote.value[field] });
+      }
+      async function updateRemote(field) {
+        if (numericGalleryId.value === null) {
+          return;
+        }
+        if (!window.confirm(`Update the ${field === "coverImageId" ? "cover image" : field} of gallery #${numericGalleryId.value} on ${instanceId}?`)) {
+          return;
+        }
+        updating.value = field;
+        updateErrors[field] = "";
+        try {
+          remote.value = await updateGalleryDetails(numericGalleryId.value, { [field]: draft[field] });
+          ignored[field] = false;
+        } catch (error) {
+          updateErrors[field] = error instanceof Error ? error.message : "The update failed.";
+        } finally {
+          updating.value = null;
+        }
+      }
+      function setCoverImageId(event) {
+        const value = event.target.value;
+        draft.coverImageId = value === "" ? null : Math.max(0, Math.trunc(Number(value)));
+      }
+      function resetRemote() {
+        remote.value = null;
+        remoteState.value = "idle";
+        remoteError.value = "";
+      }
+      watch(
+        () => [dialogOpen.value, step.value, draft.galleryId],
+        ([open, currentStep]) => {
+          if (!open) {
+            resetRemote();
+          } else if (currentStep === DETAILS_STEP && remoteState.value === "idle") {
+            void loadRemote();
+          }
+        }
+      );
+      watch(
+        () => draft.galleryId,
+        () => resetRemote()
+      );
+      function detailsSummary(button) {
+        return [
+          button.coverImageId !== null ? `cover image #${button.coverImageId}` : "",
+          button.spoiler ? `spoiler: ${button.spoiler}` : "",
+          button.description ? `description: ${button.description}` : ""
+        ].filter(Boolean).join(" · ");
+      }
+      const galleryOptions = /* @__PURE__ */ ref([]);
+      const galleryLookupState = /* @__PURE__ */ ref("loading");
+      const linkingId = /* @__PURE__ */ ref(null);
+      const linkGalleryId = /* @__PURE__ */ ref("");
+      onMounted(async () => {
+        const username = getCurrentUsername();
+        if (!username) {
+          galleryLookupState.value = "error";
+          return;
+        }
+        try {
+          galleryOptions.value = await searchUserGalleries(username);
+          galleryLookupState.value = "ready";
+        } catch {
+          galleryLookupState.value = "error";
+        }
+      });
+      function save() {
+        if (editingId.value) {
+          store.update(editingId.value, { ...draft });
+          editingId.value = null;
+        } else {
+          store.add({ ...draft });
+        }
+        closeDialog();
+      }
+      function openAdd() {
+        Object.assign(draft, createGalleryQuickButtonConfig());
+        editingId.value = null;
+        step.value = 0;
+        dialogOpen.value = true;
+      }
+      function closeDialog() {
+        Object.assign(draft, createGalleryQuickButtonConfig());
+        editingId.value = null;
+        step.value = 0;
+        dialogOpen.value = false;
+      }
+      function edit(button) {
+        Object.assign(draft, button);
+        editingId.value = button.id;
+        step.value = 0;
+        dialogOpen.value = true;
+      }
+      const buttonListCopy = computed(() => [...store.buttons]);
+      function onButtonDrop(event) {
+        const button = event.oldIndex === void 0 ? void 0 : store.buttons[event.oldIndex];
+        if (button && event.newIndex !== void 0) {
+          store.move(button.id, event.newIndex);
+        }
+      }
+      function startLinking(id) {
+        linkingId.value = id;
+        linkGalleryId.value = "";
+      }
+      function saveLink() {
+        if (linkingId.value && linkGalleryId.value) {
+          store.linkHere(linkingId.value, linkGalleryId.value);
+        }
+        linkingId.value = null;
+      }
+      return (_ctx, _cache) => {
+        return openBlock(), createElementBlock("div", _hoisted_1$h, [
+          createBaseVNode("button", {
+            type: "button",
+            class: "lodestone-primary",
+            onClick: openAdd
+          }, "Add a gallery quick button"),
+          createVNode(_sfc_main$w, {
+            open: dialogOpen.value,
+            title: editingId.value ? "Edit gallery quick button" : "Add a gallery quick button",
+            onClose: closeDialog
+          }, {
+            default: withCtx(() => [
+              createVNode(_sfc_main$v, {
+                modelValue: step.value,
+                "onUpdate:modelValue": _cache[17] || (_cache[17] = ($event) => step.value = $event),
+                steps: steps.value,
+                "save-label": editingId.value ? "Save changes" : "Add button",
+                onSave: save,
+                onCancel: closeDialog
+              }, {
+                default: withCtx(({ step: stepId }) => [
+                  stepId === "gallery" ? (openBlock(), createBlock(_sfc_main$n, {
+                    key: 0,
+                    modelValue: draft.galleryId,
+                    "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => draft.galleryId = $event),
+                    options: galleryOptions.value,
+                    "lookup-state": galleryLookupState.value
+                  }, null, 8, ["modelValue", "options", "lookup-state"])) : stepId === "appearance" ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
+                    createBaseVNode("label", null, [
+                      _cache[21] || (_cache[21] = createTextVNode("Label ", -1)),
+                      withDirectives(createBaseVNode("input", {
+                        "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => draft.label = $event),
+                        type: "text"
+                      }, null, 512), [
+                        [vModelText, draft.label]
+                      ])
+                    ]),
+                    createBaseVNode("label", null, [
+                      _cache[22] || (_cache[22] = createTextVNode("Icon ", -1)),
+                      createVNode(_sfc_main$x, {
+                        modelValue: draft.icon,
+                        "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => draft.icon = $event)
+                      }, null, 8, ["modelValue"])
+                    ]),
+                    createBaseVNode("label", null, [
+                      _cache[23] || (_cache[23] = createTextVNode("Color ", -1)),
+                      withDirectives(createBaseVNode("input", {
+                        "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => draft.color = $event),
+                        type: "color"
+                      }, null, 512), [
+                        [vModelText, draft.color]
+                      ])
+                    ]),
+                    createBaseVNode("label", null, [
+                      withDirectives(createBaseVNode("input", {
+                        "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => draft.syncColors = $event),
+                        type: "checkbox"
+                      }, null, 512), [
+                        [vModelCheckbox, draft.syncColors]
+                      ]),
+                      _cache[24] || (_cache[24] = createTextVNode(" Sync colors (use the same color in dark mode) ", -1))
+                    ]),
+                    !draft.syncColors ? (openBlock(), createElementBlock("label", _hoisted_2$e, [
+                      _cache[25] || (_cache[25] = createTextVNode(" Dark mode color ", -1)),
+                      withDirectives(createBaseVNode("input", {
+                        "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => draft.darkColor = $event),
+                        type: "color"
+                      }, null, 512), [
+                        [vModelText, draft.darkColor]
+                      ])
+                    ])) : createCommentVNode("", true),
+                    createBaseVNode("div", _hoisted_3$b, [
+                      createVNode(_sfc_main$l, { config: draft }, null, 8, ["config"])
+                    ])
+                  ], 64)) : (openBlock(), createElementBlock(Fragment, { key: 2 }, [
+                    createBaseVNode("div", _hoisted_4$a, [
+                      createBaseVNode("button", {
+                        type: "button",
+                        disabled: numericGalleryId.value === null || remoteState.value === "loading",
+                        onClick: loadRemote
+                      }, toDisplayString(remoteState.value === "loading" ? "Loading…" : remote.value ? "Reload from gallery" : "Load from gallery"), 9, _hoisted_5$9)
+                    ]),
+                    numericGalleryId.value === null ? (openBlock(), createElementBlock("p", _hoisted_6$9, "Only galleries with a numeric id can be compared with the booru.")) : createCommentVNode("", true),
+                    remoteError.value ? (openBlock(), createElementBlock("p", _hoisted_7$8, toDisplayString(remoteError.value), 1)) : createCommentVNode("", true),
+                    createBaseVNode("label", null, [
+                      _cache[26] || (_cache[26] = createTextVNode(" Spoiler ", -1)),
+                      withDirectives(createBaseVNode("input", {
+                        "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => draft.spoiler = $event),
+                        type: "text",
+                        maxlength: unref(maxSpoilerLength)
+                      }, null, 8, _hoisted_8$7), [
+                        [vModelText, draft.spoiler]
+                      ]),
+                      createBaseVNode("small", _hoisted_9$7, toDisplayString(draft.spoiler.length) + " / " + toDisplayString(unref(maxSpoilerLength)), 1)
+                    ]),
+                    createVNode(_sfc_main$m, {
+                      "remote-text": remoteText("spoiler"),
+                      differs: differs("spoiler"),
+                      ignored: ignored.spoiler,
+                      updating: updating.value === "spoiler",
+                      error: updateErrors.spoiler,
+                      onUseRemote: _cache[7] || (_cache[7] = ($event) => useRemote("spoiler")),
+                      onIgnore: _cache[8] || (_cache[8] = ($event) => ignored.spoiler = true),
+                      onUpdate: _cache[9] || (_cache[9] = ($event) => updateRemote("spoiler"))
+                    }, null, 8, ["remote-text", "differs", "ignored", "updating", "error"]),
+                    createBaseVNode("label", _hoisted_10$7, [
+                      _cache[27] || (_cache[27] = createTextVNode(" Description ", -1)),
+                      withDirectives(createBaseVNode("textarea", {
+                        "onUpdate:modelValue": _cache[10] || (_cache[10] = ($event) => draft.description = $event),
+                        rows: "4"
+                      }, null, 512), [
+                        [vModelText, draft.description]
+                      ])
+                    ]),
+                    createVNode(_sfc_main$m, {
+                      "remote-text": remoteText("description"),
+                      differs: differs("description"),
+                      ignored: ignored.description,
+                      updating: updating.value === "description",
+                      error: updateErrors.description,
+                      onUseRemote: _cache[11] || (_cache[11] = ($event) => useRemote("description")),
+                      onIgnore: _cache[12] || (_cache[12] = ($event) => ignored.description = true),
+                      onUpdate: _cache[13] || (_cache[13] = ($event) => updateRemote("description"))
+                    }, null, 8, ["remote-text", "differs", "ignored", "updating", "error"]),
+                    createBaseVNode("label", null, [
+                      _cache[28] || (_cache[28] = createTextVNode(" Cover image id ", -1)),
+                      createBaseVNode("input", {
+                        value: draft.coverImageId ?? "",
+                        type: "number",
+                        min: "0",
+                        step: "1",
+                        placeholder: unref(defaultCover) === null ? "" : `default ${unref(defaultCover)}`,
+                        onInput: setCoverImageId
+                      }, null, 40, _hoisted_11$6)
+                    ]),
+                    unref(defaultCover) !== null ? (openBlock(), createElementBlock("p", _hoisted_12$6, "Default cover image on " + toDisplayString(unref(instanceId)) + " when a gallery is created later: #" + toDisplayString(unref(defaultCover)) + ".", 1)) : createCommentVNode("", true),
+                    createVNode(_sfc_main$m, {
+                      "remote-text": remoteText("coverImageId"),
+                      differs: differs("coverImageId"),
+                      ignored: ignored.coverImageId,
+                      updating: updating.value === "coverImageId",
+                      error: updateErrors.coverImageId,
+                      onUseRemote: _cache[14] || (_cache[14] = ($event) => useRemote("coverImageId")),
+                      onIgnore: _cache[15] || (_cache[15] = ($event) => ignored.coverImageId = true),
+                      onUpdate: _cache[16] || (_cache[16] = ($event) => updateRemote("coverImageId"))
+                    }, null, 8, ["remote-text", "differs", "ignored", "updating", "error"])
+                  ], 64))
+                ]),
+                _: 1
+              }, 8, ["modelValue", "steps", "save-label"])
+            ]),
+            _: 1
+          }, 8, ["open", "title"]),
+          createBaseVNode("h4", null, "Active on " + toDisplayString(unref(instanceId)), 1),
+          unref(store).buttons.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_13$6, "No quick buttons on this booru yet.")) : createCommentVNode("", true),
+          createVNode(unref(lo), {
+            tag: "ul",
+            class: "lodestone-manager-list",
+            "model-value": buttonListCopy.value,
+            handle: ".lodestone-drag-handle",
+            animation: 150,
+            onUpdate: onButtonDrop
+          }, {
+            default: withCtx(() => [
+              (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).buttons, (button, index) => {
+                return openBlock(), createElementBlock("li", {
+                  key: button.id,
+                  class: "lodestone-manager-list__item"
+                }, [
+                  _cache[29] || (_cache[29] = createBaseVNode("span", {
+                    class: "lodestone-drag-handle",
+                    role: "img",
+                    "aria-label": "Drag to reorder",
+                    title: "Drag to reorder"
+                  }, "☰", -1)),
+                  createVNode(_sfc_main$l, { config: button }, null, 8, ["config"]),
+                  createBaseVNode("a", {
+                    href: `/galleries?gallery[include_image]=${button.galleryId}`,
+                    target: "_blank",
+                    rel: "noopener"
+                  }, " gallery #" + toDisplayString(button.galleryId), 9, _hoisted_14$4),
+                  detailsSummary(button) ? (openBlock(), createElementBlock("small", _hoisted_15$4, toDisplayString(detailsSummary(button)), 1)) : createCommentVNode("", true),
+                  createBaseVNode("span", _hoisted_16$4, [
+                    createBaseVNode("button", {
+                      type: "button",
+                      disabled: index === 0,
+                      "aria-label": "Move up",
+                      onClick: ($event) => unref(store).move(button.id, index - 1)
+                    }, "↑", 8, _hoisted_17$3),
+                    createBaseVNode("button", {
+                      type: "button",
+                      disabled: index === unref(store).buttons.length - 1,
+                      "aria-label": "Move down",
+                      onClick: ($event) => unref(store).move(button.id, index + 1)
+                    }, "↓", 8, _hoisted_18$2),
+                    createBaseVNode("button", {
+                      type: "button",
+                      onClick: ($event) => edit(button)
+                    }, "Edit", 8, _hoisted_19$2),
+                    createBaseVNode("button", {
+                      type: "button",
+                      onClick: ($event) => unref(store).duplicate(button.id)
+                    }, "Duplicate", 8, _hoisted_20$2),
+                    createBaseVNode("button", {
+                      type: "button",
+                      title: "Hides it on this booru; it moves to Other boorus unless no other booru uses it",
+                      onClick: ($event) => unref(store).remove(button.id)
+                    }, "Remove here", 8, _hoisted_21$2)
+                  ])
+                ]);
+              }), 128))
+            ]),
+            _: 1
+          }, 8, ["model-value"]),
+          unref(store).otherBoorusButtons.length > 0 ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
+            _cache[30] || (_cache[30] = createBaseVNode("h4", null, "Other boorus", -1)),
+            createBaseVNode("p", _hoisted_22$2, " These buttons are not active on " + toDisplayString(unref(instanceId)) + " yet. Link them to this booru's equivalent gallery; look and settings stay shared. ", 1),
+            createBaseVNode("ul", _hoisted_23$1, [
+              (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).otherBoorusButtons, (button) => {
+                return openBlock(), createElementBlock("li", {
+                  key: button.id,
+                  class: "lodestone-manager-list__item"
+                }, [
+                  createVNode(_sfc_main$l, {
+                    config: { ...button, galleryId: "", coverImageId: null }
+                  }, null, 8, ["config"]),
+                  createBaseVNode("span", null, "on " + toDisplayString(Object.keys(button.galleryIds).join(", ")), 1),
+                  createBaseVNode("span", _hoisted_24$1, [
+                    createBaseVNode("button", {
+                      type: "button",
+                      onClick: ($event) => startLinking(button.id)
+                    }, "Find equivalent gallery here", 8, _hoisted_25$1),
+                    createBaseVNode("button", {
+                      type: "button",
+                      onClick: ($event) => unref(store).removeEverywhere(button.id)
+                    }, "Delete everywhere", 8, _hoisted_26$1)
+                  ])
+                ]);
+              }), 128))
+            ])
+          ], 64)) : createCommentVNode("", true),
+          createVNode(_sfc_main$w, {
+            open: linkingId.value !== null,
+            title: "Find equivalent gallery here",
+            onClose: _cache[20] || (_cache[20] = ($event) => linkingId.value = null)
+          }, {
+            footer: withCtx(() => [
+              createBaseVNode("button", {
+                type: "button",
+                onClick: _cache[19] || (_cache[19] = ($event) => linkingId.value = null)
+              }, "Cancel"),
+              createBaseVNode("button", {
+                type: "button",
+                class: "lodestone-primary",
+                disabled: !linkGalleryId.value,
+                onClick: saveLink
+              }, "Save link", 8, _hoisted_28$1)
+            ]),
+            default: withCtx(() => [
+              createBaseVNode("div", _hoisted_27$1, [
+                createVNode(_sfc_main$n, {
+                  modelValue: linkGalleryId.value,
+                  "onUpdate:modelValue": _cache[18] || (_cache[18] = ($event) => linkGalleryId.value = $event),
+                  options: galleryOptions.value,
+                  "lookup-state": galleryLookupState.value
+                }, null, 8, ["modelValue", "options", "lookup-state"])
+              ])
+            ]),
+            _: 1
+          }, 8, ["open"])
+        ]);
+      };
+    }
+  });
+  async function copyText(text, fallbackElement) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+    }
+    if (!fallbackElement) {
+      return false;
+    }
+    fallbackElement.select();
+    return document.execCommand("copy");
+  }
+  const COPY_FAILED_HINT = "Could not copy automatically. The text is selected, press Ctrl+C (Cmd+C) to copy it.";
+  function useExcludeQuery() {
+    const settings = useSettingsStore();
+    const quickButtons = useGalleryQuickButtonsStore();
+    return computed(
+      () => buildExcludeQuery(settings.excludeQuery, quickButtons.buttons)
+    );
+  }
+  const _hoisted_1$g = { class: "lodestone-exclude-query-field" };
+  const _hoisted_2$d = { class: "lodestone-inline-group" };
+  const _hoisted_3$a = ["value"];
+  const _hoisted_4$9 = {
+    key: 0,
+    class: "lodestone-import-export__error",
+    role: "alert"
+  };
+  const _sfc_main$j = /* @__PURE__ */ defineComponent({
+    __name: "ExcludeQueryField",
+    props: {
+      showSettingsButton: { type: Boolean }
+    },
+    emits: ["settings"],
+    setup(__props) {
+      const query = useExcludeQuery();
+      const inputRef = /* @__PURE__ */ ref(null);
+      const copied = /* @__PURE__ */ ref(false);
+      const copyError = /* @__PURE__ */ ref("");
+      async function copy() {
+        copied.value = false;
+        copyError.value = "";
+        if (await copyText(query.value, inputRef.value)) {
+          copied.value = true;
+        } else {
+          copyError.value = COPY_FAILED_HINT;
+        }
+      }
+      return (_ctx, _cache) => {
+        return openBlock(), createElementBlock("div", _hoisted_1$g, [
+          createBaseVNode("div", _hoisted_2$d, [
+            createBaseVNode("input", {
+              ref_key: "inputRef",
+              ref: inputRef,
+              type: "text",
+              readonly: "",
+              value: unref(query),
+              "aria-label": "Exclude query"
+            }, null, 8, _hoisted_3$a),
+            createBaseVNode("button", {
+              type: "button",
+              onClick: copy
+            }, toDisplayString(copied.value ? "Copied" : "Copy to clipboard"), 1),
+            __props.showSettingsButton ? (openBlock(), createElementBlock("button", {
+              key: 0,
+              type: "button",
+              onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("settings"))
+            }, "Settings")) : createCommentVNode("", true)
+          ]),
+          copyError.value ? (openBlock(), createElementBlock("p", _hoisted_4$9, toDisplayString(copyError.value), 1)) : createCommentVNode("", true)
+        ]);
+      };
+    }
+  });
+  const _hoisted_1$f = {
+    id: "lodestone-exclude-query-settings",
+    class: "lodestone-exclude-query-settings"
+  };
+  const _hoisted_2$c = { class: "lodestone-settings-subfields" };
+  const _hoisted_3$9 = ["checked", "onChange"];
+  const _hoisted_4$8 = { class: "lodestone-hint" };
+  const _hoisted_5$8 = ["href"];
+  const _hoisted_6$8 = { class: "lodestone-exclude-query-galleries" };
+  const _hoisted_7$7 = {
+    key: 0,
+    class: "lodestone-settings-subfields"
+  };
+  const _hoisted_8$6 = {
+    key: 0,
+    class: "lodestone-hint"
+  };
+  const _hoisted_9$6 = ["checked", "onChange"];
+  const _hoisted_10$6 = { class: "lodestone-hint" };
+  const _sfc_main$i = /* @__PURE__ */ defineComponent({
+    __name: "ExcludeQuerySettings",
+    setup(__props) {
+      const store = useSettingsStore();
+      const settings = store;
+      const quickButtons = useGalleryQuickButtonsStore();
+      const query = computed(() => store.excludeQuery);
+      const specificOpen = /* @__PURE__ */ ref(query.value.galleries !== null && query.value.galleries.length > 0);
+      const galleryMode = computed({
+        get: () => specificOpen.value ? "specific" : query.value.galleries === null ? "all" : "none",
+        set: (mode) => {
+          var _a;
+          specificOpen.value = mode === "specific";
+          if (mode === "all") {
+            query.value.galleries = null;
+          } else if (mode === "none") {
+            query.value.galleries = [];
+          } else {
+            (_a = query.value).galleries ?? (_a.galleries = quickButtons.buttons.map((button) => button.id));
+          }
+        }
+      });
+      function toggleFilter(id, checked) {
+        const selected = new Set(query.value.filters);
+        if (checked) {
+          selected.add(id);
+        } else {
+          selected.delete(id);
+        }
+        query.value.filters = EXCLUDE_FILTERS.map((filter) => filter.id).filter((filterId) => selected.has(filterId));
+      }
+      function toggleGallery(buttonId, checked) {
+        const selected = new Set(query.value.galleries ?? []);
+        if (checked) {
+          selected.add(buttonId);
+        } else {
+          selected.delete(buttonId);
+        }
+        query.value.galleries = quickButtons.buttons.map((button) => button.id).filter((id) => selected.has(id));
+      }
+      return (_ctx, _cache) => {
+        return openBlock(), createElementBlock("div", _hoisted_1$f, [
+          _cache[19] || (_cache[19] = createBaseVNode("h4", null, "Exclude query", -1)),
+          _cache[20] || (_cache[20] = createBaseVNode("p", { class: "lodestone-hint" }, " Add this to a search to hide images you already voted on, hid, or saved in one of your quick-button galleries. The default excludes everything listed below except subscriptions. ", -1)),
+          createVNode(_sfc_main$E, {
+            modelValue: query.value.commaPrefix,
+            "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => query.value.commaPrefix = $event),
+            hint: "Starts with a comma so the text can be appended to an existing query."
+          }, {
+            default: withCtx(() => [..._cache[7] || (_cache[7] = [
+              createTextVNode(' Start with ", " ', -1)
+            ])]),
+            _: 1
+          }, 8, ["modelValue"]),
+          createBaseVNode("label", null, [
+            _cache[8] || (_cache[8] = createTextVNode("Your own prefix ", -1)),
+            withDirectives(createBaseVNode("input", {
+              "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => query.value.userPrefix = $event),
+              type: "text",
+              placeholder: "e.g. safe"
+            }, null, 512), [
+              [vModelText, query.value.userPrefix]
+            ])
+          ]),
+          createBaseVNode("div", _hoisted_2$c, [
+            (openBlock(true), createElementBlock(Fragment, null, renderList(unref(EXCLUDE_FILTERS), (filter) => {
+              return openBlock(), createElementBlock("label", {
+                key: filter.id
+              }, [
+                createBaseVNode("input", {
+                  type: "checkbox",
+                  checked: query.value.filters.includes(filter.id),
+                  onChange: ($event) => toggleFilter(filter.id, $event.target.checked)
+                }, null, 40, _hoisted_3$9),
+                createTextVNode(" " + toDisplayString(filter.label), 1)
+              ]);
+            }), 128))
+          ]),
+          createBaseVNode("p", _hoisted_4$8, [
+            _cache[9] || (_cache[9] = createTextVNode(" Untested on the live site, check each search once before relying on it: ", -1)),
+            (openBlock(true), createElementBlock(Fragment, null, renderList(unref(EXCLUDE_FILTERS).filter((entry) => entry.testUrl), (filter, index) => {
+              return openBlock(), createElementBlock(Fragment, {
+                key: filter.id
+              }, [
+                createBaseVNode("a", {
+                  href: filter.testUrl,
+                  target: "_blank",
+                  rel: "noopener"
+                }, toDisplayString(filter.token), 9, _hoisted_5$8),
+                index < unref(EXCLUDE_FILTERS).filter((entry) => entry.testUrl).length - 1 ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
+                  createTextVNode(", ")
+                ], 64)) : createCommentVNode("", true)
+              ], 64);
+            }), 128)),
+            _cache[10] || (_cache[10] = createTextVNode(" . Subscriptions are off by default because ", -1)),
+            _cache[11] || (_cache[11] = createBaseVNode("code", null, "my:subs", -1)),
+            _cache[12] || (_cache[12] = createTextVNode(" is not officially implemented yet. ", -1))
+          ]),
+          createBaseVNode("fieldset", _hoisted_6$8, [
+            _cache[16] || (_cache[16] = createBaseVNode("legend", null, "In your gallery quick buttons", -1)),
+            createBaseVNode("label", null, [
+              withDirectives(createBaseVNode("input", {
+                "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => galleryMode.value = $event),
+                type: "radio",
+                value: "all"
+              }, null, 512), [
+                [vModelRadio, galleryMode.value]
+              ]),
+              _cache[13] || (_cache[13] = createTextVNode(" All (including ones added later)", -1))
+            ]),
+            createBaseVNode("label", null, [
+              withDirectives(createBaseVNode("input", {
+                "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => galleryMode.value = $event),
+                type: "radio",
+                value: "none"
+              }, null, 512), [
+                [vModelRadio, galleryMode.value]
+              ]),
+              _cache[14] || (_cache[14] = createTextVNode(" None", -1))
+            ]),
+            createBaseVNode("label", null, [
+              withDirectives(createBaseVNode("input", {
+                "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => galleryMode.value = $event),
+                type: "radio",
+                value: "specific"
+              }, null, 512), [
+                [vModelRadio, galleryMode.value]
+              ]),
+              _cache[15] || (_cache[15] = createTextVNode(" Only specific galleries", -1))
+            ]),
+            galleryMode.value === "specific" ? (openBlock(), createElementBlock("div", _hoisted_7$7, [
+              unref(quickButtons).buttons.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_8$6, "No gallery quick buttons on this booru yet.")) : createCommentVNode("", true),
+              (openBlock(true), createElementBlock(Fragment, null, renderList(unref(quickButtons).buttons, (button) => {
+                var _a;
+                return openBlock(), createElementBlock("label", {
+                  key: button.id
+                }, [
+                  createBaseVNode("input", {
+                    type: "checkbox",
+                    checked: (_a = query.value.galleries) == null ? void 0 : _a.includes(button.id),
+                    onChange: ($event) => toggleGallery(button.id, $event.target.checked)
+                  }, null, 40, _hoisted_9$6),
+                  createTextVNode(" " + toDisplayString(button.label) + " ", 1),
+                  createBaseVNode("small", _hoisted_10$6, "gallery " + toDisplayString(button.galleryId || "not set"), 1)
+                ]);
+              }), 128))
+            ])) : createCommentVNode("", true)
+          ]),
+          createBaseVNode("label", null, [
+            _cache[17] || (_cache[17] = createTextVNode("Your own suffix ", -1)),
+            withDirectives(createBaseVNode("input", {
+              "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => query.value.userSuffix = $event),
+              type: "text"
+            }, null, 512), [
+              [vModelText, query.value.userSuffix]
+            ])
+          ]),
+          createVNode(_sfc_main$j),
+          createVNode(_sfc_main$E, {
+            modelValue: unref(settings).excludeQueryToggleEnabled,
+            "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => unref(settings).excludeQueryToggleEnabled = $event),
+            hint: "Takes effect on the next page load."
+          }, {
+            default: withCtx(() => [..._cache[18] || (_cache[18] = [
+              createTextVNode(" Show a button in the search boxes that adds or removes the exclude query ", -1)
+            ])]),
+            _: 1
+          }, 8, ["modelValue"])
+        ]);
+      };
+    }
+  });
+  const _sfc_main$h = /* @__PURE__ */ defineComponent({
+    __name: "QuickButtonsSection",
+    setup(__props) {
+      function scrollToSettings() {
+        var _a;
+        (_a = document.getElementById("lodestone-exclude-query-settings")) == null ? void 0 : _a.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      return (_ctx, _cache) => {
+        return openBlock(), createBlock(_sfc_main$F, {
+          title: "Gallery quick buttons",
+          description: "One-click buttons that add or remove the current image from a gallery."
+        }, {
+          default: withCtx(() => [
+            createVNode(_sfc_main$k),
+            _cache[0] || (_cache[0] = createBaseVNode("h4", null, "Exclude query", -1)),
+            createVNode(_sfc_main$j, {
+              "show-settings-button": "",
+              onSettings: scrollToSettings
+            }),
+            createVNode(_sfc_main$i)
+          ]),
+          _: 1
+        });
+      };
+    }
+  });
   function whenOn(targetId) {
     return { type: "leaf", targetKind: "id", targetId, state: "on", trigger: true };
   }
@@ -12857,6 +12928,56 @@
       actions: [{ targetId: "upvote", verb: "turn-on", reverse: "nothing" }]
     }
   ];
+  const SUBSCRIPTION_SELECTOR = 'a[href$="/subscription"]';
+  const SUBSCRIPTION_SCOPE = ".block__header";
+  const DEFAULT_TIMEOUT_MS$1 = 8e3;
+  function isSubscribed(el) {
+    const method = el.getAttribute("data-method");
+    return method !== null ? method.toLowerCase() === "delete" : el.classList.contains("active");
+  }
+  function currentSubscriptionLink() {
+    return document.querySelector(`${SUBSCRIPTION_SCOPE} ${SUBSCRIPTION_SELECTOR}`);
+  }
+  function subscriptionImageId() {
+    var _a;
+    return ((_a = document.querySelector(".image-show-container[data-image-id]")) == null ? void 0 : _a.dataset.imageId) ?? void 0;
+  }
+  function syncSubscriptionActive() {
+    for (const el of document.querySelectorAll(`${SUBSCRIPTION_SCOPE} ${SUBSCRIPTION_SELECTOR}`)) {
+      const on2 = isSubscribed(el);
+      if (el.hasAttribute("data-method") && el.classList.contains("active") !== on2) {
+        el.classList.toggle("active", on2);
+      }
+    }
+  }
+  function startSubscriptionSync() {
+    syncSubscriptionActive();
+    const scope = document.querySelector(SUBSCRIPTION_SCOPE);
+    if (!scope) {
+      return () => void 0;
+    }
+    const observer = new MutationObserver(syncSubscriptionActive);
+    observer.observe(scope, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-method"] });
+    return () => observer.disconnect();
+  }
+  function waitForSubscriptionChange(wasSubscribed, timeoutMs = DEFAULT_TIMEOUT_MS$1) {
+    return new Promise((resolve2) => {
+      const timeout = setTimeout(() => {
+        observer.disconnect();
+        resolve2();
+      }, timeoutMs);
+      const observer = new MutationObserver(() => {
+        const link = currentSubscriptionLink();
+        if (!link || isSubscribed(link) === wasSubscribed) {
+          return;
+        }
+        observer.disconnect();
+        clearTimeout(timeout);
+        resolve2();
+      });
+      observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-method"] });
+    });
+  }
   function displayLabel(entry) {
     return entry.label.trim() || entry.icon;
   }
@@ -12926,6 +13047,9 @@
     if (!el) {
       return void 0;
     }
+    if (entry.category === "subscribe") {
+      return isSubscribed(el);
+    }
     return entry.category === "gallery-quick" ? el.dataset.active === "true" : el.classList.contains("active");
   }
   function findCatalogEntriesForElement(catalog, el) {
@@ -12943,7 +13067,7 @@
   const _hoisted_10$5 = ["value"];
   const _hoisted_11$5 = { class: "lodestone-hint" };
   const _hoisted_12$5 = { class: "lodestone-condition-node__children" };
-  const _hoisted_13$4 = ["onClick"];
+  const _hoisted_13$5 = ["onClick"];
   const _sfc_main$g = /* @__PURE__ */ defineComponent({
     __name: "ConditionGroupEditor",
     props: {
@@ -13129,7 +13253,7 @@
                   createBaseVNode("button", {
                     type: "button",
                     onClick: ($event) => removeChildAt(index)
-                  }, "Remove", 8, _hoisted_13$4)
+                  }, "Remove", 8, _hoisted_13$5)
                 ]);
               }), 128))
             ]),
@@ -13164,11 +13288,11 @@
     class: "lodestone-hint"
   };
   const _hoisted_12$4 = ["disabled", "onClick"];
-  const _hoisted_13$3 = ["disabled", "onClick"];
-  const _hoisted_14$2 = ["onClick"];
-  const _hoisted_15$2 = { key: 0 };
-  const _hoisted_16$2 = { key: 2 };
-  const _hoisted_17$1 = ["checked"];
+  const _hoisted_13$4 = ["disabled", "onClick"];
+  const _hoisted_14$3 = ["onClick"];
+  const _hoisted_15$3 = { key: 0 };
+  const _hoisted_16$3 = { key: 2 };
+  const _hoisted_17$2 = ["checked"];
   const _hoisted_18$1 = ["checked"];
   const _hoisted_19$1 = ["checked", "onChange"];
   const _hoisted_20$1 = { key: 3 };
@@ -13292,12 +13416,6 @@
           actionKeys.set(action, key);
         }
         return key;
-      }
-      function moveItem(list, from, to2) {
-        if (to2 < 0 || to2 >= list.length || from === to2) {
-          return;
-        }
-        list.splice(to2, 0, ...list.splice(from, 1));
       }
       function moveAction(from, to2) {
         moveItem(draft.actions, from, to2);
@@ -13461,11 +13579,11 @@
                                 disabled: index === draft.actions.length - 1,
                                 "aria-label": "Move action down",
                                 onClick: ($event) => moveAction(index, index + 1)
-                              }, "↓", 8, _hoisted_13$3),
+                              }, "↓", 8, _hoisted_13$4),
                               createBaseVNode("button", {
                                 type: "button",
                                 onClick: ($event) => removeAction(index)
-                              }, "Remove", 8, _hoisted_14$2)
+                              }, "Remove", 8, _hoisted_14$3)
                             ], 64)) : createCommentVNode("", true)
                           ]);
                         }), 128))
@@ -13476,7 +13594,7 @@
                       type: "button",
                       onClick: addAction
                     }, "Add another action"),
-                    anyReverse.value ? (openBlock(), createElementBlock("label", _hoisted_15$2, [
+                    anyReverse.value ? (openBlock(), createElementBlock("label", _hoisted_15$3, [
                       _cache[13] || (_cache[13] = createTextVNode(" Run the reverse actions ", -1)),
                       withDirectives(createBaseVNode("select", {
                         "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => draft.reverseOrder = $event)
@@ -13487,14 +13605,14 @@
                         [vModelSelect, draft.reverseOrder]
                       ])
                     ])) : createCommentVNode("", true)
-                  ])) : stepId === "where" ? (openBlock(), createElementBlock("fieldset", _hoisted_16$2, [
+                  ])) : stepId === "where" ? (openBlock(), createElementBlock("fieldset", _hoisted_16$3, [
                     _cache[17] || (_cache[17] = createBaseVNode("legend", null, "Where", -1)),
                     createBaseVNode("label", null, [
                       createBaseVNode("input", {
                         type: "radio",
                         checked: !scopedToBoorus.value,
                         onChange: _cache[2] || (_cache[2] = ($event) => setScoped(false))
-                      }, null, 40, _hoisted_17$1),
+                      }, null, 40, _hoisted_17$2),
                       _cache[15] || (_cache[15] = createTextVNode(" On every booru", -1))
                     ]),
                     createBaseVNode("label", null, [
@@ -13726,7 +13844,10 @@
     const rules = [
       // Full width (also inside a flex parent) with equal-width columns, each button filling its cell.
       `.${GROUP_CLASS} { display: grid; box-sizing: border-box; width: 100%; flex: 1 1 100%; justify-content: stretch; align-items: center; gap: 4px; }`,
-      `.${GROUP_CLASS} > * { box-sizing: border-box; width: 100%; min-width: 0; margin: 0; }`
+      `.${GROUP_CLASS} > * { box-sizing: border-box; width: 100%; min-width: 0; margin: 0; }`,
+      // The Subscribe link stays inside the site's `.js-subscription-target` span (the site's answer handler needs it), so the span is the cell.
+      `.${GROUP_CLASS} > .js-subscription-target { display: flex; }`,
+      `.${GROUP_CLASS} > .js-subscription-target > a { flex: 1 1 auto; box-sizing: border-box; min-width: 0; margin: 0; }`
     ];
     for (const group of groups) {
       const base2 = group.breakpoints.find((breakpoint) => breakpoint.maxWidthPx === null);
@@ -13740,19 +13861,24 @@
   }
   const _hoisted_1$b = { class: "lodestone-button-groups-manager" };
   const _hoisted_2$9 = ["checked", "onChange"];
-  const _hoisted_3$6 = ["onUpdate:modelValue"];
-  const _hoisted_4$5 = ["onClick"];
-  const _hoisted_5$5 = ["onUpdate:modelValue"];
-  const _hoisted_6$5 = ["onClick"];
-  const _hoisted_7$4 = { class: "lodestone-button-groups-manager__preview" };
-  const _hoisted_8$3 = {
+  const _hoisted_3$6 = { key: 0 };
+  const _hoisted_4$5 = { class: "lodestone-manager-list__actions" };
+  const _hoisted_5$5 = ["disabled", "onClick"];
+  const _hoisted_6$5 = ["disabled", "onClick"];
+  const _hoisted_7$4 = ["onUpdate:modelValue"];
+  const _hoisted_8$3 = ["onClick"];
+  const _hoisted_9$3 = ["onUpdate:modelValue"];
+  const _hoisted_10$3 = ["onClick"];
+  const _hoisted_11$3 = { class: "lodestone-button-groups-manager__preview" };
+  const _hoisted_12$3 = {
     key: 0,
     class: "lodestone-hint"
   };
-  const _hoisted_9$3 = { class: "lodestone-manager-list" };
-  const _hoisted_10$3 = { class: "lodestone-manager-list__actions" };
-  const _hoisted_11$3 = ["onClick"];
-  const _hoisted_12$3 = ["onClick"];
+  const _hoisted_13$3 = { class: "lodestone-manager-list__actions" };
+  const _hoisted_14$2 = ["disabled", "onClick"];
+  const _hoisted_15$2 = ["disabled", "onClick"];
+  const _hoisted_16$2 = ["onClick"];
+  const _hoisted_17$1 = ["onClick"];
   const _sfc_main$c = /* @__PURE__ */ defineComponent({
     __name: "ButtonGroupsManager",
     setup(__props) {
@@ -13786,6 +13912,24 @@
       }
       function setSelected2(id, checked) {
         draft.buttonIds = checked ? [...draft.buttonIds, id] : draft.buttonIds.filter((existing) => existing !== id);
+      }
+      const groupListCopy = computed(() => [...store.groups]);
+      const orderedEntries = computed(() => [...selectedEntries.value]);
+      function onGroupDrop(event) {
+        const group = event.oldIndex === void 0 ? void 0 : store.groups[event.oldIndex];
+        if (group && event.newIndex !== void 0) {
+          store.move(group.id, event.newIndex);
+        }
+      }
+      function moveButton(id, toIndex) {
+        draft.buttonIds = movedById(draft.buttonIds, (existing) => existing, id, toIndex);
+      }
+      function onButtonDrop(event) {
+        var _a;
+        const entry = event.oldIndex === void 0 ? void 0 : selectedEntries.value[event.oldIndex];
+        if (entry && event.newIndex !== void 0) {
+          moveButton(entry.id, draft.buttonIds.indexOf(((_a = selectedEntries.value[event.newIndex]) == null ? void 0 : _a.id) ?? entry.id));
+        }
       }
       function onScopeChange() {
         draft.buttonIds = draft.buttonIds.filter((id) => scopedCatalog.value.some((entry) => entry.id === id));
@@ -13866,39 +14010,88 @@
                         [vModelSelect, draft.scope]
                       ])
                     ])
-                  ], 64)) : stepId === "buttons" ? (openBlock(true), createElementBlock(Fragment, { key: 1 }, renderList(sections.value, (section) => {
-                    return openBlock(), createElementBlock("fieldset", {
-                      key: section.title
-                    }, [
-                      createBaseVNode("legend", null, [
-                        createTextVNode(toDisplayString(section.title) + " ", 1),
-                        createVNode(_sfc_main$d, {
-                          "model-value": draft.buttonIds,
-                          ids: section.entries.map((entry) => entry.id),
-                          "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => draft.buttonIds = $event)
-                        }, null, 8, ["model-value", "ids"])
-                      ]),
-                      (openBlock(true), createElementBlock(Fragment, null, renderList(section.entries, (entry) => {
-                        return openBlock(), createElementBlock("label", {
-                          key: entry.id,
-                          class: "lodestone-button-groups-manager__choice"
-                        }, [
-                          createBaseVNode("input", {
-                            type: "checkbox",
-                            checked: isSelected(entry.id),
-                            onChange: ($event) => setSelected2(entry.id, $event.target.checked)
-                          }, null, 40, _hoisted_2$9),
-                          createVNode(_sfc_main$u, {
-                            icon: entry.icon,
-                            label: unref(displayLabel)(entry),
-                            color: entry.color
-                          }, null, 8, ["icon", "label", "color"])
-                        ]);
-                      }), 128))
-                    ]);
-                  }), 128)) : (openBlock(), createElementBlock(Fragment, { key: 2 }, [
+                  ], 64)) : stepId === "buttons" ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
+                    (openBlock(true), createElementBlock(Fragment, null, renderList(sections.value, (section) => {
+                      return openBlock(), createElementBlock("fieldset", {
+                        key: section.title
+                      }, [
+                        createBaseVNode("legend", null, [
+                          createTextVNode(toDisplayString(section.title) + " ", 1),
+                          createVNode(_sfc_main$d, {
+                            "model-value": draft.buttonIds,
+                            ids: section.entries.map((entry) => entry.id),
+                            "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => draft.buttonIds = $event)
+                          }, null, 8, ["model-value", "ids"])
+                        ]),
+                        (openBlock(true), createElementBlock(Fragment, null, renderList(section.entries, (entry) => {
+                          return openBlock(), createElementBlock("label", {
+                            key: entry.id,
+                            class: "lodestone-button-groups-manager__choice"
+                          }, [
+                            createBaseVNode("input", {
+                              type: "checkbox",
+                              checked: isSelected(entry.id),
+                              onChange: ($event) => setSelected2(entry.id, $event.target.checked)
+                            }, null, 40, _hoisted_2$9),
+                            createVNode(_sfc_main$u, {
+                              icon: entry.icon,
+                              label: unref(displayLabel)(entry),
+                              color: entry.color
+                            }, null, 8, ["icon", "label", "color"])
+                          ]);
+                        }), 128))
+                      ]);
+                    }), 128)),
+                    selectedEntries.value.length > 1 ? (openBlock(), createElementBlock("fieldset", _hoisted_3$6, [
+                      _cache[8] || (_cache[8] = createBaseVNode("legend", null, "Order", -1)),
+                      createVNode(unref(lo), {
+                        tag: "ul",
+                        class: "lodestone-manager-list",
+                        "model-value": orderedEntries.value,
+                        handle: ".lodestone-drag-handle",
+                        animation: 150,
+                        onUpdate: onButtonDrop
+                      }, {
+                        default: withCtx(() => [
+                          (openBlock(true), createElementBlock(Fragment, null, renderList(selectedEntries.value, (entry, index) => {
+                            return openBlock(), createElementBlock("li", {
+                              key: entry.id,
+                              class: "lodestone-manager-list__item"
+                            }, [
+                              _cache[7] || (_cache[7] = createBaseVNode("span", {
+                                class: "lodestone-drag-handle",
+                                role: "img",
+                                "aria-label": "Drag to reorder",
+                                title: "Drag to reorder"
+                              }, "☰", -1)),
+                              createVNode(_sfc_main$u, {
+                                icon: entry.icon,
+                                label: unref(displayLabel)(entry),
+                                color: entry.color
+                              }, null, 8, ["icon", "label", "color"]),
+                              createBaseVNode("span", _hoisted_4$5, [
+                                createBaseVNode("button", {
+                                  type: "button",
+                                  disabled: index === 0,
+                                  "aria-label": "Move up",
+                                  onClick: ($event) => moveButton(entry.id, draft.buttonIds.indexOf(selectedEntries.value[index - 1].id))
+                                }, "↑", 8, _hoisted_5$5),
+                                createBaseVNode("button", {
+                                  type: "button",
+                                  disabled: index === selectedEntries.value.length - 1,
+                                  "aria-label": "Move down",
+                                  onClick: ($event) => moveButton(entry.id, draft.buttonIds.indexOf(selectedEntries.value[index + 1].id))
+                                }, "↓", 8, _hoisted_6$5)
+                              ])
+                            ]);
+                          }), 128))
+                        ]),
+                        _: 1
+                      }, 8, ["model-value"])
+                    ])) : createCommentVNode("", true)
+                  ], 64)) : (openBlock(), createElementBlock(Fragment, { key: 2 }, [
                     createBaseVNode("fieldset", null, [
-                      _cache[10] || (_cache[10] = createBaseVNode("legend", null, "Columns", -1)),
+                      _cache[12] || (_cache[12] = createBaseVNode("legend", null, "Columns", -1)),
                       (openBlock(true), createElementBlock(Fragment, null, renderList(draft.breakpoints, (breakpoint) => {
                         return openBlock(), createElementBlock("div", {
                           key: breakpoint.id,
@@ -13907,12 +14100,12 @@
                           breakpoint.maxWidthPx === null ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
                             createTextVNode("Any screen/window size")
                           ], 64)) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-                            _cache[7] || (_cache[7] = createTextVNode(" Up to ", -1)),
+                            _cache[9] || (_cache[9] = createTextVNode(" Up to ", -1)),
                             withDirectives(createBaseVNode("input", {
                               "onUpdate:modelValue": ($event) => breakpoint.maxWidthPx = $event,
                               type: "number",
                               min: "1"
-                            }, null, 8, _hoisted_3$6), [
+                            }, null, 8, _hoisted_7$4), [
                               [
                                 vModelText,
                                 breakpoint.maxWidthPx,
@@ -13920,20 +14113,20 @@
                                 { number: true }
                               ]
                             ]),
-                            _cache[8] || (_cache[8] = createTextVNode(" px ", -1)),
+                            _cache[10] || (_cache[10] = createTextVNode(" px ", -1)),
                             createBaseVNode("button", {
                               type: "button",
                               onClick: ($event) => breakpoint.maxWidthPx = unref(width)
-                            }, "Use current size", 8, _hoisted_4$5)
+                            }, "Use current size", 8, _hoisted_8$3)
                           ], 64)),
                           createBaseVNode("label", null, [
-                            _cache[9] || (_cache[9] = createTextVNode(" Columns ", -1)),
+                            _cache[11] || (_cache[11] = createTextVNode(" Columns ", -1)),
                             withDirectives(createBaseVNode("input", {
                               "onUpdate:modelValue": ($event) => breakpoint.columns = $event,
                               type: "number",
                               min: "1",
                               max: "24"
-                            }, null, 8, _hoisted_5$5), [
+                            }, null, 8, _hoisted_9$3), [
                               [
                                 vModelText,
                                 breakpoint.columns,
@@ -13946,7 +14139,7 @@
                             key: 2,
                             type: "button",
                             onClick: ($event) => removeBreakpoint(breakpoint.id)
-                          }, "Remove", 8, _hoisted_6$5)) : createCommentVNode("", true)
+                          }, "Remove", 8, _hoisted_10$3)) : createCommentVNode("", true)
                         ]);
                       }), 128)),
                       createBaseVNode("button", {
@@ -13954,7 +14147,7 @@
                         onClick: addBreakpoint
                       }, "Add breakpoint")
                     ]),
-                    createBaseVNode("div", _hoisted_7$4, [
+                    createBaseVNode("div", _hoisted_11$3, [
                       createBaseVNode("div", null, "Preview at the current window width (" + toDisplayString(unref(width)) + "px): " + toDisplayString(previewColumns.value) + " column" + toDisplayString(previewColumns.value === 1 ? "" : "s"), 1),
                       createBaseVNode("div", {
                         class: "lodestone-button-groups-manager__grid",
@@ -13977,28 +14170,56 @@
             ]),
             _: 1
           }, 8, ["open", "title"]),
-          _cache[11] || (_cache[11] = createBaseVNode("h4", null, "Configured button groups", -1)),
-          unref(store).groups.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_8$3, "No button groups yet.")) : createCommentVNode("", true),
-          createBaseVNode("ul", _hoisted_9$3, [
-            (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).groups, (group) => {
-              return openBlock(), createElementBlock("li", {
-                key: group.id,
-                class: "lodestone-manager-list__item"
-              }, [
-                createBaseVNode("span", null, toDisplayString(group.name) + " (" + toDisplayString(group.scope) + ", " + toDisplayString(group.buttonIds.length) + " buttons)", 1),
-                createBaseVNode("span", _hoisted_10$3, [
-                  createBaseVNode("button", {
-                    type: "button",
-                    onClick: ($event) => edit(group)
-                  }, "Edit", 8, _hoisted_11$3),
-                  createBaseVNode("button", {
-                    type: "button",
-                    onClick: ($event) => unref(store).remove(group.id)
-                  }, "Delete", 8, _hoisted_12$3)
-                ])
-              ]);
-            }), 128))
-          ])
+          _cache[14] || (_cache[14] = createBaseVNode("h4", null, "Configured button groups", -1)),
+          unref(store).groups.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_12$3, "No button groups yet.")) : createCommentVNode("", true),
+          createVNode(unref(lo), {
+            tag: "ul",
+            class: "lodestone-manager-list",
+            "model-value": groupListCopy.value,
+            handle: ".lodestone-drag-handle",
+            animation: 150,
+            onUpdate: onGroupDrop
+          }, {
+            default: withCtx(() => [
+              (openBlock(true), createElementBlock(Fragment, null, renderList(unref(store).groups, (group, index) => {
+                return openBlock(), createElementBlock("li", {
+                  key: group.id,
+                  class: "lodestone-manager-list__item"
+                }, [
+                  _cache[13] || (_cache[13] = createBaseVNode("span", {
+                    class: "lodestone-drag-handle",
+                    role: "img",
+                    "aria-label": "Drag to reorder",
+                    title: "Drag to reorder"
+                  }, "☰", -1)),
+                  createBaseVNode("span", null, toDisplayString(group.name) + " (" + toDisplayString(group.scope) + ", " + toDisplayString(group.buttonIds.length) + " buttons)", 1),
+                  createBaseVNode("span", _hoisted_13$3, [
+                    createBaseVNode("button", {
+                      type: "button",
+                      disabled: index === 0,
+                      "aria-label": "Move up",
+                      onClick: ($event) => unref(store).move(group.id, index - 1)
+                    }, "↑", 8, _hoisted_14$2),
+                    createBaseVNode("button", {
+                      type: "button",
+                      disabled: index === unref(store).groups.length - 1,
+                      "aria-label": "Move down",
+                      onClick: ($event) => unref(store).move(group.id, index + 1)
+                    }, "↓", 8, _hoisted_15$2),
+                    createBaseVNode("button", {
+                      type: "button",
+                      onClick: ($event) => edit(group)
+                    }, "Edit", 8, _hoisted_16$2),
+                    createBaseVNode("button", {
+                      type: "button",
+                      onClick: ($event) => unref(store).remove(group.id)
+                    }, "Delete", 8, _hoisted_17$1)
+                  ])
+                ]);
+              }), 128))
+            ]),
+            _: 1
+          }, 8, ["model-value"])
         ]);
       };
     }
@@ -16114,7 +16335,13 @@ ${event}
     if (el.matches(".interaction--hide")) {
       return "hide";
     }
+    if (el.matches('a[href$="/subscription"]')) {
+      return "subscribe";
+    }
     return void 0;
+  }
+  function pendingImageIdOf(el) {
+    return el.dataset.imageId ?? (pendingKindOf(el) === "subscribe" ? subscriptionImageId() : void 0);
   }
   const ENGINE_CLICK_ATTRIBUTE = "data-lodestone-effect";
   const eventListeners = /* @__PURE__ */ new Set();
@@ -16151,6 +16378,7 @@ ${event}
   function initVoteProgress() {
     const store = useSettingsStore();
     const { run } = useSpinnerAction();
+    startSubscriptionSync();
     document.addEventListener(
       "click",
       (event) => {
@@ -16168,10 +16396,11 @@ ${event}
         const kind = pendingKindOf(target);
         const container = target.closest(".stretched-mobile-links, .media-box__overlay") ?? target.parentElement ?? target;
         notifyNativeButtonEvent(target, "on-click");
-        const imageId = target.dataset.imageId;
+        const imageId = pendingImageIdOf(target);
         const finish = kind && imageId ? beginPendingAction(imageId, kind) : void 0;
-        const wasActive = target.classList.contains("active");
-        const settle = () => (finish ? waitForActiveChange(target, wasActive, 8e3) : waitForMutation(container)).finally(() => finish == null ? void 0 : finish()).then(() => notifyNativeButtonEvent(target, "after-settle"));
+        const wasActive = kind === "subscribe" ? isSubscribed(target) : target.classList.contains("active");
+        const waitForAnswer = () => kind === "subscribe" ? waitForSubscriptionChange(wasActive) : waitForActiveChange(target, wasActive, 8e3);
+        const settle = () => (finish ? waitForAnswer() : waitForMutation(container)).finally(() => finish == null ? void 0 : finish()).then(() => notifyNativeButtonEvent(target, "after-settle"));
         if (store.voteProgressEnabled) {
           void run(target, settle);
         } else {
@@ -17117,25 +17346,28 @@ ${icons} { font-size: ${iconSize} !important; }`;
     await trigger2();
   }
   async function performNativeAction(entry, verb) {
-    const el = resolveCatalogElement(entry);
+    let el = resolveCatalogElement(entry);
     if (!el) {
       throw new ButtonEffectError(`the button "${displayLabel(entry)}" is not on this page`, belongsToOtherPageType(entry));
     }
     const desiredOn = desiredOnFor(verb);
-    const wasActive = readCatalogState(entry) ?? false;
-    if (desiredOn !== void 0 && wasActive === desiredOn) {
+    if (desiredOn !== void 0 && (readCatalogState(entry) ?? false) === desiredOn) {
       return;
     }
     const kind = pendingKindOf(el);
-    const imageId = el.dataset.imageId;
+    const imageId = pendingImageIdOf(el);
     if (kind && imageId) {
       await whenIdle(imageId, kind);
       if (desiredOn !== void 0 && (readCatalogState(entry) ?? false) === desiredOn) {
         return;
       }
+      el = resolveCatalogElement(entry) ?? el;
     }
+    const wasActive = readCatalogState(entry) ?? false;
     const finish = kind && imageId ? beginPendingAction(imageId, kind) : void 0;
-    const settled = waitForActiveChange(el, el.classList.contains("active")).finally(() => finish == null ? void 0 : finish());
+    const settled = (kind === "subscribe" ? waitForSubscriptionChange(wasActive) : waitForActiveChange(el, wasActive)).finally(
+      () => finish == null ? void 0 : finish()
+    );
     el.setAttribute(ENGINE_CLICK_ATTRIBUTE, "");
     try {
       el.click();
@@ -17334,6 +17566,9 @@ ${icons} { font-size: ${iconSize} !important; }`;
   function containerFor(el, scope) {
     return scope === "list" ? el.closest(LIST_CONTAINER_SELECTOR) ?? document : document;
   }
+  function movableNodeOf(el) {
+    return el.closest(".js-subscription-target") ?? el;
+  }
   function membersByContainer(group, catalog) {
     const byContainer = /* @__PURE__ */ new Map();
     for (const buttonId of group.buttonIds) {
@@ -17352,7 +17587,7 @@ ${icons} { font-size: ${iconSize} !important; }`;
     const catalog = buildButtonCatalog({ includeNav: true });
     for (const group of groups.filter((candidate) => candidate.scope === pageScope)) {
       for (const members of membersByContainer(group, catalog).values()) {
-        const first = members[0];
+        const first = movableNodeOf(members[0]);
         let wrapper = members.map((el) => el.closest(`.${GROUP_CLASS}[data-lodestone-group-id="${group.id}"]`)).find(Boolean) ?? null;
         if (!wrapper) {
           wrapper = document.createElement("div");
@@ -17362,7 +17597,7 @@ ${icons} { font-size: ${iconSize} !important; }`;
           first.before(wrapper);
         }
         for (const el of members) {
-          wrapper.append(el);
+          wrapper.append(movableNodeOf(el));
         }
       }
     }
