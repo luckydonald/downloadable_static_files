@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.11.14.0000.10.56.15.0000.59382
+// @version      2026.11.14.0000.13.04.28.0000.abe6d
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -8748,7 +8748,7 @@
     store.$subscribe(() => setValue(STORAGE_KEY, store.$state), { flush: "sync" });
     onValueChanged(STORAGE_KEY, (value) => store.$patch((state) => Object.assign(state, normalizeWatchListBackupState(value))));
   }
-  const APP_VERSION = "2026.11.14.0000.10.56.15.0000.59382";
+  const APP_VERSION = "2026.11.14.0000.13.04.28.0000.abe6d";
   function numericSegments(version2) {
     const segments = [];
     for (const part of version2.split(".")) {
@@ -10786,10 +10786,10 @@
       };
     }
   });
-  const _hoisted_1$s = ["disabled"];
+  const _hoisted_1$s = ["disabled", "aria-label", "onClick"];
   const _hoisted_2$p = ["disabled", "aria-label", "onClick"];
-  const _hoisted_3$m = ["disabled", "aria-label", "onClick"];
-  const _hoisted_4$k = ["aria-label", "onClick"];
+  const _hoisted_3$m = ["aria-label", "onClick"];
+  const _hoisted_4$k = ["disabled"];
   const _sfc_main$A = /* @__PURE__ */ defineComponent({
     __name: "FavoriteTagsSection",
     setup(__props) {
@@ -10834,23 +10834,6 @@
               ])]),
               _: 1
             }, 8, ["model-value"]),
-            createBaseVNode("form", {
-              class: "lodestone-settings-subfield",
-              onSubmit: withModifiers(add, ["prevent"])
-            }, [
-              withDirectives(createBaseVNode("input", {
-                "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => draft.value = $event),
-                type: "text",
-                placeholder: "tag, another tag",
-                "aria-label": "Tags to add to the favorites"
-              }, null, 512), [
-                [vModelText, draft.value]
-              ]),
-              createBaseVNode("button", {
-                type: "submit",
-                disabled: draft.value.trim() === ""
-              }, "Add", 8, _hoisted_1$s)
-            ], 32),
             createVNode(unref(lo), {
               tag: "ul",
               class: "lodestone-manager-list lodestone-favorite-tag-list",
@@ -10876,24 +10859,41 @@
                       disabled: index === 0,
                       "aria-label": `Move ${tag} up`,
                       onClick: ($event) => move(index, index - 1)
-                    }, "↑", 8, _hoisted_2$p),
+                    }, "↑", 8, _hoisted_1$s),
                     createBaseVNode("button", {
                       type: "button",
                       disabled: index === unref(store).favoriteTags.tags.length - 1,
                       "aria-label": `Move ${tag} down`,
                       onClick: ($event) => move(index, index + 1)
-                    }, " ↓ ", 8, _hoisted_3$m),
+                    }, " ↓ ", 8, _hoisted_2$p),
                     createBaseVNode("button", {
                       type: "button",
                       "aria-label": `Remove ${tag}`,
                       onClick: ($event) => remove2(index)
-                    }, "✕", 8, _hoisted_4$k),
+                    }, "✕", 8, _hoisted_3$m),
                     createBaseVNode("code", null, toDisplayString(tag), 1)
                   ]);
                 }), 128))
               ]),
               _: 1
-            }, 8, ["model-value"])
+            }, 8, ["model-value"]),
+            createBaseVNode("form", {
+              class: "lodestone-settings-subfield",
+              onSubmit: withModifiers(add, ["prevent"])
+            }, [
+              withDirectives(createBaseVNode("input", {
+                "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => draft.value = $event),
+                type: "text",
+                placeholder: "tag, another tag",
+                "aria-label": "Tags to add to the favorites"
+              }, null, 512), [
+                [vModelText, draft.value]
+              ]),
+              createBaseVNode("button", {
+                type: "submit",
+                disabled: draft.value.trim() === ""
+              }, "Add", 8, _hoisted_4$k)
+            ], 32)
           ]),
           _: 1
         });
@@ -16215,6 +16215,7 @@ ${event}
     .lodestone-manager-list { list-style: none; margin: var(--lodestone-space-2) 0 0; padding: 0; border: 1px solid var(--lodestone-border-soft); border-radius: var(--lodestone-radius-lg); }
     .lodestone-manager-list:empty { display: none; }
     .lodestone-manager-list__item {
+      list-style: none;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -16368,13 +16369,14 @@ ${event}
   }
   const IMAGE_SCORE_SELECTOR = ".block__header .score.block__header__title";
   const LIST_SCORE_SELECTOR = ".media-box .score";
+  const GALLERY_QUICK_BUTTON_SELECTOR = ".lodestone-gallery-quick-button";
   const EXCLUDE_SEARCH_FORM = ":not(#searchform *)";
   function joinSelectors(selectors) {
     return selectors.map((selector) => `${selector}${EXCLUDE_SEARCH_FORM}`).join(", ");
   }
   function buildBiggerButtonsCss(listSize, imageSize) {
     const listSelector = joinSelectors([...listButtonDefs.map((button) => button.selector), LIST_SCORE_SELECTOR]);
-    const imageSelector = joinSelectors([...imageButtonDefs.map((button) => button.selector), IMAGE_SCORE_SELECTOR]);
+    const imageSelector = joinSelectors([...imageButtonDefs.map((button) => button.selector), IMAGE_SCORE_SELECTOR, GALLERY_QUICK_BUTTON_SELECTOR]);
     return [
       `${listSelector} { font-size: ${listSize}px !important; }`,
       `${imageSelector} { font-size: ${imageSize}px !important; }`
@@ -18114,6 +18116,7 @@ ${icons} { font-size: ${iconSize} !important; }`;
     if (!store.favoriteTags.enabled) {
       return;
     }
+    installSettingsPersistence(store);
     mountAll();
     const parent = (_a = document.querySelector(".js-tagsauce")) == null ? void 0 : _a.parentElement;
     if (parent) {
