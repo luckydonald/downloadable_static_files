@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.11.13.0000.02.17.58.0000.11244
+// @version      2026.11.14.0000.10.43.28.0000.7f077
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -8748,7 +8748,7 @@
     store.$subscribe(() => setValue(STORAGE_KEY, store.$state), { flush: "sync" });
     onValueChanged(STORAGE_KEY, (value) => store.$patch((state) => Object.assign(state, normalizeWatchListBackupState(value))));
   }
-  const APP_VERSION = "2026.11.13.0000.02.17.58.0000.11244";
+  const APP_VERSION = "2026.11.14.0000.10.43.28.0000.7f077";
   function numericSegments(version2) {
     const segments = [];
     for (const part of version2.split(".")) {
@@ -9221,7 +9221,7 @@
       return (_ctx, _cache) => {
         return openBlock(), createBlock(_sfc_main$G, {
           title: "Favorite Tags",
-          description: "Tags you add to images often. Every tag's dropdown on an image page gets an entry to add or remove it here, and the tag editor gets one button per favorite that adds or removes the tag and saves right away. Takes effect on the next page load."
+          description: "Tags you add to images often. Every tag's dropdown on an image page gets an entry to add or remove it here. Under the tag list, one button per favorite adds or removes the tag and saves right away; under the tag editor, the buttons only change the list, and you save as usual. The list applies live, the toggle below on the next page load."
         }, {
           default: withCtx(() => [
             createVNode(_sfc_main$F, {
@@ -13090,10 +13090,15 @@
   const DEFAULT_TIMEOUT_MS$1 = 8e3;
   function isSubscribed(el) {
     const method = el.getAttribute("data-method");
-    return method !== null ? method.toLowerCase() === "delete" : el.classList.contains("active");
+    if (method === null) {
+      return el.classList.contains("active");
+    }
+    const offersUnsubscribe = method.toLowerCase() === "delete";
+    return el.classList.contains("hidden") ? !offersUnsubscribe : offersUnsubscribe;
   }
   function currentSubscriptionLink() {
-    return document.querySelector(`${SUBSCRIPTION_SCOPE} ${SUBSCRIPTION_SELECTOR}`);
+    const links2 = Array.from(document.querySelectorAll(`${SUBSCRIPTION_SCOPE} ${SUBSCRIPTION_SELECTOR}`));
+    return links2.find((link) => !link.classList.contains("hidden")) ?? links2[0] ?? null;
   }
   function subscriptionImageId() {
     var _a;
@@ -13194,7 +13199,8 @@
     return [...native, ...merged, ...galleryQuick, ...telegram];
   }
   function resolveCatalogElement(entry) {
-    return document.querySelector(entry.selector);
+    const matches = Array.from(document.querySelectorAll(entry.selector));
+    return matches.find((el) => !el.classList.contains("hidden")) ?? matches[0] ?? null;
   }
   function readCatalogState(entry) {
     if (entry.stateKind === "stateless") {
@@ -16656,9 +16662,9 @@ ${event}
     if (selectors.length === 0) {
       return "";
     }
-    const links = selectors.join(", ");
+    const links2 = selectors.join(", ");
     const icons = selectors.map((selector) => `${selector} > i`).join(", ");
-    return `${links} { font-size: 0 !important; }
+    return `${links2} { font-size: 0 !important; }
 ${icons} { font-size: ${iconSize} !important; }`;
   }
   function readIconSize(selectors) {
@@ -17916,12 +17922,16 @@ ${icons} { font-size: ${iconSize} !important; }`;
       input.after(button);
     }
   }
-  const TAG_INPUT_SELECTOR = '.js-imageform textarea.js-taginput-plain, .js-imageform textarea[name="image[tag_input]"]';
+  const TAG_INPUT_SELECTOR = '#image_tag_input, .js-imageform textarea.js-taginput-plain, .js-imageform textarea[name="image[tag_input]"]';
+  const TAG_LIST_SELECTOR = ".tagsauce .tag-list";
+  const BAR_CLASS = "lodestone-favorite-tags";
   const SUBMIT_WAIT_MS = 5e3;
   const FAVORITE_TAGS_BAR_CSS = `
-.lodestone-favorite-tags { display: flex; flex-wrap: wrap; gap: 0.4em; margin: 0.5em 0; }
-.lodestone-favorite-tags button[aria-pressed="true"] { font-weight: bold; text-decoration: underline; }
+.${BAR_CLASS} { display: flex; flex-wrap: wrap; gap: 0.4em; margin: 0.5em 0; }
+.${BAR_CLASS}[hidden] { display: none; }
+.${BAR_CLASS} button[aria-pressed="true"] { font-weight: bold; text-decoration: underline; }
 `;
+  const bars = [];
   function waitForSubmit(form) {
     return new Promise((resolve2) => {
       const done = () => {
@@ -17941,47 +17951,84 @@ ${icons} { font-size: ${iconSize} !important; }`;
       (_a = form.querySelector('[type="submit"]')) == null ? void 0 : _a.click();
     }
   }
-  function mountFavoriteTagsBar() {
-    const input = document.querySelector(TAG_INPUT_SELECTOR);
-    const form = (input == null ? void 0 : input.closest("form")) ?? null;
-    const favorites = useSettingsStore().favoriteTags.tags;
-    if (!input || !form || favorites.length === 0) {
-      return;
-    }
-    addStyle(FAVORITE_TAGS_BAR_CSS);
+  function toggleInEditor(input, tag) {
+    input.value = toggleTag(input.value, tag);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new CustomEvent("reload"));
+  }
+  function renderBar(bar) {
     const spinner = useSpinnerAction();
-    const bar = document.createElement("div");
-    bar.className = "lodestone-favorite-tags";
+    const favorites = useSettingsStore().favoriteTags.tags;
     const buttons = favorites.map((tag) => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "button";
       button.textContent = tag;
-      button.title = `Toggle the tag "${tag}" and save`;
+      button.title = bar.afterToggle ? `Toggle the tag "${tag}" and save` : `Toggle the tag "${tag}" in the list`;
       button.addEventListener("click", () => {
+        const { afterToggle } = bar;
+        if (!afterToggle) {
+          toggleInEditor(bar.input, tag);
+          return;
+        }
         void spinner.run(button, async () => {
-          input.value = toggleTag(input.value, tag);
-          input.dispatchEvent(new Event("input", { bubbles: true }));
-          input.dispatchEvent(new CustomEvent("reload"));
-          const answered = waitForSubmit(form);
-          submitForm(form);
-          await answered;
+          toggleInEditor(bar.input, tag);
+          await afterToggle(button);
         });
       });
       return { tag, button };
     });
-    const sync = () => {
-      for (const { tag, button } of buttons) {
-        button.setAttribute("aria-pressed", String(hasTag(input.value, tag)));
-      }
-    };
-    for (const { button } of buttons) {
-      bar.append(button);
+    bar.element.replaceChildren(...buttons.map(({ button }) => button));
+    bar.element.hidden = buttons.length === 0;
+    syncPressed(bar);
+  }
+  function syncPressed(bar) {
+    for (const button of bar.element.querySelectorAll("button")) {
+      button.setAttribute("aria-pressed", String(hasTag(bar.input.value, button.textContent ?? "")));
     }
-    input.addEventListener("input", sync);
-    input.addEventListener("change", sync);
-    sync();
-    (form.querySelector(".js-taginput") ?? input).after(bar);
+  }
+  function addBar(input, place, afterToggle) {
+    const element = document.createElement("div");
+    element.className = BAR_CLASS;
+    const bar = { element, input, afterToggle };
+    place(element);
+    input.addEventListener("input", () => syncPressed(bar));
+    input.addEventListener("change", () => syncPressed(bar));
+    bars.push(bar);
+    renderBar(bar);
+  }
+  function refreshFavoriteTagsBars() {
+    for (let index = bars.length - 1; index >= 0; index--) {
+      if (!bars[index].element.isConnected) {
+        bars.splice(index, 1);
+      }
+    }
+    for (const bar of bars) {
+      renderBar(bar);
+    }
+  }
+  function mountFavoriteTagsBars() {
+    const input = document.querySelector(TAG_INPUT_SELECTOR);
+    const form = (input == null ? void 0 : input.closest("form")) ?? null;
+    if (!input || !form) {
+      return;
+    }
+    addStyle(FAVORITE_TAGS_BAR_CSS);
+    if (!bars.some((bar) => bar.input === input && bar.element.isConnected && !bar.afterToggle)) {
+      addBar(input, (element) => (form.querySelector(".js-taginput") ?? input).after(element));
+    }
+    const list = document.querySelector(TAG_LIST_SELECTOR);
+    if (list && !bars.some((bar) => bar.input === input && bar.element.isConnected && bar.afterToggle)) {
+      addBar(
+        input,
+        (element) => list.after(element),
+        async () => {
+          const answered = waitForSubmit(form);
+          submitForm(form);
+          await answered;
+        }
+      );
+    }
   }
   const TAG_SELECTOR = ".tag.dropdown[data-tag-name]";
   const LINK_CLASS = "lodestone-favorite-tag-link";
@@ -17997,8 +18044,18 @@ ${icons} { font-size: ${iconSize} !important; }`;
     const tags = store.favoriteTags.tags;
     store.favoriteTags = { ...store.favoriteTags, tags: tags.includes(name) ? tags.filter((entry) => entry !== name) : [...tags, name] };
   }
+  const links = [];
+  function refreshFavoriteTagDropdownLabels() {
+    for (let index = links.length - 1; index >= 0; index--) {
+      if (!links[index].link.isConnected) {
+        links.splice(index, 1);
+      }
+    }
+    for (const entry of links) {
+      entry.link.textContent = labelFor(entry.tag);
+    }
+  }
   function mountFavoriteTagDropdownLinks() {
-    const links = [];
     for (const element of document.querySelectorAll(TAG_SELECTOR)) {
       const content = element.querySelector(".dropdown__content");
       const tag = element.dataset.tagName;
@@ -18012,20 +18069,38 @@ ${icons} { font-size: ${iconSize} !important; }`;
       link.addEventListener("click", (event) => {
         event.preventDefault();
         toggleFavorite(tag);
-        for (const entry of links) {
-          entry.link.textContent = labelFor(entry.tag);
-        }
+        refreshFavoriteTagDropdownLabels();
       });
       content.append(link);
       links.push({ link, tag });
     }
   }
+  function mountAll() {
+    mountFavoriteTagDropdownLinks();
+    mountFavoriteTagsBars();
+  }
   function initFavoriteTags() {
-    if (!useSettingsStore().favoriteTags.enabled) {
+    var _a;
+    const store = useSettingsStore();
+    if (!store.favoriteTags.enabled) {
       return;
     }
-    mountFavoriteTagDropdownLinks();
-    mountFavoriteTagsBar();
+    mountAll();
+    const parent = (_a = document.querySelector(".js-tagsauce")) == null ? void 0 : _a.parentElement;
+    if (parent) {
+      new MutationObserver(mountAll).observe(parent, { childList: true });
+    }
+    let lastTags = store.favoriteTags.tags;
+    store.$subscribe(
+      () => {
+        if (store.favoriteTags.tags !== lastTags) {
+          lastTags = store.favoriteTags.tags;
+          refreshFavoriteTagsBars();
+          refreshFavoriteTagDropdownLabels();
+        }
+      },
+      { flush: "sync" }
+    );
   }
   const pinia = createPinia();
   setActivePinia(pinia);
