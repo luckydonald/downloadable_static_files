@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.11.15.0000.12.28.29.0000.3196f
+// @version      2026.11.15.0000.13.02.07.0000.b5e4b
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -8452,6 +8452,7 @@
       scope: "image",
       buttonIds: [],
       breakpoints: [createBreakpoint()],
+      placements: {},
       ...overrides2
     };
   }
@@ -8461,11 +8462,28 @@
   function isRecord$4(value) {
     return typeof value === "object" && value !== null;
   }
+  function finite(value) {
+    return typeof value === "number" && Number.isFinite(value);
+  }
+  function normalizePlacements(raw) {
+    if (!isRecord$4(raw)) {
+      return {};
+    }
+    const placements = {};
+    for (const [key, value] of Object.entries(raw)) {
+      if (!isRecord$4(value) || !finite(value.xPct) || !finite(value.yPct) || !finite(value.wPct) || value.wPct <= 0) {
+        continue;
+      }
+      const hPct = finite(value.hPct) && value.hPct > 0 ? value.hPct : null;
+      placements[key] = { xPct: value.xPct, yPct: value.yPct, wPct: value.wPct, hPct, label: typeof value.label === "string" ? value.label : key };
+    }
+    return placements;
+  }
   function normalizeGroup(group) {
     const given = Array.isArray(group.breakpoints) ? group.breakpoints : [];
     const base2 = given.find((breakpoint) => breakpoint.maxWidthPx === null) ?? createBreakpoint();
     const rest = given.filter((breakpoint) => breakpoint.maxWidthPx !== null);
-    return { ...group, buttonIds: Array.isArray(group.buttonIds) ? group.buttonIds : [], breakpoints: [base2, ...rest] };
+    return { ...group, buttonIds: Array.isArray(group.buttonIds) ? group.buttonIds : [], breakpoints: [base2, ...rest], placements: normalizePlacements(group.placements) };
   }
   function normalizeButtonGroupsState(raw) {
     const record = isRecord$4(raw) ? raw : {};
@@ -8494,6 +8512,21 @@
           return;
         }
         this.perInstance[instanceId] = groups.map((group) => group.id === id ? normalizeGroup({ ...group, ...changes, id }) : group);
+      },
+      /** Detaches the group on one device (or moves/resizes it there). */
+      setPlacement(id, deviceKey2, placement) {
+        const group = this.groups.find((candidate) => candidate.id === id);
+        if (group) {
+          this.update(id, { placements: { ...group.placements, [deviceKey2]: placement } });
+        }
+      },
+      /** Docks the group again on one device. */
+      clearPlacement(id, deviceKey2) {
+        const group = this.groups.find((candidate) => candidate.id === id);
+        if (group && deviceKey2 in group.placements) {
+          const { [deviceKey2]: _removed, ...rest } = group.placements;
+          this.update(id, { placements: rest });
+        }
       },
       remove(id) {
         const instanceId = resolveInstanceId(location.hostname);
@@ -8750,7 +8783,7 @@
     store.$subscribe(() => setValue(STORAGE_KEY, store.$state), { flush: "sync" });
     onValueChanged(STORAGE_KEY, (value) => store.$patch((state) => Object.assign(state, normalizeWatchListBackupState(value))));
   }
-  const APP_VERSION = "2026.11.15.0000.12.28.29.0000.3196f";
+  const APP_VERSION = "2026.11.15.0000.13.02.07.0000.b5e4b";
   function numericSegments(version2) {
     const segments = [];
     for (const part of version2.split(".")) {
@@ -12372,9 +12405,9 @@
   };
   const _hoisted_16$4 = { class: "lodestone-manager-list__actions" };
   const _hoisted_17$3 = ["disabled", "onClick"];
-  const _hoisted_18$2 = ["disabled", "onClick"];
-  const _hoisted_19$2 = ["onClick"];
-  const _hoisted_20$2 = ["onClick"];
+  const _hoisted_18$3 = ["disabled", "onClick"];
+  const _hoisted_19$3 = ["onClick"];
+  const _hoisted_20$3 = ["onClick"];
   const _hoisted_21$2 = ["onClick"];
   const _hoisted_22$2 = { class: "lodestone-quick-button-manager__note" };
   const _hoisted_23$1 = { class: "lodestone-manager-list" };
@@ -12750,15 +12783,15 @@
                       disabled: index === unref(store).buttons.length - 1,
                       "aria-label": "Move down",
                       onClick: ($event) => unref(store).move(button.id, index + 1)
-                    }, "↓", 8, _hoisted_18$2),
+                    }, "↓", 8, _hoisted_18$3),
                     createBaseVNode("button", {
                       type: "button",
                       onClick: ($event) => edit(button)
-                    }, "Edit", 8, _hoisted_19$2),
+                    }, "Edit", 8, _hoisted_19$3),
                     createBaseVNode("button", {
                       type: "button",
                       onClick: ($event) => unref(store).duplicate(button.id)
-                    }, "Duplicate", 8, _hoisted_20$2),
+                    }, "Duplicate", 8, _hoisted_20$3),
                     createBaseVNode("button", {
                       type: "button",
                       title: "Hides it on this booru; it moves to Other boorus unless no other booru uses it",
@@ -13516,9 +13549,9 @@
   const _hoisted_15$3 = { key: 0 };
   const _hoisted_16$3 = { key: 2 };
   const _hoisted_17$2 = ["checked"];
-  const _hoisted_18$1 = ["checked"];
-  const _hoisted_19$1 = ["checked", "onChange"];
-  const _hoisted_20$1 = { key: 3 };
+  const _hoisted_18$2 = ["checked"];
+  const _hoisted_19$2 = ["checked", "onChange"];
+  const _hoisted_20$2 = { key: 3 };
   const _hoisted_21$1 = {
     key: 0,
     class: "lodestone-hint"
@@ -13843,7 +13876,7 @@
                         type: "radio",
                         checked: scopedToBoorus.value,
                         onChange: _cache[3] || (_cache[3] = ($event) => setScoped(true))
-                      }, null, 40, _hoisted_18$1),
+                      }, null, 40, _hoisted_18$2),
                       _cache[16] || (_cache[16] = createTextVNode(" Only on these boorus", -1))
                     ]),
                     scopedToBoorus.value ? (openBlock(true), createElementBlock(Fragment, { key: 0 }, renderList(unref(KNOWN_INSTANCE_IDS), (booru) => {
@@ -13856,11 +13889,11 @@
                           type: "checkbox",
                           checked: (_a = draft.boorus) == null ? void 0 : _a.includes(booru),
                           onChange: ($event) => toggleBooru(booru, $event.target.checked)
-                        }, null, 40, _hoisted_19$1),
+                        }, null, 40, _hoisted_19$2),
                         createTextVNode(" " + toDisplayString(booru), 1)
                       ]);
                     }), 128)) : createCommentVNode("", true)
-                  ])) : (openBlock(), createElementBlock("label", _hoisted_20$1, [
+                  ])) : (openBlock(), createElementBlock("label", _hoisted_20$2, [
                     _cache[18] || (_cache[18] = createTextVNode("Label ", -1)),
                     withDirectives(createBaseVNode("input", {
                       "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => draft.label = $event),
@@ -14061,8 +14094,26 @@
   }
   const GROUP_CLASS = "lodestone-button-group";
   const HOST_CLASS = "lodestone-button-group-host";
+  const GRIP_CLASS = "lodestone-group-grip";
+  const DOCK_CLASS = "lodestone-group-dock";
+  const RESIZE_CLASS = "lodestone-group-resize";
+  const FLOATING_ATTRIBUTE = "data-lodestone-floating";
   function gridRule(groupId, columns) {
     return `.${GROUP_CLASS}[data-lodestone-group-id="${groupId}"] { grid-template-columns: repeat(${clampColumns(columns)}, minmax(0, 1fr)); }`;
+  }
+  function floatingRules() {
+    const group = `.${GROUP_CLASS}`;
+    const floating = `${group}[${FLOATING_ATTRIBUTE}]`;
+    return [
+      `${group} > .${GRIP_CLASS} { grid-column: 1 / -1; order: -1; display: flex; align-items: center; justify-content: center; position: relative; height: 14px; line-height: 14px; font-size: 10px; cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none; opacity: .55; }`,
+      `${group} > .${GRIP_CLASS}::before { content: "\\2807\\2807\\2807"; letter-spacing: 2px; }`,
+      `${group} > .${GRIP_CLASS} > .${DOCK_CLASS} { position: absolute; right: 0; top: 0; display: none; width: auto; height: 100%; margin: 0; padding: 0 6px; font-size: 11px; line-height: 14px; cursor: pointer; }`,
+      `${floating} > .${GRIP_CLASS} { height: 22px; line-height: 22px; font-size: 14px; opacity: 1; }`,
+      `${floating} > .${GRIP_CLASS} > .${DOCK_CLASS} { display: block; line-height: 22px; }`,
+      `${group} > .${RESIZE_CLASS} { display: none; }`,
+      `${floating} > .${RESIZE_CLASS} { display: block; position: absolute; right: 0; bottom: 0; width: 26px; height: 26px; margin: 0; cursor: nwse-resize; touch-action: none; background: linear-gradient(135deg, transparent 50%, currentColor 50%, currentColor 58%, transparent 58%, transparent 70%, currentColor 70%, currentColor 78%, transparent 78%); opacity: .6; }`,
+      `${floating} { position: fixed; left: var(--lodestone-x, 0); top: var(--lodestone-y, 0); width: var(--lodestone-w, 30vw); height: var(--lodestone-h, auto); flex: none; max-width: 100vw; z-index: 2147483000; padding: 0 4px 26px; overflow: visible; background: var(--background-color, #fff); color: var(--foreground-color, inherit); border: 1px solid var(--border-color, rgba(128, 128, 128, .6)); border-radius: 6px; box-shadow: 0 4px 18px rgba(0, 0, 0, .35); }`
+    ];
   }
   function buildButtonGroupsCss(groups) {
     const rules = [
@@ -14073,7 +14124,8 @@
       `.${GROUP_CLASS} > * { box-sizing: border-box; width: 100%; min-width: 0; margin: 0; text-align: center; }`,
       // The Subscribe link stays inside the site's `.js-subscription-target` span (the site's answer handler needs it), so the span is the cell.
       `.${GROUP_CLASS} > .js-subscription-target { display: flex; }`,
-      `.${GROUP_CLASS} > .js-subscription-target > a { flex: 1 1 auto; box-sizing: border-box; min-width: 0; margin: 0; text-align: center; }`
+      `.${GROUP_CLASS} > .js-subscription-target > a { flex: 1 1 auto; box-sizing: border-box; min-width: 0; margin: 0; text-align: center; }`,
+      ...floatingRules()
     ];
     for (const group of groups) {
       const base2 = group.breakpoints.find((breakpoint) => breakpoint.maxWidthPx === null);
@@ -14084,6 +14136,59 @@
       }
     }
     return rules.join("\n");
+  }
+  function detectOs(ua, touchPoints) {
+    if (/iPad/i.test(ua)) {
+      return "iPad";
+    }
+    if (/iPhone|iPod/i.test(ua)) {
+      return "iPhone";
+    }
+    if (/Macintosh|Mac OS X/i.test(ua)) {
+      return touchPoints > 1 ? "iPad" : "Mac";
+    }
+    if (/Android/i.test(ua)) {
+      return "Android";
+    }
+    if (/Windows/i.test(ua)) {
+      return "Windows";
+    }
+    if (/CrOS/i.test(ua)) {
+      return "ChromeOS";
+    }
+    if (/Linux|X11/i.test(ua)) {
+      return "Linux";
+    }
+    return "Unknown";
+  }
+  function detectBrowser(ua) {
+    if (/Edg(e|A|iOS)?\//.test(ua)) {
+      return "Edge";
+    }
+    if (/OPR\/|Opera/.test(ua)) {
+      return "Opera";
+    }
+    if (/Firefox\/|FxiOS\//.test(ua)) {
+      return "Firefox";
+    }
+    if (/CriOS\/|Chrome\//.test(ua)) {
+      return "Chrome";
+    }
+    if (/Safari\//.test(ua)) {
+      return "Safari";
+    }
+    return "Unknown";
+  }
+  function deviceInfo(ua = navigator.userAgent, touchPoints = navigator.maxTouchPoints ?? 0) {
+    return { os: detectOs(ua, touchPoints), browser: detectBrowser(ua) };
+  }
+  function deviceKey(ua, touchPoints) {
+    const { os, browser } = deviceInfo(ua, touchPoints);
+    return `${os}|${browser}`.toLowerCase();
+  }
+  function deviceLabel(ua, touchPoints) {
+    const { os, browser } = deviceInfo(ua, touchPoints);
+    return `${os} · ${browser}`;
   }
   const _hoisted_1$b = { class: "lodestone-button-groups-manager" };
   const _hoisted_2$9 = ["checked", "onChange"];
@@ -14100,15 +14205,25 @@
     key: 0,
     class: "lodestone-hint"
   };
-  const _hoisted_13$3 = { class: "lodestone-manager-list__actions" };
-  const _hoisted_14$2 = ["disabled", "onClick"];
-  const _hoisted_15$2 = ["disabled", "onClick"];
-  const _hoisted_16$2 = ["onClick"];
-  const _hoisted_17$1 = ["onClick"];
+  const _hoisted_13$3 = {
+    key: 0,
+    class: "lodestone-button-groups-manager__placements"
+  };
+  const _hoisted_14$2 = ["onClick"];
+  const _hoisted_15$2 = {
+    key: 1,
+    class: "lodestone-hint"
+  };
+  const _hoisted_16$2 = { class: "lodestone-manager-list__actions" };
+  const _hoisted_17$1 = ["disabled", "onClick"];
+  const _hoisted_18$1 = ["disabled", "onClick"];
+  const _hoisted_19$1 = ["onClick"];
+  const _hoisted_20$1 = ["onClick"];
   const _sfc_main$c = /* @__PURE__ */ defineComponent({
     __name: "ButtonGroupsManager",
     setup(__props) {
       const store = useButtonGroupsStore();
+      const thisDevice = deviceKey();
       const draft = /* @__PURE__ */ reactive(createButtonGroup());
       const editingId = /* @__PURE__ */ ref(null);
       const dialogOpen = /* @__PURE__ */ ref(false);
@@ -14419,27 +14534,42 @@
                     title: "Drag to reorder"
                   }, "☰", -1)),
                   createBaseVNode("span", null, toDisplayString(group.name) + " (" + toDisplayString(group.scope) + ", " + toDisplayString(group.buttonIds.length) + " buttons)", 1),
-                  createBaseVNode("span", _hoisted_13$3, [
+                  Object.keys(group.placements).length > 0 ? (openBlock(), createElementBlock("ul", _hoisted_13$3, [
+                    (openBlock(true), createElementBlock(Fragment, null, renderList(group.placements, (placement, key) => {
+                      return openBlock(), createElementBlock("li", { key }, [
+                        createTextVNode(" Floating on " + toDisplayString(placement.label), 1),
+                        key === unref(thisDevice) ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
+                          createTextVNode(" (this device)")
+                        ], 64)) : createCommentVNode("", true),
+                        createTextVNode(": " + toDisplayString(Math.round(placement.wPct)) + "% wide at " + toDisplayString(Math.round(placement.xPct)) + "% / " + toDisplayString(Math.round(placement.yPct)) + "% ", 1),
+                        createBaseVNode("button", {
+                          type: "button",
+                          onClick: ($event) => unref(store).clearPlacement(group.id, key)
+                        }, "Dock", 8, _hoisted_14$2)
+                      ]);
+                    }), 128))
+                  ])) : group.scope === "image" ? (openBlock(), createElementBlock("span", _hoisted_15$2, "Drag the grip above the group on an image page to float it.")) : createCommentVNode("", true),
+                  createBaseVNode("span", _hoisted_16$2, [
                     createBaseVNode("button", {
                       type: "button",
                       disabled: index === 0,
                       "aria-label": "Move up",
                       onClick: ($event) => unref(store).move(group.id, index - 1)
-                    }, "↑", 8, _hoisted_14$2),
+                    }, "↑", 8, _hoisted_17$1),
                     createBaseVNode("button", {
                       type: "button",
                       disabled: index === unref(store).groups.length - 1,
                       "aria-label": "Move down",
                       onClick: ($event) => unref(store).move(group.id, index + 1)
-                    }, "↓", 8, _hoisted_15$2),
+                    }, "↓", 8, _hoisted_18$1),
                     createBaseVNode("button", {
                       type: "button",
                       onClick: ($event) => edit(group)
-                    }, "Edit", 8, _hoisted_16$2),
+                    }, "Edit", 8, _hoisted_19$1),
                     createBaseVNode("button", {
                       type: "button",
                       onClick: ($event) => unref(store).remove(group.id)
-                    }, "Delete", 8, _hoisted_17$1)
+                    }, "Delete", 8, _hoisted_20$1)
                   ])
                 ]);
               }), 128))
@@ -17810,6 +17940,185 @@ ${icons} { font-size: ${iconSize} !important; }`;
       { immediate: true, flush: "sync" }
     );
   }
+  const DETACH_THRESHOLD_PX = 6;
+  const MIN_WIDTH_PCT = 8;
+  const MIN_HEIGHT_PCT = 4;
+  const MIN_VISIBLE_WIDTH_PCT = 12;
+  const MAX_TOP_PCT = 94;
+  function round1(value) {
+    return Math.round(value * 10) / 10;
+  }
+  function clampPlacement(placement) {
+    const wPct = Math.min(100, Math.max(MIN_WIDTH_PCT, placement.wPct));
+    const hPct = placement.hPct === null ? null : Math.min(100, Math.max(MIN_HEIGHT_PCT, placement.hPct));
+    const xPct = Math.min(100 - MIN_VISIBLE_WIDTH_PCT, Math.max(MIN_VISIBLE_WIDTH_PCT - wPct, placement.xPct));
+    const yPct = Math.min(MAX_TOP_PCT, Math.max(0, placement.yPct));
+    return { ...placement, xPct, yPct, wPct, hPct };
+  }
+  function draw(wrapper, placement) {
+    var _a;
+    const clamped = clampPlacement(placement);
+    wrapper.setAttribute(FLOATING_ATTRIBUTE, "");
+    (_a = wrapper.parentElement) == null ? void 0 : _a.classList.remove(HOST_CLASS);
+    wrapper.style.setProperty("--lodestone-x", `${clamped.xPct}vw`);
+    wrapper.style.setProperty("--lodestone-y", `${clamped.yPct}vh`);
+    wrapper.style.setProperty("--lodestone-w", `${clamped.wPct}vw`);
+    if (clamped.hPct === null) {
+      wrapper.style.removeProperty("--lodestone-h");
+    } else {
+      wrapper.style.setProperty("--lodestone-h", `${clamped.hPct}vh`);
+    }
+  }
+  function undraw(wrapper) {
+    var _a;
+    wrapper.removeAttribute(FLOATING_ATTRIBUTE);
+    (_a = wrapper.parentElement) == null ? void 0 : _a.classList.add(HOST_CLASS);
+    for (const property of ["--lodestone-x", "--lodestone-y", "--lodestone-w", "--lodestone-h"]) {
+      wrapper.style.removeProperty(property);
+    }
+  }
+  function makeHandle(wrapper, className, tag, title, text = "") {
+    const existing = wrapper.querySelector(`:scope > .${className}`);
+    if (existing) {
+      return existing;
+    }
+    const handle = document.createElement(tag);
+    handle.className = className;
+    handle.title = title;
+    handle.textContent = text;
+    if (handle instanceof HTMLButtonElement) {
+      handle.type = "button";
+    }
+    wrapper.append(handle);
+    return handle;
+  }
+  function trackPointer(handle, start, onMove, onEnd) {
+    var _a;
+    let moved = false;
+    const pointerId = start.pointerId;
+    (_a = handle.setPointerCapture) == null ? void 0 : _a.call(handle, pointerId);
+    const move = (event) => {
+      if (event.pointerId !== pointerId) {
+        return;
+      }
+      moved = true;
+      onMove(event.clientX - start.clientX, event.clientY - start.clientY);
+    };
+    const end = (event) => {
+      var _a2;
+      if (event.pointerId !== pointerId) {
+        return;
+      }
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", end);
+      handle.removeEventListener("pointercancel", end);
+      (_a2 = handle.releasePointerCapture) == null ? void 0 : _a2.call(handle, pointerId);
+      onEnd(moved);
+    };
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", end);
+    handle.addEventListener("pointercancel", end);
+  }
+  function installDrag(wrapper, groupId, context, grip) {
+    grip.addEventListener("pointerdown", (event) => {
+      if (event.button > 0 || event.target.closest(`.${DOCK_CLASS}`)) {
+        return;
+      }
+      event.preventDefault();
+      const viewportWidth = window.innerWidth || 1;
+      const viewportHeight = window.innerHeight || 1;
+      const rect = wrapper.getBoundingClientRect();
+      let base2 = context.get(groupId) ?? null;
+      let live = base2;
+      let changed = false;
+      trackPointer(
+        grip,
+        event,
+        (dx, dy) => {
+          if (!base2) {
+            if (Math.hypot(dx, dy) < DETACH_THRESHOLD_PX) {
+              return;
+            }
+            base2 = {
+              xPct: round1(rect.left / viewportWidth * 100),
+              yPct: round1(rect.top / viewportHeight * 100),
+              wPct: round1(rect.width / viewportWidth * 100),
+              hPct: null,
+              label: context.deviceLabel
+            };
+          }
+          live = { ...base2, xPct: round1(base2.xPct + dx / viewportWidth * 100), yPct: round1(base2.yPct + dy / viewportHeight * 100), label: context.deviceLabel };
+          changed = true;
+          draw(wrapper, live);
+        },
+        () => {
+          if (live && changed) {
+            context.set(groupId, clampPlacement(live));
+          }
+        }
+      );
+    });
+  }
+  function installResize(wrapper, groupId, context, handle) {
+    handle.addEventListener("pointerdown", (event) => {
+      const base2 = context.get(groupId);
+      if (event.button > 0 || !base2) {
+        return;
+      }
+      event.preventDefault();
+      const viewportWidth = window.innerWidth || 1;
+      const viewportHeight = window.innerHeight || 1;
+      const startHeightPct = base2.hPct ?? wrapper.getBoundingClientRect().height / viewportHeight * 100;
+      let live = base2;
+      trackPointer(
+        handle,
+        event,
+        (dx, dy) => {
+          live = {
+            ...base2,
+            wPct: round1(Math.min(100, Math.max(MIN_WIDTH_PCT, base2.wPct + dx / viewportWidth * 100))),
+            hPct: round1(Math.min(100, Math.max(MIN_HEIGHT_PCT, startHeightPct + dy / viewportHeight * 100))),
+            label: context.deviceLabel
+          };
+          draw(wrapper, live);
+        },
+        (moved) => {
+          if (moved) {
+            context.set(groupId, live);
+          }
+        }
+      );
+    });
+  }
+  function wrappersOf(group) {
+    return Array.from(document.querySelectorAll(`.${GROUP_CLASS}[data-lodestone-group-id="${group.id}"]`));
+  }
+  function applyFloating(groups, context) {
+    for (const group of groups) {
+      if (group.scope !== "image") {
+        continue;
+      }
+      const placement = group.placements[context.deviceKey];
+      for (const wrapper of wrappersOf(group)) {
+        if (!wrapper.dataset.lodestoneHandles) {
+          wrapper.dataset.lodestoneHandles = "1";
+          const grip = makeHandle(wrapper, GRIP_CLASS, "div", "Drag to float this group; drag again to move it");
+          makeHandle(wrapper, DOCK_CLASS, "button", "Put the group back into the button bar", "✕");
+          const dock = wrapper.querySelector(`.${DOCK_CLASS}`);
+          grip.append(dock);
+          const resize = makeHandle(wrapper, RESIZE_CLASS, "div", "Drag to resize");
+          installDrag(wrapper, group.id, context, grip);
+          installResize(wrapper, group.id, context, resize);
+          dock.addEventListener("click", () => context.clear(group.id));
+        }
+        if (placement) {
+          draw(wrapper, placement);
+        } else {
+          undraw(wrapper);
+        }
+      }
+    }
+  }
   const LIST_CONTAINER_SELECTOR = ".media-box";
   function containerFor(el, scope) {
     return scope === "list" ? el.closest(LIST_CONTAINER_SELECTOR) ?? document : document;
@@ -17845,7 +18154,9 @@ ${icons} { font-size: ${iconSize} !important; }`;
           wrapper.title = group.name;
           first.before(wrapper);
         }
-        (_a = wrapper.parentElement) == null ? void 0 : _a.classList.add(HOST_CLASS);
+        if (!wrapper.hasAttribute(FLOATING_ATTRIBUTE)) {
+          (_a = wrapper.parentElement) == null ? void 0 : _a.classList.add(HOST_CLASS);
+        }
         for (const el of members) {
           wrapper.append(movableNodeOf(el));
         }
@@ -17866,6 +18177,26 @@ ${icons} { font-size: ${iconSize} !important; }`;
       { immediate: true, flush: "sync" }
     );
     applyButtonGroups(groupsForPage(), pageScope);
+    installButtonGroupsPersistence(store);
+    const key = deviceKey();
+    const context = {
+      deviceKey: key,
+      deviceLabel: deviceLabel(),
+      get: (groupId) => {
+        var _a;
+        return (_a = store.groups.find((group) => group.id === groupId)) == null ? void 0 : _a.placements[key];
+      },
+      set: (groupId, placement) => store.setPlacement(groupId, key, placement),
+      clear: (groupId) => store.clearPlacement(groupId, key)
+    };
+    const redraw = () => applyFloating(groupsForPage(), context);
+    redraw();
+    watch(() => JSON.stringify(groupsForPage().map((group) => [group.id, group.placements[key]])), redraw, { flush: "sync" });
+    let frame = 0;
+    window.addEventListener("resize", () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(redraw);
+    });
   }
   function initNewTabButtons() {
     const store = useSettingsStore();
