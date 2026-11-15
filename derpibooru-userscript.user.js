@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.11.15.0000.12.07.04.0000.3a33a
+// @version      2026.11.15.0000.12.22.16.0000.861cc
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -8748,7 +8748,7 @@
     store.$subscribe(() => setValue(STORAGE_KEY, store.$state), { flush: "sync" });
     onValueChanged(STORAGE_KEY, (value) => store.$patch((state) => Object.assign(state, normalizeWatchListBackupState(value))));
   }
-  const APP_VERSION = "2026.11.15.0000.12.07.04.0000.3a33a";
+  const APP_VERSION = "2026.11.15.0000.12.22.16.0000.861cc";
   function numericSegments(version2) {
     const segments = [];
     for (const part of version2.split(".")) {
@@ -14034,10 +14034,10 @@
       `.${GROUP_CLASS} { display: grid; box-sizing: border-box; width: 100%; flex: 1 1 100%; justify-content: stretch; align-items: center; gap: 4px; }`,
       // The group's parent (e.g. the image page's content-sized `.stretched-mobile-links`, itself a flex item of the metabar) must span the row too, or 100% of it is only as wide as its content.
       `.${HOST_CLASS} { box-sizing: border-box; width: 100%; flex: 1 1 100%; max-width: 100%; }`,
-      `.${GROUP_CLASS} > * { box-sizing: border-box; width: 100%; min-width: 0; margin: 0; }`,
+      `.${GROUP_CLASS} > * { box-sizing: border-box; width: 100%; min-width: 0; margin: 0; text-align: center; }`,
       // The Subscribe link stays inside the site's `.js-subscription-target` span (the site's answer handler needs it), so the span is the cell.
       `.${GROUP_CLASS} > .js-subscription-target { display: flex; }`,
-      `.${GROUP_CLASS} > .js-subscription-target > a { flex: 1 1 auto; box-sizing: border-box; min-width: 0; margin: 0; }`
+      `.${GROUP_CLASS} > .js-subscription-target > a { flex: 1 1 auto; box-sizing: border-box; min-width: 0; margin: 0; text-align: center; }`
     ];
     for (const group of groups) {
       const base2 = group.breakpoints.find((breakpoint) => breakpoint.maxWidthPx === null);
