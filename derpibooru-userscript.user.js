@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.11.15.0000.12.22.16.0000.861cc
+// @version      2026.11.15.0000.12.28.29.0000.3196f
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -7735,6 +7735,8 @@
     biggerButtonsEnabled: false,
     listButtonSize: 24,
     imageButtonSize: 24,
+    buttonPaddingPx: 0,
+    buttonMarginPx: 0,
     showVoteNumbersList: true,
     showVoteNumbersImage: true,
     showScoreList: true,
@@ -8748,7 +8750,7 @@
     store.$subscribe(() => setValue(STORAGE_KEY, store.$state), { flush: "sync" });
     onValueChanged(STORAGE_KEY, (value) => store.$patch((state) => Object.assign(state, normalizeWatchListBackupState(value))));
   }
-  const APP_VERSION = "2026.11.15.0000.12.22.16.0000.861cc";
+  const APP_VERSION = "2026.11.15.0000.12.28.29.0000.3196f";
   function numericSegments(version2) {
     const segments = [];
     for (const part of version2.split(".")) {
@@ -8972,6 +8974,8 @@
       const biggerButtonsEnabled = useToggle(store, "biggerButtonsEnabled");
       const listButtonSize = useToggle(store, "listButtonSize");
       const imageButtonSize = useToggle(store, "imageButtonSize");
+      const buttonPaddingPx = useToggle(store, "buttonPaddingPx");
+      const buttonMarginPx = useToggle(store, "buttonMarginPx");
       const showVoteNumbersList = useToggle(store, "showVoteNumbersList");
       const showVoteNumbersImage = useToggle(store, "showVoteNumbersImage");
       const showScoreList = useToggle(store, "showScoreList");
@@ -8986,14 +8990,14 @@
               modelValue: unref(biggerButtonsEnabled),
               "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => /* @__PURE__ */ isRef(biggerButtonsEnabled) ? biggerButtonsEnabled.value = $event : null)
             }, {
-              default: withCtx(() => [..._cache[7] || (_cache[7] = [
+              default: withCtx(() => [..._cache[9] || (_cache[9] = [
                 createTextVNode("Bigger buttons", -1)
               ])]),
               _: 1
             }, 8, ["modelValue"]),
             unref(biggerButtonsEnabled) ? (openBlock(), createElementBlock("div", _hoisted_1$v, [
               createBaseVNode("label", null, [
-                _cache[8] || (_cache[8] = createTextVNode(" List button size (px) ", -1)),
+                _cache[10] || (_cache[10] = createTextVNode(" List button size (px) ", -1)),
                 withDirectives(createBaseVNode("input", {
                   "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => /* @__PURE__ */ isRef(listButtonSize) ? listButtonSize.value = $event : null),
                   min: "12",
@@ -9009,7 +9013,7 @@
                 ])
               ]),
               createBaseVNode("label", null, [
-                _cache[9] || (_cache[9] = createTextVNode(" Image button size (px) ", -1)),
+                _cache[11] || (_cache[11] = createTextVNode(" Image button size (px) ", -1)),
                 withDirectives(createBaseVNode("input", {
                   "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => /* @__PURE__ */ isRef(imageButtonSize) ? imageButtonSize.value = $event : null),
                   min: "12",
@@ -9023,42 +9027,74 @@
                     { number: true }
                   ]
                 ])
+              ]),
+              createBaseVNode("label", null, [
+                _cache[12] || (_cache[12] = createTextVNode(" Button padding (px, 0 = site default) ", -1)),
+                withDirectives(createBaseVNode("input", {
+                  "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => /* @__PURE__ */ isRef(buttonPaddingPx) ? buttonPaddingPx.value = $event : null),
+                  min: "0",
+                  max: "32",
+                  type: "number"
+                }, null, 512), [
+                  [
+                    vModelText,
+                    unref(buttonPaddingPx),
+                    void 0,
+                    { number: true }
+                  ]
+                ])
+              ]),
+              createBaseVNode("label", null, [
+                _cache[13] || (_cache[13] = createTextVNode(" Button margin (px, 0 = site default) ", -1)),
+                withDirectives(createBaseVNode("input", {
+                  "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => /* @__PURE__ */ isRef(buttonMarginPx) ? buttonMarginPx.value = $event : null),
+                  min: "0",
+                  max: "32",
+                  type: "number"
+                }, null, 512), [
+                  [
+                    vModelText,
+                    unref(buttonMarginPx),
+                    void 0,
+                    { number: true }
+                  ]
+                ])
               ])
             ])) : createCommentVNode("", true),
-            _cache[14] || (_cache[14] = createBaseVNode("h4", null, "Numbers — List", -1)),
+            _cache[18] || (_cache[18] = createBaseVNode("h4", null, "Numbers — List", -1)),
             createVNode(_sfc_main$F, {
               modelValue: unref(showVoteNumbersList),
-              "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => /* @__PURE__ */ isRef(showVoteNumbersList) ? showVoteNumbersList.value = $event : null)
+              "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => /* @__PURE__ */ isRef(showVoteNumbersList) ? showVoteNumbersList.value = $event : null)
             }, {
-              default: withCtx(() => [..._cache[10] || (_cache[10] = [
+              default: withCtx(() => [..._cache[14] || (_cache[14] = [
                 createTextVNode("Show the count on favorite / upvote / downvote buttons", -1)
               ])]),
               _: 1
             }, 8, ["modelValue"]),
             createVNode(_sfc_main$F, {
               modelValue: unref(showScoreList),
-              "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => /* @__PURE__ */ isRef(showScoreList) ? showScoreList.value = $event : null)
+              "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => /* @__PURE__ */ isRef(showScoreList) ? showScoreList.value = $event : null)
             }, {
-              default: withCtx(() => [..._cache[11] || (_cache[11] = [
+              default: withCtx(() => [..._cache[15] || (_cache[15] = [
                 createTextVNode("Show the general score", -1)
               ])]),
               _: 1
             }, 8, ["modelValue"]),
-            _cache[15] || (_cache[15] = createBaseVNode("h4", null, "Numbers — Image", -1)),
+            _cache[19] || (_cache[19] = createBaseVNode("h4", null, "Numbers — Image", -1)),
             createVNode(_sfc_main$F, {
               modelValue: unref(showVoteNumbersImage),
-              "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => /* @__PURE__ */ isRef(showVoteNumbersImage) ? showVoteNumbersImage.value = $event : null)
+              "onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => /* @__PURE__ */ isRef(showVoteNumbersImage) ? showVoteNumbersImage.value = $event : null)
             }, {
-              default: withCtx(() => [..._cache[12] || (_cache[12] = [
+              default: withCtx(() => [..._cache[16] || (_cache[16] = [
                 createTextVNode("Show the count on favorite / upvote / downvote buttons", -1)
               ])]),
               _: 1
             }, 8, ["modelValue"]),
             createVNode(_sfc_main$F, {
               modelValue: unref(showScoreImage),
-              "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => /* @__PURE__ */ isRef(showScoreImage) ? showScoreImage.value = $event : null)
+              "onUpdate:modelValue": _cache[8] || (_cache[8] = ($event) => /* @__PURE__ */ isRef(showScoreImage) ? showScoreImage.value = $event : null)
             }, {
-              default: withCtx(() => [..._cache[13] || (_cache[13] = [
+              default: withCtx(() => [..._cache[17] || (_cache[17] = [
                 createTextVNode("Show the general score", -1)
               ])]),
               _: 1
@@ -16377,22 +16413,36 @@ ${event}
   function joinSelectors(selectors) {
     return selectors.map((selector) => `${selector}${EXCLUDE_SEARCH_FORM}`).join(", ");
   }
-  function buildBiggerButtonsCss(listSize, imageSize) {
+  const EXCLUDE_GROUP_MEMBER = `:not(.${GROUP_CLASS} > *)`;
+  function clampPx(value) {
+    return Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
+  }
+  function buildBiggerButtonsCss(listSize, imageSize, paddingPx = 0, marginPx = 0) {
     const listSelector = joinSelectors([...listButtonDefs.map((button) => button.selector), LIST_SCORE_SELECTOR]);
     const imageSelector = joinSelectors([...imageButtonDefs.map((button) => button.selector), IMAGE_SCORE_SELECTOR, GALLERY_QUICK_BUTTON_SELECTOR]);
-    return [
+    const rules = [
       `${listSelector} { font-size: ${listSize}px !important; }`,
       `${imageSelector} { font-size: ${imageSize}px !important; }`
-    ].join("\n");
+    ];
+    const padding = clampPx(paddingPx);
+    const margin = clampPx(marginPx);
+    const allSelector = `${listSelector}, ${imageSelector}`;
+    if (padding > 0) {
+      rules.push(`${allSelector} { padding: ${padding}px !important; box-sizing: border-box; }`);
+    }
+    if (margin > 0) {
+      rules.push(`${allSelector.replaceAll(EXCLUDE_SEARCH_FORM, `${EXCLUDE_SEARCH_FORM}${EXCLUDE_GROUP_MEMBER}`)} { margin: ${margin}px !important; }`);
+    }
+    return rules.join("\n");
   }
   function initBiggerButtons() {
     const store = useSettingsStore();
     let styleEl = null;
     watch(
-      () => [store.biggerButtonsEnabled, store.listButtonSize, store.imageButtonSize],
-      ([enabled, listSize, imageSize]) => {
+      () => [store.biggerButtonsEnabled, store.listButtonSize, store.imageButtonSize, store.buttonPaddingPx, store.buttonMarginPx],
+      ([enabled, listSize, imageSize, paddingPx, marginPx]) => {
         styleEl == null ? void 0 : styleEl.remove();
-        styleEl = enabled ? addStyle(buildBiggerButtonsCss(listSize, imageSize)) : null;
+        styleEl = enabled ? addStyle(buildBiggerButtonsCss(listSize, imageSize, paddingPx, marginPx)) : null;
       },
       { immediate: true, flush: "sync" }
     );
