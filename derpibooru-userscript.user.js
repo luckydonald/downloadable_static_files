@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.11.14.0000.13.04.28.0000.abe6d
+// @version      2026.11.15.0000.12.07.04.0000.3a33a
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -8748,7 +8748,7 @@
     store.$subscribe(() => setValue(STORAGE_KEY, store.$state), { flush: "sync" });
     onValueChanged(STORAGE_KEY, (value) => store.$patch((state) => Object.assign(state, normalizeWatchListBackupState(value))));
   }
-  const APP_VERSION = "2026.11.14.0000.13.04.28.0000.abe6d";
+  const APP_VERSION = "2026.11.15.0000.12.07.04.0000.3a33a";
   function numericSegments(version2) {
     const segments = [];
     for (const part of version2.split(".")) {
@@ -14024,6 +14024,7 @@
     return Number.isFinite(columns) ? Math.max(1, Math.floor(columns)) : DEFAULT_COLUMNS;
   }
   const GROUP_CLASS = "lodestone-button-group";
+  const HOST_CLASS = "lodestone-button-group-host";
   function gridRule(groupId, columns) {
     return `.${GROUP_CLASS}[data-lodestone-group-id="${groupId}"] { grid-template-columns: repeat(${clampColumns(columns)}, minmax(0, 1fr)); }`;
   }
@@ -14031,6 +14032,8 @@
     const rules = [
       // Full width (also inside a flex parent) with equal-width columns, each button filling its cell.
       `.${GROUP_CLASS} { display: grid; box-sizing: border-box; width: 100%; flex: 1 1 100%; justify-content: stretch; align-items: center; gap: 4px; }`,
+      // The group's parent (e.g. the image page's content-sized `.stretched-mobile-links`, itself a flex item of the metabar) must span the row too, or 100% of it is only as wide as its content.
+      `.${HOST_CLASS} { box-sizing: border-box; width: 100%; flex: 1 1 100%; max-width: 100%; }`,
       `.${GROUP_CLASS} > * { box-sizing: border-box; width: 100%; min-width: 0; margin: 0; }`,
       // The Subscribe link stays inside the site's `.js-subscription-target` span (the site's answer handler needs it), so the span is the cell.
       `.${GROUP_CLASS} > .js-subscription-target { display: flex; }`,
@@ -17779,6 +17782,7 @@ ${icons} { font-size: ${iconSize} !important; }`;
     return byContainer;
   }
   function applyButtonGroups(groups, pageScope) {
+    var _a;
     const catalog = buildButtonCatalog({ includeNav: true });
     for (const group of groups.filter((candidate) => candidate.scope === pageScope)) {
       for (const members of membersByContainer(group, catalog).values()) {
@@ -17791,6 +17795,7 @@ ${icons} { font-size: ${iconSize} !important; }`;
           wrapper.title = group.name;
           first.before(wrapper);
         }
+        (_a = wrapper.parentElement) == null ? void 0 : _a.classList.add(HOST_CLASS);
         for (const el of members) {
           wrapper.append(movableNodeOf(el));
         }
