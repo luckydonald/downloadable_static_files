@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.11.21.0000.19.42.54.0000.c7e21
+// @version      2026.11.21.0000.19.54.51.0000.9179a
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
@@ -27,7 +27,7 @@
 // ==/UserScript==
 
 
-System.register("./__entry.js", ['./__monkey.entry-Bex_j-Pw.js'], (function (exports, module) {
+System.register("./__entry.js", ['./__monkey.entry-B6S2-5dQ.js'], (function (exports, module) {
 	'use strict';
 	return {
 		setters: [null],
@@ -39,7 +39,7 @@ System.register("./__entry.js", ['./__monkey.entry-Bex_j-Pw.js'], (function (exp
 	};
 }));
 
-System.register("./__monkey.entry-Bex_j-Pw.js", [], (function (exports, module) {
+System.register("./__monkey.entry-B6S2-5dQ.js", [], (function (exports, module) {
   'use strict';
   return {
     execute: (function () {
@@ -8932,7 +8932,7 @@ System.register("./__monkey.entry-Bex_j-Pw.js", [], (function (exports, module) 
         store.$subscribe(() => setValue(STORAGE_KEY, store.$state), { flush: "sync" });
         onValueChanged(STORAGE_KEY, (value) => store.$patch((state) => Object.assign(state, normalizeWatchListBackupState(value))));
       }
-      const APP_VERSION = "2026.11.21.0000.19.42.54.0000.c7e21";
+      const APP_VERSION = "2026.11.21.0000.19.54.51.0000.9179a";
       function numericSegments(version2) {
         const segments = [];
         for (const part of version2.split(".")) {
@@ -18712,7 +18712,7 @@ ${icons} { font-size: ${iconSize} !important; }`;
       const page = detectPage(location.pathname);
       {
         void __vitePreload(async () => {
-          const { initSyncTodoOverlay } = await module.import('./index-DGBGKrEG-rwgUcQae.js');
+          const { initSyncTodoOverlay } = await module.import('./index-ejVufMcs-6Y1tXoNO.js');
           return { initSyncTodoOverlay };
         }, void 0 ).then(
           ({ initSyncTodoOverlay }) => initSyncTodoOverlay({ url: "", token: "" })
@@ -18755,7 +18755,7 @@ ${icons} { font-size: ${iconSize} !important; }`;
   };
 }));
 
-System.register("./index-DGBGKrEG-rwgUcQae.js", ['./__monkey.entry-Bex_j-Pw.js'], (function (exports, module) {
+System.register("./index-ejVufMcs-6Y1tXoNO.js", ['./__monkey.entry-B6S2-5dQ.js'], (function (exports, module) {
   'use strict';
   var gmRequest;
   return {
