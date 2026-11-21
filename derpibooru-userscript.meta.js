@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lodestone's Userscript
 // @namespace    https://github.com/luckydonald/derpibooru_userscript
-// @version      2026.11.21.0000.15.35.36.0000.782a3
+// @version      2026.11.21.0000.19.42.54.0000.c7e21
 // @description  A userscript created for depibooru, enhancing features Lodestone wished for. Waring: Quickly vibecoded for her.
 // @downloadURL  https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
 // @updateURL    https://luckydonald.github.io/downloadable_static_files/derpibooru-userscript.user.js
